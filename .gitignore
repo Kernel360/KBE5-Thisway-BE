@@ -1,6 +1,7 @@
 ### custom ###
 **/application.yml
 gradle.properties
+build.local.gradle
 
 HELP.md
 .gradle

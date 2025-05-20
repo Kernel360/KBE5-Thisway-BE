@@ -43,3 +43,9 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+def localGradle = file('build.local.gradle')
+
+if (localGradle.exists()) {
+    apply from: localGradle
+}
