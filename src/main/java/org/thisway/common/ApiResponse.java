@@ -1,5 +1,6 @@
 package org.thisway.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Value;
 import org.springframework.http.HttpStatus;
 
@@ -8,6 +9,8 @@ public class ApiResponse<DATA> {
 
     int status;
     String message;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     DATA data;
 
     public static <DATA> ApiResponse<DATA> ok() {
