@@ -8,8 +8,13 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
 
-    SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에러 입니다.")
-    ;
+    /* 서버 에러 */
+    SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에러 입니다."),
+
+    /* 비즈니스 에러 */
+    // 회사
+    COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "회사 정보를 찾을 수 없습니다."),
+    COMPANY_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 회사입니다.");
 
     private final HttpStatus status;
     private final String message;
