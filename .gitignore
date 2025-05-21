@@ -1,5 +1,6 @@
 ### custom ###
 **/application.yml
+**/db-environment.yml
 gradle.properties
 build.local.gradle
 
