@@ -1,11 +1,16 @@
 package org.thisway.company.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.thisway.common.BaseEntity;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Company extends BaseEntity {
     @Column(nullable = false)
     private String name;
