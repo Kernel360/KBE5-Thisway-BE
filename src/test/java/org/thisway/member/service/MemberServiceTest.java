@@ -15,6 +15,7 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
@@ -30,6 +31,40 @@ class MemberServiceTest {
     @BeforeEach
     void setUp() {
         memberRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("멤버가 정상적으로 조회된다.")
+    void givenValidMemberId_whenGetMemberDetail_thenSuccessfulGetDetail() {
+        // given
+        Member member = MemberFixture.createMember();
+
+        // when
+        memberRepository.save(member);
+        MemberResponse memberResponse = memberService.getMemberDetail(member.getId());
+
+        // then
+        assertThat(memberResponse.id()).isEqualTo(member.getId());
+        assertThat(memberResponse.email()).isEqualTo(member.getEmail());
+        assertThat(memberResponse.password()).isEqualTo(member.getPassword());
+        assertThat(memberResponse.phone()).isEqualTo(member.getPhone());
+    }
+
+    @Test
+    @DisplayName("없는 멤버를 조회하려 하면 member not found exception이 발생한다.")
+    void givenInvalidMemberId_whenGetMemberDetail_thenThrowNotFoundException() {
+        // given
+        Member member = MemberFixture.createMember();
+
+        // when
+        memberRepository.save(member);
+        CustomException e = assertThrows(
+                CustomException.class,
+                () -> memberService.getMemberDetail(member.getId() + 1)
+        );
+
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+        // then
     }
 
     @Test

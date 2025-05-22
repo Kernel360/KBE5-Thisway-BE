@@ -1,6 +1,7 @@
 package org.thisway.member.support;
 
 import org.thisway.member.dto.request.MemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.entity.Member;
 
 public class MemberFixture {
@@ -23,5 +24,16 @@ public class MemberFixture {
                 .phone("010-1234-5678")
                 .memo("가입 메모")
                 .build();
+    }
+
+    public static MemberResponse createMemberResponse(long id) {
+        return new MemberResponse(
+                1L,
+                "홍길동",
+                "hong@example.com",
+                "Password123!",
+                "010-1234-5678",
+                "가입 메모"
+        );
     }
 }
