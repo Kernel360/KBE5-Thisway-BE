@@ -14,7 +14,10 @@ public enum ErrorCode {
     /* 비즈니스 에러 */
     // 회사
     COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "회사 정보를 찾을 수 없습니다."),
-    COMPANY_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 회사입니다.");
+    COMPANY_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 회사입니다."),
+
+    // 멤버
+    INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증 코드입니다.");
 
     private final HttpStatus status;
     private final String message;
