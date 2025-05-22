@@ -11,7 +11,7 @@ import org.thisway.common.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-// todo: 역할 컬럼 추가
+// todo: 인증/인가 구현 후 역할 컬럼 추가
 public class Member extends BaseEntity {
 
     @Column(nullable = false)
