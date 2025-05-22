@@ -1,6 +1,7 @@
 package org.thisway.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
+import org.thisway.common.CustomException;
+import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
@@ -48,4 +51,31 @@ class MemberServiceTest {
         assertThat(savedMember.getPassword()).isEqualTo(request.password());
         assertThat(savedMember.getPhone()).isEqualTo(request.phone());
     }
+
+    @Test
+    @DisplayName("멤버가 정상적으로 삭제된다.")
+    void givenValidMemberId_whenDeleteMember_thenSuccessfulDelete() {
+        // given
+        Member member = MemberFixture.createMember();
+
+        // when
+        memberRepository.save(member);
+
+        memberService.deleteMember(member.getId());
+
+        // then
+        Member deletedMember = memberRepository.findById(member.getId()).orElse(null);
+        assertThat(deletedMember).isNotNull();
+        assertThat(deletedMember.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("없는 멤버를 삭제하려 하면 member not found exception이 발생한다.")
+    void givenNotFoundMemberId_whenDeleteMember_thenThrowNotFoundException() {
+        // when & then
+        CustomException e = assertThrows(CustomException.class, () -> memberService.deleteMember(1L));
+
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+    }
+
 }

@@ -1,6 +1,8 @@
 package org.thisway.member.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -10,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.BDDMockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +21,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.common.ApiResponse;
+import org.thisway.common.CustomException;
+import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
@@ -53,5 +58,42 @@ class MemberControllerTest {
         String responseBody = mvcResult.getResponse().getContentAsString();
         ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
         assertThat(response.status()).isEqualTo(HttpStatus.CREATED.value());
+    }
+
+    @Test
+    @DisplayName("멤버 삭제가 정상적으로 되었을 때, no content 응답을 한다.")
+    void givenValidMemberId_whenDeleteMember_thenReturnsNoContentStatus() throws Exception {
+        // when
+        MvcResult mvcResult = mockMvc.perform(
+                        delete("/api/members/1")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
+        assertThat(response.status()).isEqualTo(HttpStatus.NO_CONTENT.value());
+    }
+
+    @Test
+    @DisplayName("멤버 삭제시 없는 멤버의 ID 요청이면, not found 응답을 한다.")
+    void givenNotFoundMemberId_whenDeleteMember_thenReturnsNotFoundStatus() throws Exception {
+        // when
+        BDDMockito.willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND))
+                .given(memberService).deleteMember(eq(1L));
+
+        MvcResult mvcResult = mockMvc.perform(
+                        delete("/api/members/1")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
+        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 }
