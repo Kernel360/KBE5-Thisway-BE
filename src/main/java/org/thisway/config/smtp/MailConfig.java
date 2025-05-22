@@ -33,10 +33,10 @@ public class MailConfig {
     @Bean
     public JavaMailSender mailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(host.trim());
+        mailSender.setHost(host);
         mailSender.setPort(port);
-        mailSender.setUsername(username.trim());
-        mailSender.setPassword(password.trim());
+        mailSender.setUsername(username);
+        mailSender.setPassword(password);
         mailSender.setDefaultEncoding("UTF-8");
 
         Properties props = new Properties();
