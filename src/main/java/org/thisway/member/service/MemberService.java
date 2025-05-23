@@ -1,6 +1,7 @@
 package org.thisway.member.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
@@ -8,6 +9,7 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
+import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 
@@ -24,6 +26,11 @@ public class MemberService {
                 .filter(BaseEntity::isActive)
                 .map(MemberResponse::from)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public MembersResponse getMembers(Pageable pageable) {
+        return MembersResponse.from(memberRepository.findAllByActiveTrue(pageable));
     }
 
     public void registerMember(MemberRegisterRequest request) {
