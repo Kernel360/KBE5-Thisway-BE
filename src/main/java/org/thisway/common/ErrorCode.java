@@ -17,7 +17,7 @@ public enum ErrorCode {
     COMPANY_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 회사입니다."),
 
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."),
-    MEMBER_ALREADY_EXIST_BY_EMAIL(HttpStatus.CONFLICT, "이미 이메일의 사용자입니다."),
+    MEMBER_ALREADY_EXIST_BY_EMAIL(HttpStatus.CONFLICT, "이미 등록된 이메일입니다."),
     MEMBER_INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 핸드폰 번호입니다."),
     ;
 
