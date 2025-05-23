@@ -87,6 +87,20 @@ class MemberServiceTest {
     }
 
     @Test
+    @DisplayName("멤버 등록이 정상적으로 등록된다.")
+    void 멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다() {
+        // given
+        String email = "hong@example.com";
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithEmail(email);
+
+        // when & then
+        memberRepository.save(MemberFixture.createMemberWithEmail(email));
+        CustomException e = assertThrows(CustomException.class, () -> memberService.registerMember(request));
+
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
     @DisplayName("멤버가 정상적으로 삭제된다.")
     void givenValidMemberId_whenDeleteMember_thenSuccessfulDelete() {
         // given

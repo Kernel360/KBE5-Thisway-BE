@@ -16,10 +16,30 @@ public class MemberFixture {
         );
     }
 
+    public static MemberRegisterRequest createMemberRegisterRequestWithEmail(String email) {
+        return new MemberRegisterRequest(
+                "홍길동",
+                email,
+                "Password123!",
+                "01012345678",
+                "가입 메모"
+        );
+    }
+
     public static Member createMember() {
         return Member.builder()
                 .name("홍길동")
                 .email("hong@example.com")
+                .password("Password123!")
+                .phone("01012345678")
+                .memo("가입 메모")
+                .build();
+    }
+
+    public static Member createMemberWithEmail(String email) {
+        return Member.builder()
+                .name("홍길동")
+                .email(email)
                 .password("Password123!")
                 .phone("01012345678")
                 .memo("가입 메모")

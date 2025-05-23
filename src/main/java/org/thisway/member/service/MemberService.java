@@ -27,6 +27,10 @@ public class MemberService {
     }
 
     public void registerMember(MemberRegisterRequest request) {
+        if (memberRepository.existsByEmail(request.email())) {
+            throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+        }
+
         Member member = request.toMember();
 
         memberRepository.save(member);
