@@ -15,7 +15,7 @@ public record MemberResponse(
                 member.getId(),
                 member.getName(),
                 member.getEmail(),
-                member.getPhone(),
+                member.getPhoneValue(),
                 member.getMemo()
         );
     }
