@@ -4,16 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thisway.auth.dto.VerificationEntry;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.member.repository.MemberRepository;
 
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
@@ -21,8 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EmailVerificationService {
+
+    private final MemberRepository memberRepository;
 
     private final StringRedisTemplate redisTemplate;
     private final JavaMailSender javaMailSender;
@@ -32,7 +32,10 @@ public class EmailVerificationService {
 
     public void sendVerifyCode(String email) {
         // 이메일 regex 처리 예정.
-        // Member find 로직 추가 예정.
+
+        // Member find 로직 추가 예정
+        memberRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         String code = generateVerifyCode();
 
