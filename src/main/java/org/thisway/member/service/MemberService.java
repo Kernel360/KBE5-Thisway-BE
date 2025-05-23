@@ -7,6 +7,7 @@ import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 
@@ -16,6 +17,14 @@ import org.thisway.member.repository.MemberRepository;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+
+    @Transactional(readOnly = true)
+    public MemberResponse getMemberDetail(Long id) {
+        return memberRepository.findById(id)
+                .filter(BaseEntity::isActive)
+                .map(MemberResponse::from)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
 
     public void registerMember(MemberRegisterRequest request) {
         Member member = request.toMember();

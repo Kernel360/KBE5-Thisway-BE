@@ -2,7 +2,9 @@ package org.thisway.member.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -24,6 +26,7 @@ import org.thisway.common.ApiResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
 
@@ -37,6 +40,56 @@ class MemberControllerTest {
 
     @MockitoBean
     private final MemberService memberService;
+
+    @Test
+    @DisplayName("멤버 조회가 정상적으로 되었을 때, ok 응답과 정상적으로 데이터를 조회할 수 있다.")
+    void givenValidMemberId_whenGetMemberDetail_thenReturnsOkStatusWithMemberData() throws Exception {
+        // when
+        long id = 1L;
+        MemberResponse expectResponse = MemberFixture.createMemberResponse(id);
+        when(memberService.getMemberDetail(id))
+                .thenReturn(expectResponse);
+
+        MvcResult mvcResult = mockMvc.perform(
+                        get("/api/members/1")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<MemberResponse> response = objectMapper.readValue(
+                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
+        );
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+
+        MemberResponse memberResponse = response.data();
+        assertThat(memberResponse).isNotNull();
+        assertThat(memberResponse.id()).isEqualTo(id);
+    }
+
+    @Test
+    @DisplayName("멤버 조회시 없는 멤버 ID 요청이면, not found 응답을 한다.")
+    void givenNotFoundMemberId_whenGetMemberDetail_thenReturnsNotFoundStatus() throws Exception {
+        when(memberService.getMemberDetail(1L))
+                .thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // when
+        MvcResult mvcResult = mockMvc.perform(
+                        get ("/api/members/1")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<MemberResponse> response = objectMapper.readValue(
+                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
+        );
+        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
 
     @Test
     @DisplayName("멤버 등록이 정상적으로 되었을 때, created 응답을 한다.")
