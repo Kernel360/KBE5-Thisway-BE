@@ -1,6 +1,8 @@
 package org.thisway.member.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thisway.common.ApiResponse;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
+import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 
 @RestController
@@ -25,6 +28,12 @@ public class MemberController {
     public ApiResponse<MemberResponse> getMemberDetail(@PathVariable Long id) {
         return ApiResponse.ok(memberService.getMemberDetail(id));
     }
+
+    @GetMapping
+    public ApiResponse<MembersResponse> getMembers(@PageableDefault Pageable pageable) {
+        return ApiResponse.ok(memberService.getMembers(pageable));
+    }
+
 
     @PostMapping
     public ApiResponse<Void> registerMember(@RequestBody @Validated MemberRegisterRequest request) {

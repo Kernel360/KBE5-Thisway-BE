@@ -1,6 +1,7 @@
 package org.thisway.member.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -12,10 +13,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
@@ -27,6 +30,7 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
+import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
 
@@ -89,6 +93,34 @@ class MemberControllerTest {
                 responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
         );
         assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    @Disabled
+    // todo: PageResponse 구조 결정 후 코드 및 주석 변경 or Disable 해제
+    void 멤버_전체_조회가_정상적으로_되었을_때_ok_응답과_함께_정상적으로_데이터를_조회할_수_있다() throws Exception {
+        // when
+        MembersResponse expectResponse = MemberFixture.createMembersResponse(2);
+        when(memberService.getMembers(any(Pageable.class)))
+                .thenReturn(expectResponse);
+
+        MvcResult mvcResult = mockMvc.perform(
+                        get("/api/members")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<MembersResponse> response = objectMapper.readValue(
+                responseBody, new TypeReference<ApiResponse<MembersResponse>>() {}
+        );
+        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+
+        MembersResponse membersResponse = response.data();
+        assertThat(membersResponse).isNotNull();
+        assertThat(membersResponse.memberResponses()).hasSize(2);
     }
 
     @Test
