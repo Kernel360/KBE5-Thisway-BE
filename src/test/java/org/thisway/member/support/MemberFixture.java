@@ -31,7 +31,6 @@ public class MemberFixture {
                 1L,
                 "홍길동",
                 "hong@example.com",
-                "Password123!",
                 "010-1234-5678",
                 "가입 메모"
         );

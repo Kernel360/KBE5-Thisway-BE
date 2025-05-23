@@ -46,7 +46,6 @@ class MemberServiceTest {
         // then
         assertThat(memberResponse.id()).isEqualTo(member.getId());
         assertThat(memberResponse.email()).isEqualTo(member.getEmail());
-        assertThat(memberResponse.password()).isEqualTo(member.getPassword());
         assertThat(memberResponse.phone()).isEqualTo(member.getPhone());
     }
 

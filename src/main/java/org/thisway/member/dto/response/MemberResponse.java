@@ -6,7 +6,6 @@ public record MemberResponse(
         Long id,
         String name,
         String email,
-        String password,
         String phone,
         String memo
 ) {
@@ -16,7 +15,6 @@ public record MemberResponse(
                 member.getId(),
                 member.getName(),
                 member.getEmail(),
-                member.getPassword(),
                 member.getPhone(),
                 member.getMemo()
         );
