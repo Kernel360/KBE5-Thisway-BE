@@ -1,4 +1,4 @@
-package org.thisway.common.validation;
+package org.thisway.vehicle.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -17,13 +17,6 @@ public class CarNumberValidator implements ConstraintValidator<ValidCarNumber, S
 
     @Override
     public boolean isValid(String carNumber, ConstraintValidatorContext context) {
-        if ("".equals(carNumber)) {
-            return true;
-        }
-
-        if (carNumber == null || carNumber.trim().isEmpty()) {
-            return false;
-        }
 
         String normalizedCarNumber = carNumber.replace(" ", "");
 

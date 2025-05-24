@@ -1,4 +1,4 @@
-package org.thisway.common.validation;
+package org.thisway.vehicle.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

@@ -52,8 +52,14 @@ class VehicleServiceTest {
     void 차량_등록_성공() {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2023, "아반떼", "12가3456", "검정", 5000,
-                true, 37.5665, 126.9780
+                "현대",
+                2023,
+                "아반떼",
+                "12가3456",
+                "검정",
+                5000,
+                37.5665,
+                126.9780
         );
 
         Company mockCompany = mock(Company.class);
@@ -80,7 +86,6 @@ class VehicleServiceTest {
         assertEquals(5000, capturedVehicle.getMileage());
         assertEquals(37.5665, capturedVehicle.getLatitude());
         assertEquals(126.9780, capturedVehicle.getLongitude());
-        assertEquals(true, capturedVehicle.isOn());
     }
 
     @Test
@@ -88,8 +93,14 @@ class VehicleServiceTest {
     void 차량_등록_실패_회사를_찾을수없음() {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2023, "아반떼", "12가3456", "검정", 5000,
-                true, 37.5665, 126.9780
+                "현대",
+                2023,
+                "아반떼",
+                "12가3456",
+                "검정",
+                5000,
+                37.5665,
+                126.9780
         );
 
         given(companyRepository.findById(1L)).willReturn(Optional.empty());

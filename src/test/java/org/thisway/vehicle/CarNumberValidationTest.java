@@ -30,7 +30,7 @@ public class CarNumberValidationTest {
         //given
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, false, 37.5665, 126.9780);
+                1000, 37.5665, 126.9780);
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -51,7 +51,7 @@ public class CarNumberValidationTest {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", carNumber, "흰색",
-                1000, false, 37.5665, 126.9780);
+                1000, 37.5665, 126.9780);
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -76,7 +76,7 @@ public class CarNumberValidationTest {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", carNumber, "흰색",
-                1000, false, 37.5665, 126.9780);
+                1000,37.5665, 126.9780);
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);

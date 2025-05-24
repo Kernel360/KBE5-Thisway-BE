@@ -45,7 +45,7 @@ class VehicleControllerTest {
     void 차량_등록_요청_성공() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, false, 37.5665, 126.9780);
+                1000, 37.5665, 126.9780);
         doNothing().when(vehicleService).registerVehicle(request);
 
         mockMvc.perform(
@@ -63,7 +63,7 @@ class VehicleControllerTest {
     void 차량_등록_요청_실패() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, false, 37.5665, 126.9780);
+                1000,37.5665, 126.9780);
         doThrow(new CustomException(ErrorCode.COMPANY_NOT_FOUND))
                 .when(vehicleService).registerVehicle(request);
 

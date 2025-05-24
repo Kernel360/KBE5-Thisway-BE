@@ -24,7 +24,7 @@ public class VehicleService {
 
     public void registerVehicle(VehicleCreateRequest request) {
 
-        VehicleDetail vehicleDetail = VehicleCreateRequest.vehicleDetailToEntity(request);
+        VehicleDetail vehicleDetail = request.toVehicleDetailEntity();
 
         VehicleDetail savedVehicleDetail = vehicleDetailRepository.save(vehicleDetail);
 
@@ -32,7 +32,7 @@ public class VehicleService {
         Company company = companyRepository.findById(1L)
             .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
-        Vehicle vehicle = VehicleCreateRequest.vehicleToEntity(request, company, savedVehicleDetail);
+        Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
 
         vehicleRepository.save(vehicle);
     }
