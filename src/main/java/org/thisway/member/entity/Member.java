@@ -1,6 +1,8 @@
 package org.thisway.member.entity;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -17,14 +19,15 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String phone;
+    @Embedded
+    @AttributeOverride(name = "value", column = @Column(name = "phone", nullable = false))
+    private PhoneNumber phone;
 
     @Column(nullable = false)
     private String memo;
@@ -40,7 +43,11 @@ public class Member extends BaseEntity {
         this.name = name;
         this.email = email;
         this.password = password;
-        this.phone = phone;
+        this.phone = new PhoneNumber(phone);
         this.memo = memo;
+    }
+
+    public String getPhoneValue() {
+        return phone.getValue();
     }
 }

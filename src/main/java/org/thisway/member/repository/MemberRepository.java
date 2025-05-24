@@ -8,4 +8,6 @@ import org.thisway.member.entity.Member;
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Page<Member> findAllByActiveTrue(Pageable pageable);
+
+    boolean existsByEmail(String email);
 }

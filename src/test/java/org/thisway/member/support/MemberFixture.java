@@ -17,7 +17,17 @@ public class MemberFixture {
                 "홍길동",
                 "hong@example.com",
                 "Password123!",
-                "010-1234-5678",
+                "01012345678",
+                "가입 메모"
+        );
+    }
+
+    public static MemberRegisterRequest createMemberRegisterRequestWithEmail(String email) {
+        return new MemberRegisterRequest(
+                "홍길동",
+                email,
+                "Password123!",
+                "01012345678",
                 "가입 메모"
         );
     }
@@ -27,7 +37,17 @@ public class MemberFixture {
                 .name("홍길동")
                 .email("hong@example.com")
                 .password("Password123!")
-                .phone("010-1234-5678")
+                .phone("01012345678")
+                .memo("가입 메모")
+                .build();
+    }
+
+    public static Member createMemberWithEmail(String email) {
+        return Member.builder()
+                .name("홍길동")
+                .email(email)
+                .password("Password123!")
+                .phone("01012345678")
                 .memo("가입 메모")
                 .build();
     }
@@ -37,7 +57,7 @@ public class MemberFixture {
                 1L,
                 "홍길동",
                 "hong@example.com",
-                "010-1234-5678",
+                "01012345678",
                 "가입 메모"
         );
     }

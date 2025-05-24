@@ -48,7 +48,7 @@ class MemberServiceTest {
         // then
         assertThat(memberResponse.id()).isEqualTo(member.getId());
         assertThat(memberResponse.email()).isEqualTo(member.getEmail());
-        assertThat(memberResponse.phone()).isEqualTo(member.getPhone());
+        assertThat(memberResponse.phone()).isEqualTo(member.getPhoneValue());
     }
 
     @Test
@@ -105,7 +105,21 @@ class MemberServiceTest {
         assertThat(savedMember.getId()).isNotNull();
         assertThat(savedMember.getEmail()).isEqualTo(request.email());
         assertThat(savedMember.getPassword()).isEqualTo(request.password());
-        assertThat(savedMember.getPhone()).isEqualTo(request.phone());
+        assertThat(savedMember.getPhoneValue()).isEqualTo(request.phone());
+    }
+
+    @Test
+    @DisplayName("멤버 등록이 정상적으로 등록된다.")
+    void 멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다() {
+        // given
+        String email = "hong@example.com";
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithEmail(email);
+
+        // when & then
+        memberRepository.save(MemberFixture.createMemberWithEmail(email));
+        CustomException e = assertThrows(CustomException.class, () -> memberService.registerMember(request));
+
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
     }
 
     @Test
