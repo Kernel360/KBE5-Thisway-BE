@@ -19,6 +19,7 @@ import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,8 +62,28 @@ public class AuthControllerTest {
 
     @Test
     @DisplayName("이메일 인증 코드 요청 시 존재하지 않는 이메일을 입력하면, not_found 응답을 한다.")
-    void givenInvalidEmail_whenSendVerifyCode_thenReturnNotFoundStatus() throws Exception {
+    void givenNonexistentEmail_whenSendVerifyCode_thenReturnNotFoundStatus() throws Exception {
         SendVerifyCodeRequest request = new SendVerifyCodeRequest("1234@example.com");
+
+        MvcResult mvcResult = mockMvc.perform(
+                post("/api/auth/verify-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
+        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    @DisplayName("이메일 인증 코드 요청 시 존재하지 않는 이메일을 입력하면, not_found 응답을 한다.")
+    void givenInactiveEmail_whenSendVerifyCode_thenReturnNotFoundStatus() throws Exception {
+        mockMvc.perform(delete("/api/members/1"));
+        SendVerifyCodeRequest request = new SendVerifyCodeRequest("hong@example.com");
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/verify-code")
