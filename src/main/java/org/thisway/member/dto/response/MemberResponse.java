@@ -4,6 +4,7 @@ import org.thisway.member.entity.Member;
 
 public record MemberResponse(
         Long id,
+        Long companyId,
         String name,
         String email,
         String phone,
@@ -13,6 +14,7 @@ public record MemberResponse(
     public static MemberResponse from(Member member) {
         return new MemberResponse(
                 member.getId(),
+                member.getCompany().getId(),
                 member.getName(),
                 member.getEmail(),
                 member.getPhoneValue(),
