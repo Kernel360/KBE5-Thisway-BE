@@ -2,6 +2,7 @@ package org.thisway.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
@@ -18,6 +18,8 @@ import org.thisway.common.ApiResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -34,7 +36,6 @@ public class AuthControllerTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
-    @MockitoBean
     private final MemberRepository memberRepository;
 
     @BeforeEach
@@ -84,7 +85,10 @@ public class AuthControllerTest {
     @Test
     @DisplayName("이메일 인증 코드 요청 시 비활성화 상태의 이메일을 입력하면, not_found 응답을 한다.")
     void givenInactiveEmail_whenSendVerifyCode_thenReturnNotFoundStatus() throws Exception {
-        mockMvc.perform(delete("/api/members/1"));
+        Member member = memberRepository.findByEmailAndActiveTrue("hong@example.com").orElse(null);
+        member.delete();
+        memberRepository.save(member);
+
         SendVerifyCodeRequest request = new SendVerifyCodeRequest("hong@example.com");
 
         MvcResult mvcResult = mockMvc.perform(
