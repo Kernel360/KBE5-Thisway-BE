@@ -8,7 +8,7 @@ import org.thisway.member.entity.Member;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    Optional<Member> findByEmail(String email);
+    Optional<Member> findByEmailAndActiveTrue(String email);
 
     Page<Member> findAllByActiveTrue(Pageable pageable);
 

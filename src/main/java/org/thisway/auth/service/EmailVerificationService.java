@@ -36,7 +36,7 @@ public class EmailVerificationService {
         // todo: 이메일 regex 처리 예정.
 
         // todo: ErrorCode 논의 후 변경 예정.
-        memberRepository.findByEmail(email)
+        memberRepository.findByEmailAndActiveTrue(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         String code = generateVerifyCode();
