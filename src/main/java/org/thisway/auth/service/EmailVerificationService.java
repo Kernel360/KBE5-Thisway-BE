@@ -6,10 +6,12 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thisway.auth.dto.VerificationEntry;
+import org.thisway.auth.dto.VerificationPayload;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.repository.MemberRepository;
@@ -31,16 +33,16 @@ public class EmailVerificationService {
     private long authCodeExpirationMills;
 
     public void sendVerifyCode(String email) {
-        // 이메일 regex 처리 예정.
+        // todo: 이메일 regex 처리 예정.
 
-        // Member find 로직 추가 예정
+        // todo: ErrorCode 논의 후 변경 예정.
         memberRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         String code = generateVerifyCode();
 
-        VerificationEntry verificationEntry = new VerificationEntry(code, System.currentTimeMillis() + authCodeExpirationMills);
-        storeCode(email, verificationEntry);
+        VerificationPayload verificationPayload = new VerificationPayload(code, System.currentTimeMillis() + authCodeExpirationMills);
+        storeCode(email, verificationPayload);
 
         sendMail(email, code);
     }
@@ -51,10 +53,10 @@ public class EmailVerificationService {
         return CODE_FORMAT.format(secureRandom.nextInt(900000) + 100000);
     }
 
-    public void storeCode(String email, VerificationEntry verificationEntry) {
+    public void storeCode(String email, VerificationPayload verificationPayload) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            String json = objectMapper.writeValueAsString(verificationEntry);
+            String json = objectMapper.writeValueAsString(verificationPayload);
             redisTemplate.opsForValue().set(email, json, authCodeExpirationMills, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SERVER_ERROR);
@@ -66,12 +68,12 @@ public class EmailVerificationService {
 
         try {
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
-            mimeMessageHelper.setTo(email);
+            mimeMessageHelper.setTo(email.trim());
             mimeMessageHelper.setSubject("ThisWay 비밀번호 변경 인증 메일");
 
             mimeMessageHelper.setText(generateEmailContent(code), true);
             javaMailSender.send(mimeMessage);
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             throw new CustomException(ErrorCode.SERVER_ERROR);
         }
     }
