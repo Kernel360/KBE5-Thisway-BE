@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
@@ -33,6 +34,7 @@ public class AuthControllerTest {
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
+    @MockitoBean
     private final MemberRepository memberRepository;
 
     @BeforeEach
@@ -80,7 +82,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 인증 코드 요청 시 존재하지 않는 이메일을 입력하면, not_found 응답을 한다.")
+    @DisplayName("이메일 인증 코드 요청 시 비활성화 상태의 이메일을 입력하면, not_found 응답을 한다.")
     void givenInactiveEmail_whenSendVerifyCode_thenReturnNotFoundStatus() throws Exception {
         mockMvc.perform(delete("/api/members/1"));
         SendVerifyCodeRequest request = new SendVerifyCodeRequest("hong@example.com");
