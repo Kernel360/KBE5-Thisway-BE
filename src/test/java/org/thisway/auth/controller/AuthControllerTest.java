@@ -16,6 +16,7 @@ import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.common.ApiResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.support.MemberFixture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -36,19 +37,13 @@ public class AuthControllerTest {
     @BeforeEach
     void setUp() {
         memberRepository.deleteAll();
-        memberRepository.save(Member.builder()
-                .name("홍길동")
-                .email("abc@example.com")
-                .password("password1234")
-                .phone("010-1234-5678")
-                .memo("메모메모")
-                .build());
+        memberRepository.save(MemberFixture.createMember());
     }
 
     @Test
     @DisplayName("이메일 인증 코드 전송에 성공했을 때, ok 응답을 한다.")
     void givenValidEmail_whenSendVerifyCode_thenReturnOkStatus() throws Exception {
-        SendVerifyCodeRequest request = new SendVerifyCodeRequest("abc@example.com");
+        SendVerifyCodeRequest request = new SendVerifyCodeRequest("hong@example.com");
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/verify-code")
