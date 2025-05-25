@@ -102,7 +102,7 @@ public class EmailVerificationServiceTest {
 
         EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
 
-        when(memberRepository.findByEmail(anyString())).thenReturn(Optional.of(member));
+        when(memberRepository.findByEmailAndActiveTrue(anyString())).thenReturn(Optional.of(member));
         doNothing().when(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
         doNothing().when(emailVerificationServiceSpy).sendMail(anyString(), anyString());
 
