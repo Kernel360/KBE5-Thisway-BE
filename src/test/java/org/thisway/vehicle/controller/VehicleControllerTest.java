@@ -9,18 +9,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.service.VehicleService;
 
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VehicleController.class)
 class VehicleControllerTest {
@@ -76,6 +82,53 @@ class VehicleControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("회사 정보를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("차량 상세 조회 API 성공")
+    void 차량_상세_조회_성공() throws Exception {
+        // given
+        Long vehicleId = 1L;
+        VehicleResponse vehicleResponse = new VehicleResponse(
+                "기아",
+                2024,
+                "K5",
+                "샘플 회사",
+                "34나5678",
+                10000
+        );
+        given(vehicleService.getVehicleDetail(vehicleId)).willReturn(vehicleResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/vehicles/{id}", vehicleId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.data.manufacturer").value("기아"))
+                .andExpect(jsonPath("$.data.modelYear").value(2024))
+                .andExpect(jsonPath("$.data.model").value("K5"))
+                .andExpect(jsonPath("$.data.companyName").value("샘플 회사"))
+                .andExpect(jsonPath("$.data.carNumber").value("34나5678"))
+                .andExpect(jsonPath("$.data.mileage").value(10000));
+    }
+
+    @Test
+    @DisplayName("차량 상세 조회 API 실패 - 차량 없음")
+    void 차량_상세_조회_실패() throws Exception {
+        // given
+        Long vehicleId = 1L;
+        given(vehicleService.getVehicleDetail(vehicleId))
+                .willThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        // when & then
+        mockMvc.perform(get("/api/vehicles/{id}", vehicleId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ErrorCode.VEHICLE_NOT_FOUND.getStatusValue()))
+                .andExpect(jsonPath("$.message").value(ErrorCode.VEHICLE_NOT_FOUND.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     @Test
