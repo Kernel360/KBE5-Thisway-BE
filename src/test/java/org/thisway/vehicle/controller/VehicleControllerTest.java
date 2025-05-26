@@ -17,6 +17,7 @@ import org.thisway.vehicle.service.VehicleService;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -75,5 +76,49 @@ class VehicleControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("회사 정보를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 성공")
+    void 차량_삭제_요청_성공() throws Exception {
+        doNothing().when(vehicleService).deleteVehicle(1L);
+
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("204"));
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 실패 - 차량 미존재")
+    void 차량_삭제_요청_실패() throws Exception {
+        doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
+                .when(vehicleService).deleteVehicle(1L);
+
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("차량 정보를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 실패 - 이미 삭제된 차량")
+    void 이미_삭제된_차량_삭제_요청_실패() throws Exception {
+        // given
+        doThrow(new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED))
+                .when(vehicleService).deleteVehicle(1L);
+
+        // when & then
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("400"))
+                .andExpect(jsonPath("$.message").value("이미 삭제된 차량입니다."));
     }
 }
