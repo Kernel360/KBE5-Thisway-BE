@@ -49,6 +49,9 @@ class VehicleServiceTest {
     @Captor
     private ArgumentCaptor<Vehicle> vehicleCaptor;
 
+    @Captor
+    private ArgumentCaptor<Long> vehicleIdCaptor;
+
     @Test
     @DisplayName("차량 등록이 성공하는 경우")
     void 차량_등록_성공() {
@@ -143,11 +146,13 @@ class VehicleServiceTest {
                 .build();
 
         when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
-
         // when
         VehicleResponse response = vehicleService.getVehicleDetail(vehicleId);
 
         // then
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleIdCaptor.capture());
+        assertThat(vehicleIdCaptor.getValue()).isEqualTo(vehicleId);
+
         assertThat(response).isNotNull();
         assertThat(response.manufacturer()).isEqualTo("현대");
         assertThat(response.modelYear()).isEqualTo(2023);
@@ -169,6 +174,8 @@ class VehicleServiceTest {
             vehicleService.getVehicleDetail(vehicleId);
         });
 
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleIdCaptor.capture());
+        assertThat(vehicleIdCaptor.getValue()).isEqualTo(vehicleId);
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND);
     }
 
