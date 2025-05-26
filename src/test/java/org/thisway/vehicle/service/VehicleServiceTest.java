@@ -63,6 +63,7 @@ class VehicleServiceTest {
         );
 
         Company mockCompany = mock(Company.class);
+        when(mockCompany.isActive()).thenReturn(true);
         given(companyRepository.findById(1L)).willReturn(Optional.of(mockCompany));
         given(vehicleDetailRepository.save(any(VehicleDetail.class))).willReturn(mock(VehicleDetail.class));
 
