@@ -34,7 +34,7 @@ public class Vehicle extends BaseEntity {
     private Integer mileage;
 
     @Column(nullable = false)
-    private boolean isOn;
+    private boolean powerOn;
 
     private Double latitude;
 
@@ -47,7 +47,7 @@ public class Vehicle extends BaseEntity {
             String carNumber,
             String color,
             Integer mileage,
-            boolean isOn,
+            boolean powerOn,
             Double latitude,
             Double longitude
     ) {
@@ -56,7 +56,7 @@ public class Vehicle extends BaseEntity {
         this.carNumber = carNumber;
         this.color = color;
         this.mileage = mileage;
-        this.isOn = isOn;
+        this.powerOn = powerOn;
         this.latitude = latitude;
         this.longitude = longitude;
     }
