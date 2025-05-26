@@ -8,6 +8,7 @@ public record VehicleResponse(
         String manufacturer,
         Integer modelYear,
         String model,
+        Long companyId,
         String companyName,
         String carNumber,
         Integer mileage
@@ -19,6 +20,7 @@ public record VehicleResponse(
                 detail.getManufacturer(),
                 detail.getModelYear(),
                 detail.getModel(),
+                vehicle.getCompany().getId(),
                 vehicle.getCompany().getName(),
                 vehicle.getCarNumber(),
                 vehicle.getMileage()
