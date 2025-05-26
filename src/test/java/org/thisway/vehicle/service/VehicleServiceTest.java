@@ -13,6 +13,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
@@ -20,6 +21,7 @@ import org.thisway.vehicle.repository.VehicleRepository;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -120,5 +122,53 @@ class VehicleServiceTest {
         assertEquals("아반떼", capturedDetail.getModel());
         assertEquals(2023, capturedDetail.getModelYear());
         assertEquals(ErrorCode.COMPANY_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("차량 상세 조회 성공")
+    void 차량_조회_성공() {
+        // given
+        Long vehicleId = 1L;
+        Company company = Company.builder().name("테스트 회사").build();
+        VehicleDetail vehicleDetail = VehicleDetail.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .model("쏘나타")
+                .build();
+        Vehicle vehicle = Vehicle.builder()
+                .company(company)
+                .vehicleDetail(vehicleDetail)
+                .carNumber("12가3456")
+                .mileage(50000)
+                .build();
+
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
+
+        // when
+        VehicleResponse response = vehicleService.getVehicleDetail(vehicleId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.manufacturer()).isEqualTo("현대");
+        assertThat(response.modelYear()).isEqualTo(2023);
+        assertThat(response.model()).isEqualTo("쏘나타");
+        assertThat(response.companyName()).isEqualTo("테스트 회사");
+        assertThat(response.carNumber()).isEqualTo("12가3456");
+        assertThat(response.mileage()).isEqualTo(50000);
+    }
+
+    @Test
+    @DisplayName("차량 상세 조회 실패 - 차량 없음 혹은 active = false")
+    void 차량_조회_실패_차량_정보_없음() {
+        // given
+        Long vehicleId = 1L;
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            vehicleService.getVehicleDetail(vehicleId);
+        });
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND);
     }
 }

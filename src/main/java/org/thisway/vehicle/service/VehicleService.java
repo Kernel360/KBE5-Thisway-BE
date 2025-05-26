@@ -8,6 +8,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
@@ -35,5 +36,15 @@ public class VehicleService {
         Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
 
         vehicleRepository.save(vehicle);
+    }
+
+    @Transactional(readOnly = true)
+    public VehicleResponse getVehicleDetail(Long id) {
+
+        //TODO : 업체로 로그인 했을시 권한 확인 로직 추가
+        Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(()-> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        return VehicleResponse.fromVehicle(vehicle);
     }
 }
