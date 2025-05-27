@@ -25,6 +25,7 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.ApiResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
@@ -83,16 +84,16 @@ class MemberControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                         get ("/api/members/1")
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MemberResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
         );
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 
     @Test
@@ -172,13 +173,15 @@ class MemberControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                         delete("/api/members/1")
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 }
