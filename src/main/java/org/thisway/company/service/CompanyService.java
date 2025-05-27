@@ -10,7 +10,6 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.dto.request.CompanyRegisterRequest;
 import org.thisway.company.dto.response.CompaniesResponse;
 import org.thisway.company.dto.response.CompanyResponse;
-import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 
 @Service
@@ -38,17 +37,8 @@ public class CompanyService {
         if (existingCompany) {
             throw new CustomException(ErrorCode.COMPANY_ALREADY_EXIST);
         }
-        Company company = Company.builder()
-                .name(request.name())
-                .crn(request.crn())
-                .contact(request.contact())
-                .addrRoad(request.addrRoad())
-                .addrDetail(request.addrDetail())
-                .memo(request.memo())
-                .gpsCycle(request.gpsCycle())
-                .build();
 
-        companyRepository.save(company);
+        companyRepository.save(request.toCompany());
     }
 
     public void deleteCompany(Long id) {
