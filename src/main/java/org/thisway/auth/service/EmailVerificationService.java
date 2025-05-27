@@ -11,6 +11,7 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thisway.auth.dto.VerificationPayload;
 import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
@@ -27,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class EmailVerificationService {
 
     private final MemberRepository memberRepository;
@@ -41,6 +41,7 @@ public class EmailVerificationService {
     @Value("${custom.auth-code-expiration-millis}")
     private long authCodeExpirationMills;
 
+    @Transactional(readOnly = true)
     public void sendVerifyCode(SendVerifyCodeRequest request) {
         // todo: 이메일 regex 처리 예정.
 
@@ -56,6 +57,7 @@ public class EmailVerificationService {
         sendMail(request.email(), code);
     }
 
+    @Transactional
     public void changePassword(PasswordChangeRequest request) {
         // todo: 이메일 regex 처리
 
