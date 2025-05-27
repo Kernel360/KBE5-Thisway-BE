@@ -152,7 +152,7 @@ public class EmailVerificationServiceTest {
 
     @Test
     @DisplayName("changePassword 실행 시 verifyCode를 호출한다.")
-    void whenChangePassword_then() throws Exception {
+    void whenChangePassword_thenCallVerifyCode() throws Exception {
         Member member = MemberFixture.createMember();
         EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
 
