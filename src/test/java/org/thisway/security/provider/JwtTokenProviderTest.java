@@ -1,6 +1,7 @@
 package org.thisway.security.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
@@ -110,9 +111,9 @@ public class JwtTokenProviderTest {
         // given: 두 개의 프로바이더, 서로 다른 시크릿
         // JwtTokenProvider p1 = new
         // JwtTokenProvider("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", VALIDITY_MS);
-        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(16), VALIDITY_MS);
+        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(32), VALIDITY_MS);
 
-        JwtTokenProvider p2 = new JwtTokenProvider("B", VALIDITY_MS);
+        JwtTokenProvider p2 = new JwtTokenProvider("B".repeat(32), VALIDITY_MS);
 
         String token = p1.createAccessToken("alice", Map.of("foo", "bar"));
 
@@ -121,18 +122,28 @@ public class JwtTokenProviderTest {
                 () -> p2.validateTokenAndGetClaims(token));
     }
 
-    // @Test
-    // void validateTokenAndGetClaims_토큰이_null_또는_빈값이면_예외_발생() {
-    // // assertAll(
-    // // () -> assertThrows(
-    // // IllegalArgumentException.class,
-    // // () -> provider.validateTokenAndGetClaims(null)),
-    // // () -> assertThrows(
-    // // JwtException.class,
-    // // () -> provider.validateTokenAndGetClaims("")));
-    // assertThrows(
-    // JwtException.class,
-    // () -> provider.validateTokenAndGetClaims(""));
-    // }
-    // TODO : JWT 토큰에 대해 추가적인 테스트 해야함.
+    @Test
+    void 토큰이_null_또는_빈값이면_IllegalArgument예외_발생() {
+        assertAll(
+                () -> assertThrows(
+                        IllegalArgumentException.class,
+                        () -> provider.validateTokenAndGetClaims(null)),
+                () -> assertThrows(
+                        IllegalArgumentException.class,
+                        () -> provider.validateTokenAndGetClaims("")));
+    }
+
+    @Test
+    void 형식이_올바르지_않은_토큰_검증시_JwtException_발생() {
+        // given: 마침표가 2개가 아닌 잘못된 형식
+        String badFormatToken = "invalid.token";
+        // given: 올바르지 않은 토큰
+        String badToken = "invalid.token.value";
+
+        // when / then
+        assertThrows(JwtException.class,
+                () -> provider.validateTokenAndGetClaims(badFormatToken));
+        assertThrows(JwtException.class,
+                () -> provider.validateTokenAndGetClaims(badToken));
+    }
 }
