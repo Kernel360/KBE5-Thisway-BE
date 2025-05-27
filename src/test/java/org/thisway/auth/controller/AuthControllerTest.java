@@ -1,8 +1,12 @@
 package org.thisway.auth.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,17 +19,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.common.ApiResponse;
+import org.thisway.company.entity.Company;
+import org.thisway.company.repository.CompanyRepository;
+import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,11 +36,14 @@ public class AuthControllerTest {
     private final ObjectMapper objectMapper;
 
     private final MemberRepository memberRepository;
+    private final CompanyRepository companyRepository;
 
     @BeforeEach
     void setUp() {
         memberRepository.deleteAll();
-        memberRepository.save(MemberFixture.createMember());
+        companyRepository.deleteAll();
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        memberRepository.save(MemberFixture.createMember(company));
     }
 
     @Test
