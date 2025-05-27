@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 
-public class JwtTokenProviderAccessTokenTest {
+public class JwtTokenProviderTest {
 
     private JwtTokenProvider provider;
 
@@ -30,7 +30,7 @@ public class JwtTokenProviderAccessTokenTest {
     void JWT_AccessToken_생성_및_검증() {
         // given
         String username = "testUser";
-        List<String> roles = List.of("USER", "ADMIN");
+        List<String> roles = List.of("ROLE_USER", "ROLE_ADMIN");
         Map<String, Object> claimsMap = Map.of("roles", roles);
 
         // when
@@ -110,10 +110,9 @@ public class JwtTokenProviderAccessTokenTest {
         // given: 두 개의 프로바이더, 서로 다른 시크릿
         // JwtTokenProvider p1 = new
         // JwtTokenProvider("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", VALIDITY_MS);
-        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(16),
-                VALIDITY_MS);
+        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(16), VALIDITY_MS);
 
-        JwtTokenProvider p2 = new JwtTokenProvider("B".repeat(16), VALIDITY_MS);
+        JwtTokenProvider p2 = new JwtTokenProvider("B", VALIDITY_MS);
 
         String token = p1.createAccessToken("alice", Map.of("foo", "bar"));
 
