@@ -7,8 +7,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.common.ApiResponse;
-import org.thisway.log.LogDataSaveService;
-import org.thisway.log.dto.request.LogDataBatchRequest;
+import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
+import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
+import org.thisway.log.dto.request.powerLog.PowerLogRequest;
+import org.thisway.log.dto.response.LogResponse;
+import org.thisway.log.service.LogService;
 
 @Slf4j
 @RestController
@@ -16,15 +19,23 @@ import org.thisway.log.dto.request.LogDataBatchRequest;
 @RequiredArgsConstructor
 public class LogController {
 
-    private final LogDataSaveService logDataSaveService;
+    private final LogService logService;
 
-    @PostMapping("/batch")
-    public ApiResponse<Void> receiveLogDataBatch(@RequestBody LogDataBatchRequest request) {
-        log.info("로그 데이터 배치 수신: 차량 ID={}, MDN={}, 항목 수={}", 
-                request.vehicleId(), request.mdn(), request.entries().size());
-        
-        logDataSaveService.saveBatchLogData(request);
-        
-        return ApiResponse.ok();
+    @PostMapping("/gps")
+    public ApiResponse<LogResponse> receiveGpsLog(@RequestBody GpsLogRequest request) {
+        logService.saveGpsLog(request);
+        return ApiResponse.ok(new LogResponse("000", "Success", request.mdn()));
+    }
+
+    @PostMapping("/power")
+    public ApiResponse<LogResponse> receivePowerLog(@RequestBody PowerLogRequest request) {
+        logService.savePowerLog(request);
+        return ApiResponse.ok(new LogResponse("000", "Success", request.mdn()));
+    }
+
+    @PostMapping("/geofence")
+    public ApiResponse<LogResponse> receiveGeofenceLog(@RequestBody GeofenceLogRequest request) {
+        logService.saveGeofenceLog(request);
+        return ApiResponse.ok(new LogResponse("000", "Success", request.mdn()));
     }
 }
