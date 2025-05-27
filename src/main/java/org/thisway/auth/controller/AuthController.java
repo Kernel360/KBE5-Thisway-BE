@@ -16,7 +16,7 @@ public class AuthController {
 
     @PostMapping("/verify-code")
     public ApiResponse<Void> sendVerifyCode(@RequestBody SendVerifyCodeRequest request) {
-        emailVerificationService.sendVerifyCode(request.email());
+        emailVerificationService.sendVerifyCode(request);
         return ApiResponse.ok();
     }
 

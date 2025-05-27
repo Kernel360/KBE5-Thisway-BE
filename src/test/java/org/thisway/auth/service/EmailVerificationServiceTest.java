@@ -15,6 +15,7 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thisway.auth.dto.VerificationPayload;
 import org.thisway.auth.dto.request.PasswordChangeRequest;
+import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.entity.Member;
@@ -38,6 +39,7 @@ public class EmailVerificationServiceTest {
     @MockitoBean
     private JavaMailSender javaMailSender;
     private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private final EmailVerificationService emailVerificationService;
     @MockitoBean
@@ -55,7 +57,6 @@ public class EmailVerificationServiceTest {
         String savedCode = redisTemplate.opsForValue().get(email);
         assertThat(savedCode).isNotNull();
 
-        ObjectMapper objectMapper = new ObjectMapper();
         VerificationPayload savedEntry = objectMapper.readValue(savedCode, VerificationPayload.class);
 
         assertThat(savedEntry.code().length()).isEqualTo(6);
@@ -101,7 +102,8 @@ public class EmailVerificationServiceTest {
         doNothing().when(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
         doNothing().when(emailVerificationServiceSpy).sendMail(anyString(), anyString());
 
-        emailVerificationServiceSpy.sendVerifyCode("hong@example.com");
+        SendVerifyCodeRequest request = new SendVerifyCodeRequest(member.getEmail());
+        emailVerificationServiceSpy.sendVerifyCode(request);
         verify(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
         verify(emailVerificationServiceSpy).sendMail(anyString(), anyString());
     }
