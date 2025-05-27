@@ -1,19 +1,22 @@
 package org.thisway.auth.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.MailException;
-import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thisway.auth.dto.VerificationPayload;
+import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 
 import java.security.SecureRandom;
@@ -22,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailVerificationService {
 
     private final MemberRepository memberRepository;
@@ -47,6 +51,22 @@ public class EmailVerificationService {
         sendMail(email, code);
     }
 
+    public void changePassword(PasswordChangeRequest request) {
+        // todo: 이메일 regex 처리
+
+        if (verifyCode(request.email(), request.code())) {
+            Member member = memberRepository.findByEmailAndActiveTrue(request.email())
+                    .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            // todo: 비밀번호 regex 처리
+
+            member.setPassword(request.newPassword());
+            memberRepository.save(member);
+            redisTemplate.delete(request.email());
+        } else {
+            throw new CustomException(ErrorCode.INVALID_VERIFY_CODE);
+        }
+    }
+
     public String generateVerifyCode() {
         DecimalFormat CODE_FORMAT = new DecimalFormat("000000");
         SecureRandom secureRandom = new SecureRandom();
@@ -58,6 +78,30 @@ public class EmailVerificationService {
             ObjectMapper objectMapper = new ObjectMapper();
             String json = objectMapper.writeValueAsString(verificationPayload);
             redisTemplate.opsForValue().set(email, json, authCodeExpirationMills, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
+    }
+
+    public Boolean verifyCode(String email, String code) {
+        VerificationPayload savedEntry = retrieveFromRedis(email);
+
+        if (savedEntry == null || savedEntry.isExpired()) {
+            redisTemplate.delete(email);
+            return false;
+        }
+
+        return savedEntry.code().equals(code);
+    }
+
+    public VerificationPayload retrieveFromRedis(String email) {
+        try {
+            String savedCode = redisTemplate.opsForValue().get(email);
+
+            if (savedCode != null && !savedCode.isBlank()) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                return objectMapper.readValue(savedCode, VerificationPayload.class);
+            } else return null;
         } catch (Exception e) {
             throw new CustomException(ErrorCode.SERVER_ERROR);
         }
