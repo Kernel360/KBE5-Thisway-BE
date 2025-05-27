@@ -55,8 +55,7 @@ class VehicleControllerTest {
                                 .content(objectMapper.writeValueAsString(request))
                 )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("201"));
+                .andExpect(status().isCreated());
     }
 
     @Test

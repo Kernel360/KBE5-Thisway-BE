@@ -12,14 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.common.ApiErrorResponse;
-import org.thisway.common.ApiResponse;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
@@ -55,10 +53,6 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
-
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
     }
 
     @Test
