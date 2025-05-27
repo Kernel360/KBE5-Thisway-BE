@@ -42,14 +42,14 @@ public class EmailVerificationService {
     private long authCodeExpirationMills;
 
     @Transactional(readOnly = true)
-    public void sendVerifyCode(SendVerifyCodeRequest request) {
+    public void sendVerificationCode(SendVerifyCodeRequest request) {
         // todo: 이메일 regex 처리 예정.
 
         // todo: ErrorCode 논의 후 변경 예정.
         memberRepository.findByEmailAndActiveTrue(request.email())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String code = generateVerifyCode();
+        String code = generateVerificationCode();
 
         VerificationPayload verificationPayload = new VerificationPayload(code, System.currentTimeMillis() + authCodeExpirationMills);
         storeCode(request.email(), verificationPayload);
@@ -74,7 +74,7 @@ public class EmailVerificationService {
         }
     }
 
-    public String generateVerifyCode() {
+    public String generateVerificationCode() {
         DecimalFormat CODE_FORMAT = new DecimalFormat("000000");
         SecureRandom secureRandom = new SecureRandom();
         return CODE_FORMAT.format(secureRandom.nextInt(900000) + 100000);

@@ -49,7 +49,7 @@ public class EmailVerificationServiceTest {
     @DisplayName("생성된 코드가 redis에 저장된다.")
     void givenValidEmailAndVerifyCode_whenSendVerifyCode_thenStoreCodeInRedis() throws Exception {
         String email = "abc@example.com";
-        String verifyCode = emailVerificationService.generateVerifyCode();
+        String verifyCode = emailVerificationService.generateVerificationCode();
         VerificationPayload entry = new VerificationPayload(verifyCode, System.currentTimeMillis()+ 1000*60);
 
         emailVerificationService.storeCode(email, entry);
@@ -67,7 +67,7 @@ public class EmailVerificationServiceTest {
     @DisplayName("메일 발송 과정에서 MailException 에러 발생 시, server_error 응답을 한다.")
     void whenSendVerifyCodeAndMailExceptionThrown_thenReturnServerErrorStatus() throws Exception {
         String email = "abc@example.com";
-        String verifyCode = emailVerificationService.generateVerifyCode();
+        String verifyCode = emailVerificationService.generateVerificationCode();
 
         MimeMessage mimeMessage = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
@@ -84,7 +84,7 @@ public class EmailVerificationServiceTest {
     @DisplayName("메일 발송 과정에서 MessagingException 에러 발생 시, server_error 응답을 한다.")
     void whenSendVerifyCodeAndMessagingExceptionThrown_thenReturnServerErrorStatus() throws Exception {
         String email = " ";
-        String verifyCode = emailVerificationService.generateVerifyCode();
+        String verifyCode = emailVerificationService.generateVerificationCode();
 
         CustomException e = assertThrows(CustomException.class, () -> emailVerificationService.sendMail(email, verifyCode));
 
@@ -103,7 +103,7 @@ public class EmailVerificationServiceTest {
         doNothing().when(emailVerificationServiceSpy).sendMail(anyString(), anyString());
 
         SendVerifyCodeRequest request = new SendVerifyCodeRequest(member.getEmail());
-        emailVerificationServiceSpy.sendVerifyCode(request);
+        emailVerificationServiceSpy.sendVerificationCode(request);
         verify(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
         verify(emailVerificationServiceSpy).sendMail(anyString(), anyString());
     }
