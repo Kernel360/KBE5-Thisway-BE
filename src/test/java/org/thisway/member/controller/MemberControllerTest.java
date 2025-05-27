@@ -127,7 +127,7 @@ class MemberControllerTest {
     @DisplayName("멤버 등록이 정상적으로 되었을 때, created 응답을 한다.")
     void givenValidRequest_whenRegisterMember_thenReturnsCreatedStatus() throws Exception {
         // given
-        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequest();
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyId(1L);
 
         // when
         MvcResult mvcResult = mockMvc.perform(

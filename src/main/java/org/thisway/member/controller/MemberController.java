@@ -29,6 +29,7 @@ public class MemberController {
         return ApiResponse.ok(memberService.getMemberDetail(id));
     }
 
+    // todo: 업체 최고 담당자가 조회할 경우 특정 업체 Member만 조회 가능하도록 변경 (인증 기능 추가 후)
     @GetMapping
     public ApiResponse<MembersResponse> getMembers(@PageableDefault Pageable pageable) {
         return ApiResponse.ok(memberService.getMembers(pageable));
