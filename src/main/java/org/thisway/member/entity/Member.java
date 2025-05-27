@@ -51,7 +51,7 @@ public class Member extends BaseEntity {
         return phone.getValue();
     }
 
-    public void setPassword(String password) {
+    public void updatePassword(String password) {
         this.password = password;
     }
 }

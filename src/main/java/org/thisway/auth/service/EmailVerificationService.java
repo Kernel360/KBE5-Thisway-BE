@@ -66,7 +66,7 @@ public class EmailVerificationService {
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
             // todo: 비밀번호 regex 처리
 
-            member.setPassword(request.newPassword());
+            member.updatePassword(request.newPassword());
             memberRepository.save(member);
             redisTemplate.delete(request.email());
         } else {
