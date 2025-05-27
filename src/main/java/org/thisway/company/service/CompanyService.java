@@ -42,8 +42,7 @@ public class CompanyService {
     }
 
     public void deleteCompany(Long id) {
-        companyRepository.findById(id)
-                .filter(BaseEntity::isActive)
+        companyRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND))
                 .delete();
     }
