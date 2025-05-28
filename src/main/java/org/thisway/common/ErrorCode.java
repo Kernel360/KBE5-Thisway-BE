@@ -23,7 +23,7 @@ public enum ErrorCode {
     INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다."),
 
     //차량
-    VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 찾을 수 없습니다."),
+    VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다."),
     VEHICLE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 차량입니다."),
 
     EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." )
