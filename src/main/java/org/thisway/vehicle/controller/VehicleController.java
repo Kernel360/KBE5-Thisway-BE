@@ -1,11 +1,14 @@
 package org.thisway.vehicle.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.thisway.common.ApiResponse;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
+import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
 
 @RestController
@@ -33,5 +36,11 @@ public class VehicleController {
 
         vehicleService.deleteVehicle(id);
         return ApiResponse.noContent();
+    }
+
+    @GetMapping
+    public ApiResponse<VehiclesResponse> getVehicles(@PageableDefault Pageable pageable) {
+
+        return ApiResponse.ok(vehicleService.getVehicles(pageable));
     }
 }

@@ -1,6 +1,7 @@
 package org.thisway.vehicle.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
@@ -14,6 +15,8 @@ import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.vehicle.dto.response.VehiclesResponse;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,11 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
+
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
+            "id", "manufacturer", "modelYear", "model", "carNumber", "color", "mileage"
+    );
 
     public void registerVehicle(VehicleCreateRequest request) {
 
@@ -36,7 +44,6 @@ public class VehicleService {
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
         Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
-
         vehicleRepository.save(vehicle);
     }
 
@@ -62,5 +69,23 @@ public class VehicleService {
         }
 
         vehicle.delete();
+    }
+
+    @Transactional(readOnly = true)
+    public VehiclesResponse getVehicles(Pageable pageable) {
+        validatePageable(pageable);
+        return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
+    }
+
+    private void validatePageable(Pageable pageable) {
+        if (pageable.getPageSize() > MAX_PAGE_SIZE) {
+            throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
+        }
+
+        pageable.getSort().forEach(order -> {
+            if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
+                throw new CustomException(ErrorCode.INVALID_SORT_PROPERTY);
+            }
+        });
     }
 }

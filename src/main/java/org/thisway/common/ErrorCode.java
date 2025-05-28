@@ -26,7 +26,11 @@ public enum ErrorCode {
     VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다."),
     VEHICLE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 차량입니다."),
 
-    EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." )
+    EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." ),
+
+    // 페이지네이션
+    INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "페이지 크기는 최대 100개까지 가능합니다."),
+    INVALID_SORT_PROPERTY(HttpStatus.BAD_REQUEST, "유효하지 않은 정렬 기준입니다.")
     ;
 
     private final HttpStatus status;
