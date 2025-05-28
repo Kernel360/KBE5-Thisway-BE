@@ -2,12 +2,10 @@ package org.thisway.vehicle.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.thisway.common.ApiResponse;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.service.VehicleService;
 
 @RestController
@@ -22,5 +20,11 @@ public class VehicleController {
 
         vehicleService.registerVehicle(request);
         return ApiResponse.created();
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<VehicleResponse> getVehicleDetail(@PathVariable Long id){
+
+        return ApiResponse.ok(vehicleService.getVehicleDetail(id));
     }
 }
