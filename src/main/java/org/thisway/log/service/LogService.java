@@ -1,22 +1,22 @@
 package org.thisway.log.service;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.emulator.entity.Emulator;
 import org.thisway.emulator.repository.EmulatorRepository;
+import org.thisway.log.converter.LogDataConverter;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
+import org.thisway.log.repository.LogRepository;
 
 @Slf4j
 @Service
@@ -24,28 +24,79 @@ import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 public class LogService {
 
     private final EmulatorRepository emulatorRepository;
-    private final JdbcTemplate jdbcTemplate;
+    private final LogRepository logRepository;
+    private final LogDataConverter converter;
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    @Transactional
+    public void savePowerLog(PowerLogRequest request) {
+        log.info("시동 정보 로그 수신: MDN={}, onTime={}, offTime={}",
+                request.mdn(), request.onTime(), request.offTime());
+
+        String mdn = request.mdn();
+        Long vehicleId = getVehicleIdByMdn(mdn);
+
+        if (request.onTime() != null && !request.onTime().isEmpty()){
+            LocalDateTime powerTime = converter.convertDateTimeWithSec(request.onTime());
+
+            Double latitude = converter.convertCoordinate(request.lat());
+            Double longitude = converter.convertCoordinate(request.lon());
+            Integer totalTripMeter = converter.convertToInteger(request.sum());
+
+            logRepository.savePowerLog(
+                    vehicleId,
+                    mdn,
+                    true,
+                    powerTime,
+                    request.gcd(),
+                    latitude,
+                    longitude,
+                    totalTripMeter
+            );
+        }
+
+        if (request.offTime() != null && !request.offTime().isEmpty()){
+            LocalDateTime powerTime = converter.convertDateTimeWithSec(request.offTime());
+
+            Double latitude = converter.convertCoordinate(request.lat());
+            Double longitude = converter.convertCoordinate(request.lon());
+            Integer totalTripMeter = converter.convertToInteger(request.sum());
+
+            logRepository.savePowerLog(
+                    vehicleId,
+                    mdn,
+                    false,
+                    powerTime,
+                    request.gcd(),
+                    latitude,
+                    longitude,
+                    totalTripMeter
+            );
+        }
+
+
+
+        log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
+    }
+
 
     @Transactional
     public void saveGpsLog(GpsLogRequest request) {
         log.info("주기 정보 로그 수신: MDN={}, 항목 수={}", request.mdn(), request.cCnt());
 
-        Long mdn = Long.parseLong(request.mdn());
+        String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
         List<Object[]> gpsLogBatch = new ArrayList<>();
 
         for (GpsLogEntry entry : request.cList()) {
-            LocalDateTime occurredTime = parseDateTime(request.oTime(), entry.sec());
+            LocalDateTime occurredTime = converter.convertDateTime(request.oTime());
 
-            Double latitude = parseCoordinate(entry.lat());
-            Double longitude = parseCoordinate(entry.lon());
-            Integer angle = Integer.parseInt(entry.ang());
-            Integer speed = Integer.parseInt(entry.spd());
-            Integer totalTripMeter = Integer.parseInt(entry.sum());
-            Integer batteryVoltage = Integer.parseInt(entry.bat());
+            Double latitude = converter.convertCoordinate(entry.lat());
+            Double longitude = converter.convertCoordinate(entry.lon());
+            Integer angle = converter.convertToInteger(entry.ang());
+            Integer speed = converter.convertToInteger(entry.spd());
+            Integer totalTripMeter = converter.convertToInteger(entry.sum());
+            Integer batteryVoltage = converter.convertToInteger(entry.bat());
 
             gpsLogBatch.add(new Object[]{
                     vehicleId,
@@ -61,51 +112,9 @@ public class LogService {
             });
         }
 
-        String gpsLogSql = "INSERT INTO gps_log (vehicle_id, mdn, gps_status, latitude, longitude, anger, speed, total_trip_meter, battery_voltage, occurred_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.batchUpdate(gpsLogSql, gpsLogBatch);
+        logRepository.saveGpsLogs(gpsLogBatch);
 
         log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogBatch.size());
-    }
-
-    @Transactional
-    public void savePowerLog(PowerLogRequest request) {
-        log.info("시동 정보 로그 수신: MDN={}, onTime={}, offTime={}",
-                request.mdn(), request.onTime(), request.offTime());
-
-        Long mdn = Long.parseLong(request.mdn());
-        Long vehicleId = getVehicleIdByMdn(mdn);
-
-        LocalDateTime occurredTime = LocalDateTime.parse(request.onTime(), DATE_TIME_FORMATTER);
-
-        Double latitude = parseCoordinate(request.lat());
-        Double longitude = parseCoordinate(request.lon());
-        Integer totalTripMeter = Integer.parseInt(request.sum());
-
-        Object[] powerLogParams = new Object[]{
-                vehicleId,
-                mdn,
-                "ON",
-                occurredTime,
-                request.gcd(),
-                latitude,
-                longitude,
-                totalTripMeter
-        };
-
-        String powerLogSql = "INSERT INTO power_log ("
-                + "vehicle_id, "
-                + "mdn, "
-                + "power_status, "
-                + "power_time,"
-                + "gps_status, "
-                + "latitude, "
-                + "longitude, "
-                + "total_trip_meter"
-                + ") "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(powerLogSql, powerLogParams);
-
-        log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
     }
 
     @Transactional
@@ -113,19 +122,19 @@ public class LogService {
         log.info("지오펜스 정보 로그 수신: MDN={}, geoGrpId={}, geoPId={}",
                 request.mdn(), request.geoGrpId(), request.geoPId());
 
-        Long mdn = Long.parseLong(request.mdn());
+        String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        LocalDateTime occurredTime = LocalDateTime.parse(request.oTime(), DATE_TIME_FORMATTER);
+        LocalDateTime occurredTime = converter.convertDateTimeWithSec(request.oTime());
 
-        Double latitude = parseCoordinate(request.lat());
-        Double longitude = parseCoordinate(request.lon());
-        Integer angle = Integer.parseInt(request.ang());
-        Long geofenceGroupId = Long.parseLong(request.geoGrpId());
-        Long geofenceId = Long.parseLong(request.geoPId());
-        Byte eventVal = Byte.parseByte(request.evtVal());
+        Double latitude = converter.convertCoordinate(request.lat());
+        Double longitude = converter.convertCoordinate(request.lon());
+        Integer angle = converter.convertToInteger(request.ang());
+        Long geofenceGroupId = converter.convertToLong(request.geoGrpId());
+        Long geofenceId = converter.convertToLong(request.geoPId());
+        Byte eventVal = converter.convertToByte(request.evtVal());
 
-        Object[] geofenceLogParams = new Object[]{
+        logRepository.saveGeofenceLog(
                 vehicleId,
                 mdn,
                 occurredTime,
@@ -136,27 +145,14 @@ public class LogService {
                 latitude,
                 longitude,
                 angle
-        };
-
-        String geofenceLogSql = "INSERT INTO geofence_log (vehicle_id, mdn, occured_time, geofence_group_id, geofence_id, event_val, gps_status, latitude, longitude, angle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(geofenceLogSql, geofenceLogParams);
+        );
 
         log.info("지오펜스 정보 로그 저장 완료: MDN={}", request.mdn());
     }
 
-    private Long getVehicleIdByMdn(Long mdn) {
+    private Long getVehicleIdByMdn(String mdn) {
         Emulator emulator = emulatorRepository.findByMdn(mdn)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
         return emulator.getVehicle().getId();
-    }
-
-    private Double parseCoordinate(String coordinate) {
-        double value = Double.parseDouble(coordinate);
-        return value / 100000;
-    }
-
-    private LocalDateTime parseDateTime(String dateTime, String seconds) {
-        String fullDateTime = dateTime + seconds;
-        return LocalDateTime.parse(fullDateTime, DATE_TIME_FORMATTER);
     }
 }
