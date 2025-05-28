@@ -17,8 +17,9 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
-import org.thisway.vehicle.entity.Vehicle;
+import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -291,7 +293,7 @@ class VehicleServiceTest {
     @DisplayName("차량 목록 조회 성공 - 정렬 적용")
     void 차량_목록_조회_성공_정렬_적용() {
         // given
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("carNumber").descending());
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by("carNumber").ascending());
         List<Vehicle> vehicles = List.of(
                 createMockVehicle("기아", "K5", "34나5678"),
                 createMockVehicle("현대", "아반떼", "12가3456")
@@ -344,9 +346,14 @@ class VehicleServiceTest {
         given(vehicleDetail.getModel()).willReturn(model);
         given(vehicleDetail.getModelYear()).willReturn(2023);
 
+        Company company = mock(Company.class);
+        given(company.getId()).willReturn(1L);
+        given(company.getName()).willReturn("샘플 회사");
+
         Vehicle vehicle = mock(Vehicle.class);
         given(vehicle.getId()).willReturn(1L);
         given(vehicle.getVehicleDetail()).willReturn(vehicleDetail);
+        given(vehicle.getCompany()).willReturn(company);
         given(vehicle.getCarNumber()).willReturn(carNumber);
         given(vehicle.getColor()).willReturn("검정");
         given(vehicle.getMileage()).willReturn(5000);

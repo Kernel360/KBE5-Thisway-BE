@@ -15,7 +15,7 @@ public record VehiclesResponse(
     public static VehiclesResponse from(Page<Vehicle> page) {
         return new VehiclesResponse(
                 page.getContent().stream()
-                        .map(VehicleResponse::from)
+                        .map(VehicleResponse::fromVehicle)
                         .toList(),
                 page.getTotalPages(),
                 page.getTotalElements(),

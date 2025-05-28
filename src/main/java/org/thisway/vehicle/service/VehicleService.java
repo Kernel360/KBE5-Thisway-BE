@@ -29,7 +29,7 @@ public class VehicleService {
 
     private static final int MAX_PAGE_SIZE = 100;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
-            "id", "manufacturer", "modelYear", "model", "carNumber", "color", "mileage"
+            "id", "carNumber", "color", "mileage"
     );
 
     public void registerVehicle(VehicleCreateRequest request) {
@@ -82,6 +82,7 @@ public class VehicleService {
             throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
         }
 
+        //TODO : 현재는 VehicleDetail에 있는 속성으로는 정렬 불가. 추가예정.
         pageable.getSort().forEach(order -> {
             if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
                 throw new CustomException(ErrorCode.INVALID_SORT_PROPERTY);

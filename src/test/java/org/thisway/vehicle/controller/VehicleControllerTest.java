@@ -9,27 +9,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
-import org.thisway.vehicle.service.VehicleService;
-
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.service.VehicleService;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VehicleController.class)
 class VehicleControllerTest {
@@ -93,12 +95,14 @@ class VehicleControllerTest {
         // given
         Long vehicleId = 1L;
         VehicleResponse vehicleResponse = new VehicleResponse(
+                vehicleId,
                 "기아",
                 2024,
                 "K5",
                 1L,
                 "샘플 회사",
                 "34나5678",
+                "검정",
                 10000
         );
         given(vehicleService.getVehicleDetail(vehicleId)).willReturn(vehicleResponse);
@@ -184,8 +188,8 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_기본_페이지네이션() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000),
-                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000)
+                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
+                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000)
         );
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse response = new VehiclesResponse(vehicles, 1, 2, 0, 10);
@@ -208,7 +212,7 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_두번째_페이지() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(3L, "쌍용", 2023, "티볼리", "56다7890", "파랑", 1000)
+                new VehicleResponse(3L, "쌍용", 2023, "티볼리", 1L, "샘플 회사", "56다7890", "파랑", 1000)
         );
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse response = new VehiclesResponse(vehicles, 2, 3, 1, 2);
@@ -217,7 +221,7 @@ class VehicleControllerTest {
 
         // when & then
         mockMvc.perform(get("/api/vehicles")
-                        .param("page", "1")
+                        .param("page", "3")
                         .param("size", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.vehicles").isArray())
@@ -232,22 +236,53 @@ class VehicleControllerTest {
     @DisplayName("차량 목록 조회 성공 - 정렬 적용")
     void 차량_목록_조회_성공_정렬_적용() throws Exception {
         // given
-        List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000),
-                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000)
+        List<VehicleResponse> descendingOrder = List.of(
+                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000),
+                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000)
         );
-        Page<VehicleResponse> page = new PageImpl<>(vehicles);
-        VehiclesResponse response = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
-        given(vehicleService.getVehicles(any())).willReturn(response);
+        VehiclesResponse descResponse = new VehiclesResponse(descendingOrder, 1, 2, 0, 10);
+
+        given(vehicleService.getVehicles(argThat(pageable ->
+                pageable.getSort().getOrderFor("carNumber") != null &&
+                        pageable.getSort().getOrderFor("carNumber").getDirection().isDescending())))
+                .willReturn(descResponse);
 
         // when & then
         mockMvc.perform(get("/api/vehicles")
                         .param("sort", "carNumber,desc"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.vehicles").isArray())
                 .andExpect(jsonPath("$.data.vehicles.length()").value(2))
                 .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("34나5678"))
                 .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("12가3456"));
+    }
+
+    @Test
+    @DisplayName("차량 목록 조회 성공 - 오름차순 정렬")
+    void 차량_목록_조회_성공_오름차순_정렬() throws Exception {
+        // given
+        List<VehicleResponse> ascendingOrder = List.of(
+                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
+                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000)
+        );
+
+        VehiclesResponse ascResponse = new VehiclesResponse(ascendingOrder, 1, 2, 0, 10);
+
+        given(vehicleService.getVehicles(argThat(pageable ->
+                pageable != null &&
+                        pageable.getSort() != null &&
+                        pageable.getSort().getOrderFor("carNumber") != null &&
+                        pageable.getSort().getOrderFor("carNumber").getDirection().isAscending())))
+                .willReturn(ascResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/vehicles")
+                        .param("sort", "carNumber,asc"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("12가3456"))
+                .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("34나5678"));
     }
 }
