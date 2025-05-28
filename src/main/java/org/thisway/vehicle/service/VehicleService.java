@@ -3,6 +3,7 @@ package org.thisway.vehicle.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
@@ -31,7 +32,8 @@ public class VehicleService {
 
         //TODO: (하드코딩)업체로 로그인한 이후에 차량을 등록 -> 인가 시 업체 Id나 사업자등록번호를 받아서 유효성 검증 후 구현
         Company company = companyRepository.findById(1L)
-            .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
+                .filter(BaseEntity::isActive)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
         Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
 
