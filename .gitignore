@@ -1,7 +1,7 @@
 ### custom ###
-**/application.yml
-**/db-environment.yml
-**/application-dev.yml
+src/main/**/application.yml
+src/main/**/db-environment.yml
+src/main/**/application-dev.yml
 gradle.properties
 build.local.gradle
 
