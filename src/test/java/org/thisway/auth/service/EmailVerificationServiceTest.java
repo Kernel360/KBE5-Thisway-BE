@@ -17,7 +17,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,6 +24,7 @@ import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thisway.auth.dto.VerificationPayload;
 import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
@@ -47,6 +47,7 @@ public class EmailVerificationServiceTest {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
+    @MockitoSpyBean
     private final EmailVerificationService emailVerificationService;
     @MockitoBean
     private final MemberRepository memberRepository;
@@ -71,7 +72,7 @@ public class EmailVerificationServiceTest {
 
     @Test
     @DisplayName("메일 발송 과정에서 MailException 에러 발생 시, server_error 응답을 한다.")
-    void whenSendVerifyCodeAndMailExceptionThrown_thenReturnServerErrorStatus() throws Exception {
+    void whenSendVerifyCodeAndMailExceptionThrown_thenReturnServerErrorStatus() {
         String email = "abc@example.com";
         String verifyCode = emailVerificationService.generateVerificationCode();
 
@@ -88,7 +89,7 @@ public class EmailVerificationServiceTest {
 
     @Test
     @DisplayName("메일 발송 과정에서 MessagingException 에러 발생 시, server_error 응답을 한다.")
-    void whenSendVerifyCodeAndMessagingExceptionThrown_thenReturnServerErrorStatus() throws Exception {
+    void whenSendVerifyCodeAndMessagingExceptionThrown_thenReturnServerErrorStatus() {
         String email = " ";
         String verifyCode = emailVerificationService.generateVerificationCode();
 
@@ -99,79 +100,70 @@ public class EmailVerificationServiceTest {
 
     @Test
     @DisplayName("sendVerifyCode 실행 시 이메일이 존재하는지 확인하고, storeCode와 sendEmail을 호출한다.")
-    void whenSendVerifyCode_thenCheckEmailExistAndCallStoreCodeAndSendEmail() throws Exception {
+    void whenSendVerifyCode_thenCheckEmailExistAndCallStoreCodeAndSendEmail() {
         Company company = CompanyFixture.createCompany();
         Member member = MemberFixture.createMember(company);
 
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
-
         when(memberRepository.findByEmailAndActiveTrue(anyString())).thenReturn(Optional.of(member));
-        doNothing().when(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
-        doNothing().when(emailVerificationServiceSpy).sendMail(anyString(), anyString());
+        doNothing().when(emailVerificationService).storeCode(anyString(), any(VerificationPayload.class));
+        doNothing().when(emailVerificationService).sendMail(anyString(), anyString());
 
         SendVerifyCodeRequest request = new SendVerifyCodeRequest(member.getEmail());
-        emailVerificationServiceSpy.sendVerificationCode(request);
-        verify(emailVerificationServiceSpy).storeCode(anyString(), any(VerificationPayload.class));
-        verify(emailVerificationServiceSpy).sendMail(anyString(), anyString());
+        emailVerificationService.sendVerificationCode(request);
+        verify(emailVerificationService).storeCode(anyString(), any(VerificationPayload.class));
+        verify(emailVerificationService).sendMail(anyString(), anyString());
     }
 
     @Test
     @DisplayName("verifyCode 실행 시 retrieveFromRedis를 호출한다.")
-    void whenVerifyCode_thenCallRetrieveFromRedis() throws Exception {
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
-
+    void whenVerifyCode_thenCallRetrieveFromRedis() {
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 60000);
-        doReturn(entry).when(emailVerificationServiceSpy).retrieveFromRedis(anyString());
-        emailVerificationServiceSpy.verifyCode("hong@example.com", "123456");
-        verify(emailVerificationServiceSpy).retrieveFromRedis(anyString());
+        doReturn(entry).when(emailVerificationService).retrieveFromRedis(anyString());
+
+        emailVerificationService.verifyCode("hong@example.com", "123456");
+        verify(emailVerificationService).retrieveFromRedis(anyString());
     }
 
     @Test
     @DisplayName("인증 코드 검증 시 유효한 코드라면 True 반환")
-    void givenValidCode_whenVerifyCode_thenReturnTrue() throws Exception {
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
-
+    void givenValidCode_whenVerifyCode_thenReturnTrue() {
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 60000);
-        doReturn(entry).when(emailVerificationServiceSpy).retrieveFromRedis(any(String.class));
+        doReturn(entry).when(emailVerificationService).retrieveFromRedis(any(String.class));
 
-        assertThat(emailVerificationServiceSpy.verifyCode("hong@example.com", "123456").booleanValue()).isTrue();
+        assertThat(emailVerificationService.verifyCode("hong@example.com", "123456").booleanValue()).isTrue();
     }
 
     @Test
     @DisplayName("인증 코드 검증 시 잘못된 코드라면 False 반환")
-    void givenWrongCode_whenVerifyCode_thenReturnFalse() throws Exception {
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
-
+    void givenWrongCode_whenVerifyCode_thenReturnFalse() {
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 60000);
-        doReturn(entry).when(emailVerificationServiceSpy).retrieveFromRedis(any(String.class));
+        doReturn(entry).when(emailVerificationService).retrieveFromRedis(any(String.class));
 
-        assertThat(emailVerificationServiceSpy.verifyCode("hong@example.com", "654321").booleanValue()).isFalse();
+        assertThat(emailVerificationService.verifyCode("hong@example.com", "654321").booleanValue()).isFalse();
     }
 
     @Test
     @DisplayName("인증 코드 검증 시 만료된 코드라면 False 반환")
-    void givenExpiredCode_whenVerifyCode_thenReturnFalse() throws Exception {
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
-
+    void givenExpiredCode_whenVerifyCode_thenReturnFalse() {
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() - 10000);
-        doReturn(entry).when(emailVerificationServiceSpy).retrieveFromRedis(any(String.class));
+        doReturn(entry).when(emailVerificationService).retrieveFromRedis(any(String.class));
 
-        assertThat(emailVerificationServiceSpy.verifyCode("hong@example.com", "123456").booleanValue()).isFalse();
+        assertThat(emailVerificationService.verifyCode("hong@example.com", "123456").booleanValue()).isFalse();
     }
 
     @Test
     @DisplayName("changePassword 실행 시 verifyCode를 호출한다.")
-    void whenChangePassword_thenCallVerifyCode() throws Exception {
+    void whenChangePassword_thenCallVerifyCode() {
         Company company = CompanyFixture.createCompany();
-        Member member = memberRepository.save(MemberFixture.createMember(company));
-        EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
+        Member member = MemberFixture.createMember(company);
 
         doReturn(Optional.of(member)).when(memberRepository).findByEmailAndActiveTrue(anyString());
-        doReturn(true).when(emailVerificationServiceSpy).verifyCode(anyString(), anyString());
+        when(memberRepository.findByEmailAndActiveTrue(anyString())).thenReturn(Optional.of(member));
+        doReturn(true).when(emailVerificationService).verifyCode(anyString(), anyString());
 
         PasswordChangeRequest request = new PasswordChangeRequest(member.getEmail(), "123456", "theNewPassword");
-        emailVerificationServiceSpy.changePassword(request);
-        verify(emailVerificationServiceSpy).verifyCode(member.getEmail(), "123456");
+        emailVerificationService.changePassword(request);
+        verify(emailVerificationService).verifyCode(member.getEmail(), "123456");
     }
 
 }
