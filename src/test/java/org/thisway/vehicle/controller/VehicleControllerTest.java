@@ -156,7 +156,7 @@ class VehicleControllerTest {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("차량 정보를 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.message").value("차량 정보를 조회할 수 없습니다."));
     }
 
     @Test
