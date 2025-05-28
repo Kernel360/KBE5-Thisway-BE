@@ -43,7 +43,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버가 정상적으로 조회된다.")
-    void givenValidMemberId_whenGetMemberDetail_thenSuccessfulGetDetail() {
+    void 멤버_조회_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = MemberFixture.createMember(company);
@@ -60,7 +60,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("없는 멤버를 조회하려 하면 member not found exception이 발생한다.")
-    void givenInvalidMemberId_whenGetMemberDetail_thenThrowNotFoundException() {
+    void 멤버_조회_테스트_없는_멤버() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = MemberFixture.createMember(company);
@@ -77,7 +77,8 @@ class MemberServiceTest {
     }
 
     @Test
-    void 멤버가_페이징_정보에_맞게_정상적으로_조회된다() {
+    @DisplayName("멤버가 페이징 정보에 맞게 정상적으로 조회된다")
+    void 멤버_페이징_조회_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         List<Member> members = List.of(
@@ -99,7 +100,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버 등록이 정상적으로 등록된다.")
-    void givenValidRequest_whenRegisterMember_thenDoesNotThrowAnyException() {
+    void 멤버_등록_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyId(company.getId());
@@ -119,8 +120,8 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("멤버 등록이 정상적으로 등록된다.")
-    void 멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다() {
+    @DisplayName("멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다")
+    void 멤버_등록_테스트_존재하는_이메일() {
         // given
         String email = "hong@example.com";
         Company company = companyRepository.save(CompanyFixture.createCompany());
@@ -135,7 +136,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버가 정상적으로 삭제된다.")
-    void givenValidMemberId_whenDeleteMember_thenSuccessfulDelete() {
+    void 멤버_삭제_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = MemberFixture.createMember(company);
@@ -153,7 +154,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("없는 멤버를 삭제하려 하면 member not found exception이 발생한다.")
-    void givenNotFoundMemberId_whenDeleteMember_thenThrowNotFoundException() {
+    void 멤버_삭제_테스트_없는_멤버() {
         // when & then
         CustomException e = assertThrows(CustomException.class, () -> memberService.deleteMember(1L));
 
