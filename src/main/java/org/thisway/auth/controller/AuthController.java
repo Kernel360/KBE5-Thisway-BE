@@ -1,10 +1,8 @@
 package org.thisway.auth.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.auth.service.EmailVerificationService;
 import org.thisway.common.ApiResponse;
@@ -18,7 +16,13 @@ public class AuthController {
 
     @PostMapping("/verify-code")
     public ApiResponse<Void> sendVerifyCode(@RequestBody SendVerifyCodeRequest request) {
-        emailVerificationService.sendVerifyCode(request.email());
+        emailVerificationService.sendVerificationCode(request);
+        return ApiResponse.ok();
+    }
+
+    @PutMapping("/password")
+    public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request) {
+        emailVerificationService.changePassword(request);
         return ApiResponse.ok();
     }
 }
