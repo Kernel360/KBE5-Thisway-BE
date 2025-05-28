@@ -22,6 +22,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -92,6 +93,7 @@ class VehicleControllerTest {
                 "기아",
                 2024,
                 "K5",
+                1L,
                 "샘플 회사",
                 "34나5678",
                 10000
@@ -128,5 +130,49 @@ class VehicleControllerTest {
                 .andExpect(jsonPath("$.status").value(ErrorCode.VEHICLE_NOT_FOUND.getStatusValue()))
                 .andExpect(jsonPath("$.message").value(ErrorCode.VEHICLE_NOT_FOUND.getMessage()))
                 .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 성공")
+    void 차량_삭제_요청_성공() throws Exception {
+        doNothing().when(vehicleService).deleteVehicle(1L);
+
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("204"));
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 실패 - 차량 미존재")
+    void 차량_삭제_요청_실패() throws Exception {
+        doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
+                .when(vehicleService).deleteVehicle(1L);
+
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("차량 정보를 조회할 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("차량 삭제 요청 실패 - 이미 삭제된 차량")
+    void 이미_삭제된_차량_삭제_요청_실패() throws Exception {
+        // given
+        doThrow(new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED))
+                .when(vehicleService).deleteVehicle(1L);
+
+        // when & then
+        mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("400"))
+                .andExpect(jsonPath("$.message").value("이미 삭제된 차량입니다."));
     }
 }

@@ -60,4 +60,8 @@ public class Member extends BaseEntity {
     public String getPhoneValue() {
         return phone.getValue();
     }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 }

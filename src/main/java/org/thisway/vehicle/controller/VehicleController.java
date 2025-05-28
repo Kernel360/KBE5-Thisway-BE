@@ -27,4 +27,11 @@ public class VehicleController {
 
         return ApiResponse.ok(vehicleService.getVehicleDetail(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteVehicle(@PathVariable Long id){
+
+        vehicleService.deleteVehicle(id);
+        return ApiResponse.noContent();
+    }
 }
