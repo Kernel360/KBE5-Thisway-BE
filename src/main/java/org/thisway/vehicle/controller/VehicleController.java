@@ -20,27 +20,23 @@ public class VehicleController {
 
     @PostMapping
     public ApiResponse<Void> registerVehicle(@RequestBody @Validated VehicleCreateRequest request) {
-
         vehicleService.registerVehicle(request);
         return ApiResponse.created();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<VehicleResponse> getVehicleDetail(@PathVariable Long id){
-
         return ApiResponse.ok(vehicleService.getVehicleDetail(id));
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteVehicle(@PathVariable Long id){
-
         vehicleService.deleteVehicle(id);
         return ApiResponse.noContent();
     }
 
     @GetMapping
     public ApiResponse<VehiclesResponse> getVehicles(@PageableDefault Pageable pageable) {
-
         return ApiResponse.ok(vehicleService.getVehicles(pageable));
     }
 }

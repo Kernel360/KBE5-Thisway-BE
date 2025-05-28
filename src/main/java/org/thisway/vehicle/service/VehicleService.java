@@ -27,7 +27,7 @@ public class VehicleService {
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
 
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
             "id", "carNumber", "color", "mileage"
     );

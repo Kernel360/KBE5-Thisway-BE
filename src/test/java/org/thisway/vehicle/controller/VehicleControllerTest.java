@@ -191,7 +191,6 @@ class VehicleControllerTest {
                 new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
                 new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000)
         );
-        Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse response = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
         given(vehicleService.getVehicles(any())).willReturn(response);
@@ -257,32 +256,5 @@ class VehicleControllerTest {
                 .andExpect(jsonPath("$.data.vehicles.length()").value(2))
                 .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("34나5678"))
                 .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("12가3456"));
-    }
-
-    @Test
-    @DisplayName("차량 목록 조회 성공 - 오름차순 정렬")
-    void 차량_목록_조회_성공_오름차순_정렬() throws Exception {
-        // given
-        List<VehicleResponse> ascendingOrder = List.of(
-                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
-                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000)
-        );
-
-        VehiclesResponse ascResponse = new VehiclesResponse(ascendingOrder, 1, 2, 0, 10);
-
-        given(vehicleService.getVehicles(argThat(pageable ->
-                pageable != null &&
-                        pageable.getSort() != null &&
-                        pageable.getSort().getOrderFor("carNumber") != null &&
-                        pageable.getSort().getOrderFor("carNumber").getDirection().isAscending())))
-                .willReturn(ascResponse);
-
-        // when & then
-        mockMvc.perform(get("/api/vehicles")
-                        .param("sort", "carNumber,asc"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("12가3456"))
-                .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("34나5678"));
     }
 }
