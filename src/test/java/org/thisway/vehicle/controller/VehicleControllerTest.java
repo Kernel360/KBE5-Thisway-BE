@@ -93,6 +93,7 @@ class VehicleControllerTest {
                 "기아",
                 2024,
                 "K5",
+                1L,
                 "샘플 회사",
                 "34나5678",
                 10000
