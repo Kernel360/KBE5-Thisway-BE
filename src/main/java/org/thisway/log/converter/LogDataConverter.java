@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LogDataConverter {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("ccyyMMddHHmm");
-    private static final DateTimeFormatter DATE_TIME_FORMATTER_WITH_SEC = DateTimeFormatter.ofPattern("ccyyMMddHHmmss");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmm");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER_WITH_SEC = DateTimeFormatter.ofPattern("yyMMddHHmmss");
 
     public Double convertCoordinate(String coordinate) {
         double value = Double.parseDouble(coordinate);
