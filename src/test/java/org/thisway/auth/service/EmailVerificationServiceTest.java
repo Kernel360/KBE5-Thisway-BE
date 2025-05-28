@@ -1,7 +1,19 @@
 package org.thisway.auth.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,17 +30,11 @@ import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.company.entity.Company;
+import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -94,7 +100,8 @@ public class EmailVerificationServiceTest {
     @Test
     @DisplayName("sendVerifyCode 실행 시 이메일이 존재하는지 확인하고, storeCode와 sendEmail을 호출한다.")
     void whenSendVerifyCode_thenCheckEmailExistAndCallStoreCodeAndSendEmail() throws Exception {
-        Member member = MemberFixture.createMember();
+        Company company = CompanyFixture.createCompany();
+        Member member = MemberFixture.createMember(company);
 
         EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
 
@@ -155,7 +162,8 @@ public class EmailVerificationServiceTest {
     @Test
     @DisplayName("changePassword 실행 시 verifyCode를 호출한다.")
     void whenChangePassword_thenCallVerifyCode() throws Exception {
-        Member member = MemberFixture.createMember();
+        Company company = CompanyFixture.createCompany();
+        Member member = memberRepository.save(MemberFixture.createMember(company));
         EmailVerificationService emailVerificationServiceSpy = Mockito.spy(emailVerificationService);
 
         doReturn(Optional.of(member)).when(memberRepository).findByEmailAndActiveTrue(anyString());
