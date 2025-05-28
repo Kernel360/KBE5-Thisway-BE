@@ -22,8 +22,12 @@ public enum ErrorCode {
     MEMBER_INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 핸드폰 번호입니다."),
 
     EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." ),
-    INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다.")
-    ;
+    INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다."),
+  
+    INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다."),
+
+    //차량
+    VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
