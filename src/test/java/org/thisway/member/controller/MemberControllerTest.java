@@ -47,7 +47,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 조회가 정상적으로 되었을 때, ok 응답과 정상적으로 데이터를 조회할 수 있다.")
-    void givenValidMemberId_whenGetMemberDetail_thenReturnsOkStatusWithMemberData() throws Exception {
+    void 멤버_조회_테스트_성공() throws Exception {
         // when
         long id = 1L;
         MemberResponse expectResponse = MemberFixture.createMemberResponse(id);
@@ -75,7 +75,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 조회시 없는 멤버 ID 요청이면, not found 응답을 한다.")
-    void givenNotFoundMemberId_whenGetMemberDetail_thenReturnsNotFoundStatus() throws Exception {
+    void 멤버_조회_테스트_없는_멤버_ID() throws Exception {
         when(memberService.getMemberDetail(1L))
                 .thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -98,7 +98,8 @@ class MemberControllerTest {
     @Test
     @Disabled
     // todo: PageResponse 구조 결정 후 코드 및 주석 변경 or Disable 해제
-    void 멤버_전체_조회가_정상적으로_되었을_때_ok_응답과_함께_정상적으로_데이터를_조회할_수_있다() throws Exception {
+    @DisplayName("멤버 전체 조회가 정상적으로 되었을 때, ok 응답과 함께 정상적으로 데이터를 조회할 수 있다")
+    void 멤버_전체_조회_테스트_성공() throws Exception {
         // when
         MembersResponse expectResponse = MemberFixture.createMembersResponse(2);
         when(memberService.getMembers(any(Pageable.class)))
@@ -125,7 +126,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 등록이 정상적으로 되었을 때, created 응답을 한다.")
-    void givenValidRequest_whenRegisterMember_thenReturnsCreatedStatus() throws Exception {
+    void 멤버_등록_테스트_성공() throws Exception {
         // given
         MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyId(1L);
 
@@ -147,7 +148,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 삭제가 정상적으로 되었을 때, no content 응답을 한다.")
-    void givenValidMemberId_whenDeleteMember_thenReturnsNoContentStatus() throws Exception {
+    void 멤버_삭제_테스트_성공() throws Exception {
         // when
         MvcResult mvcResult = mockMvc.perform(
                         delete("/api/members/1")
@@ -164,7 +165,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 삭제시 없는 멤버의 ID 요청이면, not found 응답을 한다.")
-    void givenNotFoundMemberId_whenDeleteMember_thenReturnsNotFoundStatus() throws Exception {
+    void 멤버_삭제_테스트_없는_멤버_ID() throws Exception {
         // when
         BDDMockito.willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND))
                 .given(memberService).deleteMember(eq(1L));
