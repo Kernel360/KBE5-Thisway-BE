@@ -20,14 +20,14 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자 정보를 찾을 수 없습니다."),
     MEMBER_ALREADY_EXIST_BY_EMAIL(HttpStatus.CONFLICT, "이미 등록된 이메일입니다."),
     MEMBER_INVALID_PHONE_NUMBER(HttpStatus.BAD_REQUEST, "유효하지 않은 핸드폰 번호입니다."),
-
-    EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." ),
-    INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다."),
-  
     INVALID_VERIFY_CODE(HttpStatus.BAD_REQUEST, "잘못된 인증코드입니다."),
 
     //차량
-    VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다.");
+    VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다."),
+    VEHICLE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 차량입니다."),
+
+    EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." )
+    ;
 
     private final HttpStatus status;
     private final String message;

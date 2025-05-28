@@ -95,7 +95,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    @DisplayName("회사를 찾을 수 없는 경우 차량 등록 불가")
+    @DisplayName("차량 등록시 회사를 찾을 수 없는 경우 차량 등록 불가")
     void 차량_등록_실패_회사를_찾을수없음() {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
@@ -178,5 +178,52 @@ class VehicleServiceTest {
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleIdCaptor.capture());
         assertThat(vehicleIdCaptor.getValue()).isEqualTo(vehicleId);
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("차량 삭제 성공")
+    void 차량_삭제_성공() {
+        // given
+        Vehicle mockVehicle = mock(Vehicle.class);
+        given(vehicleRepository.findById(1L)).willReturn(Optional.of(mockVehicle));
+        given(mockVehicle.isActive()).willReturn(true);
+
+        // when
+        vehicleService.deleteVehicle(1L);
+
+        // then
+        verify(vehicleRepository).findById(1L);
+        verify(mockVehicle).delete();
+    }
+
+    @Test
+    @DisplayName("차량 삭제 실패 - 차량이 존재하지 않는 경우")
+    void 차량_삭제_실패_차량_미존재() {
+        // given
+        given(vehicleRepository.findById(1L)).willReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.deleteVehicle(1L));
+
+        verify(vehicleRepository).findById(1L);
+        assertEquals(ErrorCode.VEHICLE_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("차량 삭제 실패 - 이미 삭제된 차량인 경우")
+    void 차량_삭제_실패_이미_삭제된_차량() {
+        // given
+        Vehicle mockVehicle = mock(Vehicle.class);
+        given(vehicleRepository.findById(1L)).willReturn(Optional.of(mockVehicle));
+        given(mockVehicle.isActive()).willReturn(false);
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.deleteVehicle(1L));
+
+        verify(vehicleRepository).findById(1L);
+        verify(mockVehicle, never()).delete();
+        assertEquals(ErrorCode.VEHICLE_ALREADY_DELETED, exception.getErrorCode());
     }
 }

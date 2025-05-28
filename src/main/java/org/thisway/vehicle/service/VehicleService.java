@@ -49,4 +49,18 @@ public class VehicleService {
 
         return VehicleResponse.fromVehicle(vehicle);
     }
+
+    public void deleteVehicle(Long id) {
+
+        //TODO: 권한 검증 추가 예정(인증된 사용자만 삭제할 권한이 있도록)
+        //TODO: 삭제 이력은 남겨야할 것 같음. 누가, 언제 삭제했는지.
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        if (!vehicle.isActive()) {
+            throw new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED);
+        }
+
+        vehicle.delete();
+    }
 }
