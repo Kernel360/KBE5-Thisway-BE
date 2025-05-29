@@ -12,6 +12,9 @@ import org.thisway.common.ErrorCode;
 import org.thisway.emulator.entity.Emulator;
 import org.thisway.emulator.repository.EmulatorRepository;
 import org.thisway.log.converter.LogDataConverter;
+import org.thisway.log.domain.GeofenceLogData;
+import org.thisway.log.domain.GpsLogData;
+import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
@@ -36,48 +39,19 @@ public class LogService {
         Long vehicleId = getVehicleIdByMdn(mdn);
 
         if (request.onTime() != null && !request.onTime().isEmpty()){
-            LocalDateTime powerTime = converter.convertDateTimeWithSec(request.onTime());
-
-            Double latitude = converter.convertCoordinate(request.lat());
-            Double longitude = converter.convertCoordinate(request.lon());
-            Integer totalTripMeter = converter.convertToInteger(request.sum());
-
-            logRepository.savePowerLog(
-                    vehicleId,
-                    mdn,
-                    true,
-                    powerTime,
-                    request.gcd(),
-                    latitude,
-                    longitude,
-                    totalTripMeter
-            );
+            PowerLogData powerLogData = PowerLogData.from(
+                    request, mdn, vehicleId, true, request.onTime(), converter);
+            logRepository.savePowerLog(powerLogData);
         }
 
         if (request.offTime() != null && !request.offTime().isEmpty()){
-            LocalDateTime powerTime = converter.convertDateTimeWithSec(request.offTime());
-
-            Double latitude = converter.convertCoordinate(request.lat());
-            Double longitude = converter.convertCoordinate(request.lon());
-            Integer totalTripMeter = converter.convertToInteger(request.sum());
-
-            logRepository.savePowerLog(
-                    vehicleId,
-                    mdn,
-                    false,
-                    powerTime,
-                    request.gcd(),
-                    latitude,
-                    longitude,
-                    totalTripMeter
-            );
+            PowerLogData powerLogData = PowerLogData.from(
+                    request, mdn, vehicleId, false, request.offTime(), converter);
+            logRepository.savePowerLog(powerLogData);
         }
-
-
 
         log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
     }
-
 
     @Transactional
     public void saveGpsLog(GpsLogRequest request) {
@@ -86,35 +60,18 @@ public class LogService {
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        List<Object[]> gpsLogBatch = new ArrayList<>();
+        List<GpsLogData> gpsLogDataList = new ArrayList<>();
 
         for (GpsLogEntry entry : request.cList()) {
             LocalDateTime occurredTime = converter.convertDateTime(request.oTime());
 
-            Double latitude = converter.convertCoordinate(entry.lat());
-            Double longitude = converter.convertCoordinate(entry.lon());
-            Integer angle = converter.convertToInteger(entry.ang());
-            Integer speed = converter.convertToInteger(entry.spd());
-            Integer totalTripMeter = converter.convertToInteger(entry.sum());
-            Integer batteryVoltage = converter.convertToInteger(entry.bat());
-
-            gpsLogBatch.add(new Object[]{
-                    vehicleId,
-                    mdn,
-                    entry.gcd(),
-                    latitude,
-                    longitude,
-                    angle,
-                    speed,
-                    totalTripMeter,
-                    batteryVoltage,
-                    occurredTime
-            });
+            GpsLogData gpsLogData = GpsLogData.from(entry, mdn, vehicleId, occurredTime, converter);
+            gpsLogDataList.add(gpsLogData);
         }
 
-        logRepository.saveGpsLogs(gpsLogBatch);
+        logRepository.saveGpsLogs(gpsLogDataList);
 
-        log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogBatch.size());
+        log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogDataList.size());
     }
 
     @Transactional
@@ -125,27 +82,8 @@ public class LogService {
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        LocalDateTime occurredTime = converter.convertDateTimeWithSec(request.oTime());
-
-        Double latitude = converter.convertCoordinate(request.lat());
-        Double longitude = converter.convertCoordinate(request.lon());
-        Integer angle = converter.convertToInteger(request.ang());
-        Long geofenceGroupId = converter.convertToLong(request.geoGrpId());
-        Long geofenceId = converter.convertToLong(request.geoPId());
-        Byte eventVal = converter.convertToByte(request.evtVal());
-
-        logRepository.saveGeofenceLog(
-                vehicleId,
-                mdn,
-                occurredTime,
-                geofenceGroupId,
-                geofenceId,
-                eventVal,
-                request.gcd(),
-                latitude,
-                longitude,
-                angle
-        );
+        GeofenceLogData geofenceLogData = GeofenceLogData.from(request, mdn, vehicleId, converter);
+        logRepository.saveGeofenceLog(geofenceLogData);
 
         log.info("지오펜스 정보 로그 저장 완료: MDN={}", request.mdn());
     }
