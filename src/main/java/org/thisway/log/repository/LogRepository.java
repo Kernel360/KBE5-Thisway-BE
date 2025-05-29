@@ -1,36 +1,30 @@
 package org.thisway.log.repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.thisway.log.domain.GeofenceLogData;
+import org.thisway.log.domain.GpsLogData;
+import org.thisway.log.domain.PowerLogData;
 
 @Repository
 @RequiredArgsConstructor
 public class LogRepository {
-    
+
     private final JdbcTemplate jdbcTemplate;
 
-    public void savePowerLog(
-            Long vehicleId,
-            String mdn,
-            boolean powerStatus,
-            LocalDateTime powerTime,
-            String gpsStatus,
-            Double latitude,
-            Double longitude,
-            Integer totalTripMeter
-    ) {
+    public void savePowerLog(PowerLogData powerLogData) {
         Object[] powerLogParams = new Object[]{
-                vehicleId,
-                mdn,
-                powerStatus,
-                powerTime,
-                gpsStatus,
-                latitude,
-                longitude,
-                totalTripMeter
+                powerLogData.vehicleId(),
+                powerLogData.mdn(),
+                powerLogData.powerStatus(),
+                powerLogData.powerTime(),
+                powerLogData.gpsStatus(),
+                powerLogData.latitude(),
+                powerLogData.longitude(),
+                powerLogData.totalTripMeter()
         };
 
         String powerLogSql = "INSERT INTO power_log ("
@@ -42,42 +36,71 @@ public class LogRepository {
                 + "latitude, "
                 + "longitude, "
                 + "total_trip_meter"
-                + ") "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(powerLogSql, powerLogParams);
     }
 
-    public void saveGpsLogs(List<Object[]> gpsLogBatch) {
-        String gpsLogSql = "INSERT INTO gps_log (vehicle_id, mdn, gps_status, latitude, longitude, anger, speed, total_trip_meter, battery_voltage, occurred_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public void saveGpsLogs(List<GpsLogData> gpsLogDataList) {
+        List<Object[]> gpsLogBatch = gpsLogDataList.stream()
+                .map(this::toGpsLogParams)
+                .toList();
+
+        String gpsLogSql = "INSERT INTO gps_log ("
+                + "vehicle_id, "
+                + "mdn, "
+                + "gps_status, "
+                + "latitude, "
+                + "longitude, "
+                + "anger, "
+                + "speed, "
+                + "total_trip_meter, "
+                + "battery_voltage, "
+                + "occurred_time"
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.batchUpdate(gpsLogSql, gpsLogBatch);
     }
 
-    public void saveGeofenceLog(
-            Long vehicleId,
-            String mdn,
-            LocalDateTime occurredTime,
-            Long geofenceGroupId,
-            Long geofenceId,
-            Byte eventVal,
-            String gpsStatus,
-            Double latitude,
-            Double longitude,
-            Integer angle
-    ) {
-        Object[] geofenceLogParams = new Object[]{
-                vehicleId,
-                mdn,
-                occurredTime,
-                geofenceGroupId,
-                geofenceId,
-                eventVal,
-                gpsStatus,
-                latitude,
-                longitude,
-                angle
+    private Object[] toGpsLogParams(GpsLogData gpsLogData) {
+        return new Object[]{
+                gpsLogData.vehicleId(),
+                gpsLogData.mdn(),
+                gpsLogData.gpsStatus(),
+                gpsLogData.latitude(),
+                gpsLogData.longitude(),
+                gpsLogData.angle(),
+                gpsLogData.speed(),
+                gpsLogData.totalTripMeter(),
+                gpsLogData.batteryVoltage(),
+                gpsLogData.occurredTime()
         };
-        
-        String geofenceLogSql = "INSERT INTO geofence_log (vehicle_id, mdn, occured_time, geofence_group_id, geofence_id, event_val, gps_status, latitude, longitude, angle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    }
+
+    public void saveGeofenceLog(GeofenceLogData geofenceLogData) {
+        Object[] geofenceLogParams = new Object[]{
+                geofenceLogData.vehicleId(),
+                geofenceLogData.mdn(),
+                geofenceLogData.occurredTime(),
+                geofenceLogData.geofenceGroupId(),
+                geofenceLogData.geofenceId(),
+                geofenceLogData.eventVal(),
+                geofenceLogData.gpsStatus(),
+                geofenceLogData.latitude(),
+                geofenceLogData.longitude(),
+                geofenceLogData.angle()
+        };
+
+        String geofenceLogSql = "INSERT INTO geofence_log ("
+                + "vehicle_id, "
+                + "mdn, "
+                + "occured_time, "
+                + "geofence_group_id, "
+                + "geofence_id, "
+                + "event_val, "
+                + "gps_status, "
+                + "latitude, "
+                + "longitude, "
+                + "angle"
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(geofenceLogSql, geofenceLogParams);
     }
 }
