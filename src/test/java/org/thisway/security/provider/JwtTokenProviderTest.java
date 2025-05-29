@@ -11,20 +11,21 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thisway.security.utils.JwtTokenUtil;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 
 public class JwtTokenProviderTest {
 
-    private JwtTokenProvider provider;
+    private JwtTokenUtil provider;
 
     private final String secretKey = "this-is-test-string-secret-key-that-is-32-bytes-long";
     private final long VALIDITY_MS = 60 * 60 * 1000;
 
     @BeforeEach
     void setUp() {
-        provider = new JwtTokenProvider(secretKey, VALIDITY_MS);
+        provider = new JwtTokenUtil(secretKey, VALIDITY_MS);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class JwtTokenProviderTest {
     @Test
     void 만료된_JWT_AccessToken에_대한_검증_실패() {
         // given: 만료 시간을 0으로 설정한 Provider
-        JwtTokenProvider shortLived = new JwtTokenProvider(secretKey, 0L);
+        JwtTokenUtil shortLived = new JwtTokenUtil(secretKey, 0L);
         String shortToken = shortLived.createAccessToken("user", Map.of());
 
         // when: 생성되자 말자 token 만료됨.
@@ -111,9 +112,9 @@ public class JwtTokenProviderTest {
         // given: 두 개의 프로바이더, 서로 다른 시크릿
         // JwtTokenProvider p1 = new
         // JwtTokenProvider("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", VALIDITY_MS);
-        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(32), VALIDITY_MS);
+        JwtTokenUtil p1 = new JwtTokenUtil("A".repeat(32), VALIDITY_MS);
 
-        JwtTokenProvider p2 = new JwtTokenProvider("B".repeat(32), VALIDITY_MS);
+        JwtTokenUtil p2 = new JwtTokenUtil("B".repeat(32), VALIDITY_MS);
 
         String token = p1.createAccessToken("alice", Map.of("foo", "bar"));
 
