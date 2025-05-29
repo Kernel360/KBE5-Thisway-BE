@@ -1,6 +1,7 @@
 package org.thisway.security;
 
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -17,11 +18,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.thisway.member.entity.Member;
-import org.thisway.member.repository.MemberRepository;
 import org.thisway.security.dto.request.LoginRequest;
+import org.thisway.security.service.CustomUserDetailsService;
 import org.thisway.security.utils.JwtTokenUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,37 +34,34 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class SecurityIntegrationTest {
 
     @Autowired
-    MockMvc mockMvc;
-
-    @Autowired
-    private MemberRepository memberRepository;
-
-    @Autowired
-    private PasswordEncoder paosswordEncoder;
+    private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
-    JwtTokenUtil jwtTokenUtil;
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @BeforeEach
     void setup() {
-        memberRepository.deleteAll();
-        Member member = Member.builder()
-                .name("test")
-                .email("user@example.com")
-                .password(paosswordEncoder.encode("secret"))
-                .phone("01012345678")
-                .memo("")
+        // 로그인 테스트용 모의 유저 설정
+        UserDetails user = User.withUsername("user@example.com")
+                .password(passwordEncoder.encode("secret"))
+                .roles("USER")
                 .build();
 
-        memberRepository.save(member);
+        given(customUserDetailsService.loadUserByUsername("user@example.com"))
+                .willReturn(user);
     }
 
     @Test
     void 로그인_요청_성공() throws Exception {
-        // given :
         LoginRequest login = new LoginRequest("user@example.com", "secret");
 
         mockMvc.perform(post("/api/auth/login")
@@ -69,10 +69,8 @@ class SecurityIntegrationTest {
                 .content(objectMapper.writeValueAsString(login)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                // Authorization 헤더가 존재하고 "Bearer "로 시작하는지 확인
                 .andExpect(header().exists(HttpHeaders.AUTHORIZATION))
-                .andExpect(header().string(HttpHeaders.AUTHORIZATION,
-                        startsWith("Bearer ")));
+                .andExpect(header().string(HttpHeaders.AUTHORIZATION, startsWith("Bearer ")));
     }
 
     @Test
@@ -84,7 +82,6 @@ class SecurityIntegrationTest {
     @Test
     void 유효한_토큰으로_보호된_엔드포인트_접근시_200반환() throws Exception {
         String token = jwtTokenUtil.createAccessToken("testUser", Map.of("roles", List.of("USER")));
-        // String token = jwtTokenUtil.createAccessToken("testUser", Map.of());
 
         mockMvc.perform(get("/api/members/1")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
