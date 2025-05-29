@@ -1,4 +1,4 @@
-package org.thisway.security.provider;
+package org.thisway.security.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -15,12 +15,12 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Component
-public class JwtTokenProvider {
+public class JwtTokenUtil {
     // TODO : DTO 변경 생각하기.
     private final SecretKey secretKey;
     private final Long accessTokenValidityMs;
 
-    public JwtTokenProvider(
+    public JwtTokenUtil(
             @Value("${security.jwt.secret-key}") String secretKey,
             @Value("${security.jwt.access-token-validity-ms}") Long accessTokenValidityMs) {
         this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
