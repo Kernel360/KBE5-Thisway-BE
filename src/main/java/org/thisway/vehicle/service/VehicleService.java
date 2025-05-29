@@ -16,6 +16,7 @@ import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import java.util.List;
 
 @Service
@@ -75,6 +76,14 @@ public class VehicleService {
     public VehiclesResponse getVehicles(Pageable pageable) {
         validatePageable(pageable);
         return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
+    }
+
+    public void updateVehicle(Long id, VehicleUpdateRequest request) {
+        Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        vehicle.getVehicleDetail().update(request.manufacturer(), request.modelYear(), request.model());
+        vehicle.update(request.carNumber(), request.color());
     }
 
     private void validatePageable(Pageable pageable) {

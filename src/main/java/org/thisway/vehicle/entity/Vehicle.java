@@ -60,4 +60,9 @@ public class Vehicle extends BaseEntity {
         this.latitude = latitude;
         this.longitude = longitude;
     }
+
+    public void update(String carNumber, String color) {
+        this.carNumber = carNumber;
+        this.color = color;
+    }
 }

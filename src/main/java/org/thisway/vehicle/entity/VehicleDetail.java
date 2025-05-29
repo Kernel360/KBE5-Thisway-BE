@@ -32,4 +32,10 @@ public class VehicleDetail extends BaseEntity {
         this.model = model;
     }
 
+    public void update(String manufacturer, Integer modelYear, String model) {
+        this.manufacturer = manufacturer;
+        this.modelYear = modelYear;
+        this.model = model;
+    }
+
 }
