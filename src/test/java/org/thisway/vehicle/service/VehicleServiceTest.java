@@ -17,6 +17,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
@@ -338,6 +339,84 @@ class VehicleServiceTest {
 
         assertEquals(ErrorCode.INVALID_SORT_PROPERTY, exception.getErrorCode());
         verify(vehicleRepository, never()).findAllByActiveTrue(any());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 성공")
+    void 차량_정보_수정_성공() {
+        // given
+        Long vehicleId = 1L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678",
+                "흰색",
+                "기아",
+                2024,
+                "K5"
+        );
+
+        Vehicle mockVehicle = mock(Vehicle.class);
+        VehicleDetail mockVehicleDetail = mock(VehicleDetail.class);
+
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
+        when(mockVehicle.getVehicleDetail()).thenReturn(mockVehicleDetail);
+        when(mockVehicle.getCarNumber()).thenReturn("12가3456");
+
+        // when
+        vehicleService.updateVehicle(vehicleId, request);
+
+        // then
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(mockVehicleDetail).update(request.manufacturer(), request.modelYear(), request.model());
+        verify(mockVehicle).update(request.carNumber(), request.color());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 실패 - 차량 번호 중복")
+    void 차량_정보_수정_실패_차량번호_중복() {
+        // given
+        Long vehicleId = 1L;
+        String existingCarNumber = "12가3456";
+        String newCarNumber = existingCarNumber; // 기존과 동일한 번호로 시도
+
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                newCarNumber,
+                "흰색",
+                "기아",
+                2024,
+                "K5"
+        );
+
+        Vehicle mockVehicle = mock(Vehicle.class);
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
+        when(mockVehicle.getCarNumber()).thenReturn(existingCarNumber);
+        when(vehicleRepository.existsByCarNumberAndActiveTrue(newCarNumber)).thenReturn(true);
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.updateVehicle(vehicleId, request));
+
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleRepository).existsByCarNumberAndActiveTrue(newCarNumber);
+        assertEquals(ErrorCode.DUPLICATE_CAR_NUMBER, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 실패 - 차량을 찾을 수 없음")
+    void 차량_정보_수정_실패_차량을_찾을_수_없음() {
+        // given
+        Long nonExistentVehicleId = 999L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678", "흰색", "기아", 2024, "K5"
+        );
+
+        when(vehicleRepository.findByIdAndActiveTrue(nonExistentVehicleId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.updateVehicle(nonExistentVehicleId, request));
+
+        verify(vehicleRepository).findByIdAndActiveTrue(nonExistentVehicleId);
+        assertEquals(ErrorCode.VEHICLE_NOT_FOUND, exception.getErrorCode());
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {

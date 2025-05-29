@@ -78,11 +78,33 @@ public class VehicleService {
         return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
     }
 
+    //TODO : 인증/인가(권한) 적용
+    //TODO : 수정 이력 추가
+    @Transactional
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
-        Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+        Vehicle vehicle = findActiveVehicle(id);
+        validateCarNumberDuplication(vehicle, request.carNumber());
+        updateVehicleFields(vehicle, request);
+    }
 
-        vehicle.getVehicleDetail().update(request.manufacturer(), request.modelYear(), request.model());
+    private Vehicle findActiveVehicle(Long id) {
+        return vehicleRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+    }
+
+    private void validateCarNumberDuplication(Vehicle vehicle, String newCarNumber) {
+        if (vehicle.getCarNumber().equals(newCarNumber) &&
+                vehicleRepository.existsByCarNumberAndActiveTrue(newCarNumber)) {
+            throw new CustomException(ErrorCode.DUPLICATE_CAR_NUMBER);
+        }
+    }
+
+    private void updateVehicleFields(Vehicle vehicle, VehicleUpdateRequest request) {
+        vehicle.getVehicleDetail().update(
+                request.manufacturer(),
+                request.modelYear(),
+                request.model()
+        );
         vehicle.update(request.carNumber(), request.color());
     }
 
