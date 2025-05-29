@@ -24,6 +24,7 @@ import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.vehicle.validation.VehicleUpdateValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,9 @@ class VehicleServiceTest {
 
     @Mock
     private VehicleDetailRepository vehicleDetailRepository;
+
+    @Mock
+    private VehicleUpdateValidator vehicleUpdateValidator;
 
     @InjectMocks
     private VehicleService vehicleService;
@@ -359,15 +363,17 @@ class VehicleServiceTest {
 
         when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
         when(mockVehicle.getVehicleDetail()).thenReturn(mockVehicleDetail);
-        when(mockVehicle.getCarNumber()).thenReturn("12가3456");
+
+        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
 
         // when
         vehicleService.updateVehicle(vehicleId, request);
 
         // then
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
-        verify(mockVehicleDetail).update(request.manufacturer(), request.modelYear(), request.model());
-        verify(mockVehicle).update(request.carNumber(), request.color());
+        verify(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
+        verify(mockVehicleDetail).partialUpdate(request.manufacturer(), request.modelYear(), request.model());
+        verify(mockVehicle).partialUpdate(request.carNumber(), request.color());
     }
 
     @Test
@@ -375,8 +381,7 @@ class VehicleServiceTest {
     void 차량_정보_수정_실패_차량번호_중복() {
         // given
         Long vehicleId = 1L;
-        String existingCarNumber = "12가3456";
-        String newCarNumber = existingCarNumber; // 기존과 동일한 번호로 시도
+        String newCarNumber = "34가5678";
 
         VehicleUpdateRequest request = new VehicleUpdateRequest(
                 newCarNumber,
@@ -388,16 +393,18 @@ class VehicleServiceTest {
 
         Vehicle mockVehicle = mock(Vehicle.class);
         when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
-        when(mockVehicle.getCarNumber()).thenReturn(existingCarNumber);
-        when(vehicleRepository.existsByCarNumberAndActiveTrue(newCarNumber)).thenReturn(true);
+
+        doThrow(new CustomException(ErrorCode.DUPLICATE_CAR_NUMBER))
+                .when(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
 
         // when & then
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.updateVehicle(vehicleId, request));
 
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
-        verify(vehicleRepository).existsByCarNumberAndActiveTrue(newCarNumber);
+        verify(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
         assertEquals(ErrorCode.DUPLICATE_CAR_NUMBER, exception.getErrorCode());
+        verify(mockVehicle, never()).partialUpdate(any(), any());
     }
 
     @Test

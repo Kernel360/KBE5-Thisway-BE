@@ -17,6 +17,8 @@ import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.validation.VehicleUpdateValidator;
+
 import java.util.List;
 
 @Service
@@ -27,6 +29,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleUpdateValidator vehicleUpdateValidator;
 
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
@@ -80,32 +83,41 @@ public class VehicleService {
 
     //TODO : 인증/인가(권한) 적용
     //TODO : 수정 이력 추가
-    @Transactional
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = findActiveVehicle(id);
-        validateCarNumberDuplication(vehicle, request.carNumber());
+
+        vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
+
         updateVehicleFields(vehicle, request);
+    }
+
+    private void updateVehicleFields(Vehicle vehicle, VehicleUpdateRequest request) {
+        if (hasVehicleDetailUpdates(request)) {
+            vehicle.getVehicleDetail().partialUpdate(
+                    request.manufacturer(),
+                    request.modelYear(),
+                    request.model()
+            );
+        }
+
+        if (hasVehicleUpdates(request)) {
+            vehicle.partialUpdate(request.carNumber(), request.color());
+        }
+    }
+
+    private boolean hasVehicleDetailUpdates(VehicleUpdateRequest request) {
+        return request.manufacturer() != null ||
+                request.modelYear() != null ||
+                request.model() != null;
+    }
+
+    private boolean hasVehicleUpdates(VehicleUpdateRequest request) {
+        return request.carNumber() != null || request.color() != null;
     }
 
     private Vehicle findActiveVehicle(Long id) {
         return vehicleRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
-    }
-
-    private void validateCarNumberDuplication(Vehicle vehicle, String newCarNumber) {
-        if (vehicle.getCarNumber().equals(newCarNumber) &&
-                vehicleRepository.existsByCarNumberAndActiveTrue(newCarNumber)) {
-            throw new CustomException(ErrorCode.DUPLICATE_CAR_NUMBER);
-        }
-    }
-
-    private void updateVehicleFields(Vehicle vehicle, VehicleUpdateRequest request) {
-        vehicle.getVehicleDetail().update(
-                request.manufacturer(),
-                request.modelYear(),
-                request.model()
-        );
-        vehicle.update(request.carNumber(), request.color());
     }
 
     private void validatePageable(Pageable pageable) {

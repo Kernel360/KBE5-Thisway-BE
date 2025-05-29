@@ -61,8 +61,12 @@ public class Vehicle extends BaseEntity {
         this.longitude = longitude;
     }
 
-    public void update(String carNumber, String color) {
-        this.carNumber = carNumber;
-        this.color = color;
+    public void partialUpdate(String carNumber, String color) {
+        if (carNumber != null) {
+            this.carNumber = carNumber;
+        }
+        if (color != null) {
+            this.color = color;
+        }
     }
 }
