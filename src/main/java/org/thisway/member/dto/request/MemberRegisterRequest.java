@@ -2,31 +2,29 @@ package org.thisway.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.thisway.company.entity.Company;
 import org.thisway.member.entity.Member;
 
 public record MemberRegisterRequest(
 
-        @NotBlank
-        String name,
+        @NotNull Long companyId,
 
-        @NotBlank
-        String email,
+        @NotBlank String name,
 
-        @NotBlank
-        String password,
+        @NotBlank String email,
 
-        @NotBlank
-        String phone,
+        @NotBlank String password,
 
-        @NotNull
-        String memo
-) {
+        @NotBlank String phone,
 
-    public Member toMember() {
+        @NotNull String memo) {
+
+    public Member toMember(Company company, String encodedPassword) {
         return Member.builder()
+                .company(company)
                 .name(name)
                 .email(email)
-                .password(password)
+                .password(encodedPassword)
                 .phone(phone)
                 .memo(memo)
                 .build();

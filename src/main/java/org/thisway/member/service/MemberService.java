@@ -2,11 +2,14 @@ package org.thisway.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.company.entity.Company;
+import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
@@ -19,6 +22,8 @@ import org.thisway.member.repository.MemberRepository;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final CompanyRepository companyRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public MemberResponse getMemberDetail(Long id) {
@@ -38,7 +43,13 @@ public class MemberService {
             throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
         }
 
-        Member member = request.toMember();
+        Company company = companyRepository.findById(request.companyId())
+                .filter(BaseEntity::isActive)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
+
+        String encryptedPassword = passwordEncoder.encode(request.password());
+
+        Member member = request.toMember(company, encryptedPassword);
 
         memberRepository.save(member);
     }

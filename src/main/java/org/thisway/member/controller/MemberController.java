@@ -31,12 +31,12 @@ public class MemberController {
                 .body(memberService.getMemberDetail(id));
     }
 
+    // todo: 업체 최고 담당자가 조회할 경우 특정 업체 Member만 조회 가능하도록 변경 (인증 기능 추가 후)
     @GetMapping
     public ResponseEntity<MembersResponse> getMembers(@PageableDefault Pageable pageable) {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(memberService.getMembers(pageable));
     }
-
 
     @PostMapping
     public ResponseEntity<Void> registerMember(@RequestBody @Validated MemberRegisterRequest request) {

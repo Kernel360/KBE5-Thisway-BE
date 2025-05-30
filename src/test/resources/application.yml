@@ -1,0 +1,42 @@
+spring.application.name: thisway
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:
+    password:
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: true
+
+custom:
+  auth-code-expiration-millis: 600000
+
+security:
+  jwt:
+    secret-key: szU3FELDRTw9sJzzP1cWuo/xUzIjSvMGGSWKlMCgku/vZwsSmi8BHsH/rnsAyTzTAQ2IGS0mgr/oxi4WsHMhcQ==
+    access-token-validity-ms: 360000

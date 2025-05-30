@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.thisway.common.BaseEntity;
 import org.thisway.company.entity.Company;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 
 @Entity
 @Getter
@@ -34,7 +35,7 @@ public class Vehicle extends BaseEntity {
     private Integer mileage;
 
     @Column(nullable = false)
-    private boolean isOn;
+    private boolean powerOn;
 
     private Double latitude;
 
@@ -47,7 +48,7 @@ public class Vehicle extends BaseEntity {
             String carNumber,
             String color,
             Integer mileage,
-            boolean isOn,
+            boolean powerOn,
             Double latitude,
             Double longitude
     ) {
@@ -56,8 +57,25 @@ public class Vehicle extends BaseEntity {
         this.carNumber = carNumber;
         this.color = color;
         this.mileage = mileage;
-        this.isOn = isOn;
+        this.powerOn = powerOn;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void update(VehicleUpdateRequest request) {
+        partialUpdate(request.carNumber(), request.color());
+
+        if (request.manufacturer() != null || request.modelYear() != null || request.model() != null) {
+            this.vehicleDetail.partialUpdate(request.manufacturer(), request.modelYear(), request.model());
+        }
+    }
+
+    public void partialUpdate(String carNumber, String color) {
+        if (carNumber != null) {
+            this.carNumber = carNumber;
+        }
+        if (color != null) {
+            this.color = color;
+        }
     }
 }

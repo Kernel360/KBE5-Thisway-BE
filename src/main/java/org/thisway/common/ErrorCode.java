@@ -21,12 +21,25 @@ public enum ErrorCode {
     COMPANY_ALREADY_EXIST("11001", "이미 존재하는 회사입니다.", HttpStatus.BAD_REQUEST),
 
     // 멤버 에러 x2xxx
-    MEMBER_NOT_FOUND( "12000","사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
-    MEMBER_ALREADY_EXIST_BY_EMAIL( "12001","이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
-    MEMBER_INVALID_PHONE_NUMBER( "12003","유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_NOT_FOUND("12000","사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_ALREADY_EXIST_BY_EMAIL("12001","이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_INVALID_PHONE_NUMBER("12003","유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
 
     // 인증 에러 x3xxx
-    AUTH_INVALID_VERIFY_CODE( "13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
+    AUTH_INVALID_VERIFY_CODE("13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
+
+    // 차량 x4xxx
+    VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    VEHICLE_ALREADY_DELETED("14001", "이미 삭제된 차량입니다.", HttpStatus.BAD_REQUEST),
+    VEHICLE_DUPLICATE_CAR_NUMBER("14002", "이미 등록된 차량 번호입니다", HttpStatus.BAD_REQUEST),
+    VEHICLE_EMPTY_UPDATE_REQUEST("14003", "업데이트할 정보가 없습니다.", HttpStatus.BAD_REQUEST),
+
+    // 에뮬레이터 x5xxx
+    EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.BAD_REQUEST),
+
+    // 페이지네이션 x6xxx
+    PAGE_INVALID_PAGE_SIZE("16000", "페이지 크기는 최대 100개까지 가능합니다.", HttpStatus.BAD_REQUEST),
+    PAGE_INVALID_SORT_PROPERTY("16001", "유효하지 않은 정렬 기준입니다.", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;

@@ -4,17 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.company.entity.Company;
+import org.thisway.company.repository.CompanyRepository;
+import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
@@ -22,13 +27,22 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
 
+import lombok.RequiredArgsConstructor;
+
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
 class MemberServiceTest {
 
     private final MemberService memberService;
+
     private final MemberRepository memberRepository;
+
+    @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -37,9 +51,10 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버가 정상적으로 조회된다.")
-    void givenValidMemberId_whenGetMemberDetail_thenSuccessfulGetDetail() {
+    void 멤버_조회_테스트_성공() {
         // given
-        Member member = MemberFixture.createMember();
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = MemberFixture.createMember(company);
 
         // when
         memberRepository.save(member);
@@ -53,30 +68,31 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("없는 멤버를 조회하려 하면 member not found exception이 발생한다.")
-    void givenInvalidMemberId_whenGetMemberDetail_thenThrowNotFoundException() {
+    void 멤버_조회_테스트_없는_멤버() {
         // given
-        Member member = MemberFixture.createMember();
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = MemberFixture.createMember(company);
 
         // when
         memberRepository.save(member);
         CustomException e = assertThrows(
                 CustomException.class,
-                () -> memberService.getMemberDetail(member.getId() + 1)
-        );
+                () -> memberService.getMemberDetail(member.getId() + 1));
 
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
         // then
     }
 
     @Test
-    void 멤버가_페이징_정보에_맞게_정상적으로_조회된다() {
+    @DisplayName("멤버가 페이징 정보에 맞게 정상적으로 조회된다")
+    void 멤버_페이징_조회_테스트_성공() {
         // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
         List<Member> members = List.of(
-                MemberFixture.createMember(),
-                MemberFixture.createMember(),
-                MemberFixture.createMember(),
-                MemberFixture.createMember()
-        );
+                MemberFixture.createMemberWithEmail(company, "hong1@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong2@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong3@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong4@example.com"));
 
         // when
         memberRepository.saveAll(members);
@@ -90,9 +106,10 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버 등록이 정상적으로 등록된다.")
-    void givenValidRequest_whenRegisterMember_thenDoesNotThrowAnyException() {
+    void 멤버_등록_테스트_성공() {
         // given
-        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequest();
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyId(company.getId());
 
         // when
         memberService.registerMember(request);
@@ -104,19 +121,21 @@ class MemberServiceTest {
         assertThat(allMember).hasSize(1);
         assertThat(savedMember.getId()).isNotNull();
         assertThat(savedMember.getEmail()).isEqualTo(request.email());
-        assertThat(savedMember.getPassword()).isEqualTo(request.password());
+        assertThat(passwordEncoder.matches(request.password(), savedMember.getPassword())).isTrue();
         assertThat(savedMember.getPhoneValue()).isEqualTo(request.phone());
     }
 
     @Test
-    @DisplayName("멤버 등록이 정상적으로 등록된다.")
-    void 멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다() {
+    @DisplayName("멤버_등록시_존재하는_이메일의_회원일_경우_예외가_발생한다")
+    void 멤버_등록_테스트_존재하는_이메일() {
         // given
         String email = "hong@example.com";
-        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithEmail(email);
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyIdAndEmail(company.getId(),
+                email);
 
         // when & then
-        memberRepository.save(MemberFixture.createMemberWithEmail(email));
+        memberRepository.save(MemberFixture.createMemberWithEmail(company, email));
         CustomException e = assertThrows(CustomException.class, () -> memberService.registerMember(request));
 
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
@@ -124,9 +143,10 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("멤버가 정상적으로 삭제된다.")
-    void givenValidMemberId_whenDeleteMember_thenSuccessfulDelete() {
+    void 멤버_삭제_테스트_성공() {
         // given
-        Member member = MemberFixture.createMember();
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = MemberFixture.createMember(company);
 
         // when
         memberRepository.save(member);
@@ -141,7 +161,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("없는 멤버를 삭제하려 하면 member not found exception이 발생한다.")
-    void givenNotFoundMemberId_whenDeleteMember_thenThrowNotFoundException() {
+    void 멤버_삭제_테스트_없는_멤버() {
         // when & then
         CustomException e = assertThrows(CustomException.class, () -> memberService.deleteMember(1L));
 
