@@ -85,34 +85,8 @@ public class VehicleService {
     //TODO : 수정 이력 추가
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = findActiveVehicle(id);
-
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
-
-        updateVehicleFields(vehicle, request);
-    }
-
-    private void updateVehicleFields(Vehicle vehicle, VehicleUpdateRequest request) {
-        if (hasVehicleDetailUpdates(request)) {
-            vehicle.getVehicleDetail().partialUpdate(
-                    request.manufacturer(),
-                    request.modelYear(),
-                    request.model()
-            );
-        }
-
-        if (hasVehicleUpdates(request)) {
-            vehicle.partialUpdate(request.carNumber(), request.color());
-        }
-    }
-
-    private boolean hasVehicleDetailUpdates(VehicleUpdateRequest request) {
-        return request.manufacturer() != null ||
-                request.modelYear() != null ||
-                request.model() != null;
-    }
-
-    private boolean hasVehicleUpdates(VehicleUpdateRequest request) {
-        return request.carNumber() != null || request.color() != null;
+        vehicle.update(request);
     }
 
     private Vehicle findActiveVehicle(Long id) {

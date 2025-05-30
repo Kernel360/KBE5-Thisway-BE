@@ -353,27 +353,39 @@ class VehicleServiceTest {
         VehicleUpdateRequest request = new VehicleUpdateRequest(
                 "34가5678",
                 "흰색",
-                "기아",
+                null,
                 2024,
                 "K5"
         );
 
-        Vehicle mockVehicle = mock(Vehicle.class);
-        VehicleDetail mockVehicleDetail = mock(VehicleDetail.class);
+        VehicleDetail vehicleDetail = VehicleDetail.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .model("아반떼")
+                .build();
 
-        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
-        when(mockVehicle.getVehicleDetail()).thenReturn(mockVehicleDetail);
+        Vehicle vehicle = Vehicle.builder()
+                .vehicleDetail(vehicleDetail)
+                .carNumber("12가3456")
+                .color("검정")
+                .mileage(5000)
+                .build();
 
-        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
+        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
         // when
         vehicleService.updateVehicle(vehicleId, request);
 
         // then
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
-        verify(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
-        verify(mockVehicleDetail).partialUpdate(request.manufacturer(), request.modelYear(), request.model());
-        verify(mockVehicle).partialUpdate(request.carNumber(), request.color());
+        verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        assertEquals("34가5678", vehicle.getCarNumber());
+        assertEquals("흰색", vehicle.getColor());
+        assertEquals("현대", vehicle.getVehicleDetail().getManufacturer());
+        assertEquals(2024, vehicle.getVehicleDetail().getModelYear());
+        assertEquals("K5", vehicle.getVehicleDetail().getModel());
     }
 
     @Test
