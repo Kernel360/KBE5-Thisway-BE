@@ -7,31 +7,24 @@ import org.thisway.member.entity.Member;
 
 public record MemberRegisterRequest(
 
-        @NotNull
-        Long companyId,
+        @NotNull Long companyId,
 
-        @NotBlank
-        String name,
+        @NotBlank String name,
 
-        @NotBlank
-        String email,
+        @NotBlank String email,
 
-        @NotBlank
-        String password,
+        @NotBlank String password,
 
-        @NotBlank
-        String phone,
+        @NotBlank String phone,
 
-        @NotNull
-        String memo
-) {
+        @NotNull String memo) {
 
-    public Member toMember(Company company) {
+    public Member toMember(Company company, String encodedPassword) {
         return Member.builder()
                 .company(company)
                 .name(name)
                 .email(email)
-                .password(password)
+                .password(encodedPassword)
                 .phone(phone)
                 .memo(memo)
                 .build();
