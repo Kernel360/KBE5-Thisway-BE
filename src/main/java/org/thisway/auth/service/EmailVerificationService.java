@@ -3,8 +3,10 @@ package org.thisway.auth.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.security.SecureRandom;
+import java.text.DecimalFormat;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.MailException;
@@ -21,10 +23,6 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-
-import java.security.SecureRandom;
-import java.text.DecimalFormat;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +68,7 @@ public class EmailVerificationService {
             memberRepository.save(member);
             redisTemplate.delete(request.email());
         } else {
-            throw new CustomException(ErrorCode.INVALID_VERIFY_CODE);
+            throw new CustomException(ErrorCode.AUTH_INVALID_VERIFY_CODE);
         }
     }
 

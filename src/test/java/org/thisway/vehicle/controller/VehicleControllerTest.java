@@ -1,6 +1,7 @@
 // java
 package org.thisway.vehicle.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
@@ -14,8 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -26,10 +27,11 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
@@ -37,8 +39,6 @@ import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -74,8 +74,7 @@ class VehicleControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("201"));
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -93,8 +92,8 @@ class VehicleControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("회사 정보를 찾을 수 없습니다."));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(ErrorCode.COMPANY_NOT_FOUND.getCode()));
     }
 
     @Test
@@ -116,17 +115,25 @@ class VehicleControllerTest {
         given(vehicleService.getVehicleDetail(vehicleId)).willReturn(vehicleResponse);
 
         // when & then
-        mockMvc.perform(get("/api/vehicles/{id}", vehicleId)
-                .contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = mockMvc.perform(
+                get("/api/vehicles/{id}", vehicleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.data.manufacturer").value("기아"))
-                .andExpect(jsonPath("$.data.modelYear").value(2024))
-                .andExpect(jsonPath("$.data.model").value("K5"))
-                .andExpect(jsonPath("$.data.companyName").value("샘플 회사"))
-                .andExpect(jsonPath("$.data.carNumber").value("34나5678"))
-                .andExpect(jsonPath("$.data.mileage").value(10000));
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        VehicleResponse response = objectMapper.readValue(
+                responseBody, VehicleResponse.class
+        );
+
+        assertThat(response.manufacturer()).isEqualTo("기아");
+        assertThat(response.modelYear()).isEqualTo(2024);
+        assertThat(response.model()).isEqualTo("K5");
+        assertThat(response.companyName()).isEqualTo("샘플 회사");
+        assertThat(response.carNumber()).isEqualTo("34나5678");
+        assertThat(response.mileage()).isEqualTo(10000);
     }
 
     @Test
@@ -139,13 +146,19 @@ class VehicleControllerTest {
                 .willThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
 
         // when & then
-        mockMvc.perform(get("/api/vehicles/{id}", vehicleId)
-                .contentType(MediaType.APPLICATION_JSON))
+        MvcResult mvcResult = mockMvc.perform(
+                get("/api/vehicles/{id}", vehicleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(ErrorCode.VEHICLE_NOT_FOUND.getStatusValue()))
-                .andExpect(jsonPath("$.message").value(ErrorCode.VEHICLE_NOT_FOUND.getMessage()))
-                .andExpect(jsonPath("$.data").doesNotExist());
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 
     @Test
@@ -155,10 +168,10 @@ class VehicleControllerTest {
         doNothing().when(vehicleService).deleteVehicle(1L);
 
         mockMvc.perform(
-                delete("/api/vehicles/1"))
+                delete("/api/vehicles/1")
+                )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("204"));
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -168,11 +181,18 @@ class VehicleControllerTest {
         doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
                 .when(vehicleService).deleteVehicle(1L);
 
-        mockMvc.perform(
-                delete("/api/vehicles/1"))
+        MvcResult mvcResult = mockMvc.perform(
+                delete("/api/vehicles/1")
+                )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("차량 정보를 조회할 수 없습니다."));
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 
     @Test
@@ -184,12 +204,18 @@ class VehicleControllerTest {
                 .when(vehicleService).deleteVehicle(1L);
 
         // when & then
-        mockMvc.perform(
-                delete("/api/vehicles/1"))
+        MvcResult mvcResult = mockMvc.perform(
+                        delete("/api/vehicles/1")
+                )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("400"))
-                .andExpect(jsonPath("$.message").value("이미 삭제된 차량입니다."));
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_ALREADY_DELETED.getMessage());
     }
 
     @Test
@@ -200,19 +226,29 @@ class VehicleControllerTest {
         List<VehicleResponse> vehicles = List.of(
                 new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
                 new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000));
-        VehiclesResponse response = new VehiclesResponse(vehicles, 1, 2, 0, 10);
+        VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
-        given(vehicleService.getVehicles(any())).willReturn(response);
+        given(vehicleService.getVehicles(any()))
+                .willReturn(vehiclesResponse);
 
         // when & then
-        mockMvc.perform(get("/api/vehicles"))
+        MvcResult mvcResult = mockMvc.perform(
+                        get("/api/vehicles")
+                )
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.vehicles").isArray())
-                .andExpect(jsonPath("$.data.vehicles.length()").value(2))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
-                .andExpect(jsonPath("$.data.totalElements").value(2))
-                .andExpect(jsonPath("$.data.currentPage").value(0))
-                .andExpect(jsonPath("$.data.size").value(10));
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        VehiclesResponse response = objectMapper.readValue(
+                responseBody, VehiclesResponse.class
+        );
+
+        assertThat(response.vehicles()).hasSize(2);
+        assertThat(response.totalPages()).isEqualTo(1);
+        assertThat(response.totalElements()).isEqualTo(2);
+        assertThat(response.currentPage()).isEqualTo(0);
+        assertThat(response.size()).isEqualTo(10);
     }
 
     @Test
@@ -223,21 +259,30 @@ class VehicleControllerTest {
         List<VehicleResponse> vehicles = List.of(
                 new VehicleResponse(3L, "쌍용", 2023, "티볼리", 1L, "샘플 회사", "56다7890", "파랑", 1000));
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
-        VehiclesResponse response = new VehiclesResponse(vehicles, 2, 3, 1, 2);
+        VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 2, 3, 1, 2);
 
-        given(vehicleService.getVehicles(any())).willReturn(response);
+        given(vehicleService.getVehicles(any())).willReturn(vehiclesResponse);
 
         // when & then
-        mockMvc.perform(get("/api/vehicles")
-                .param("page", "3")
-                .param("size", "2"))
+        MvcResult mvcResult = mockMvc.perform(
+                get("/api/vehicles")
+                        .param("page", "3")
+                        .param("size", "2")
+                )
+                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.vehicles").isArray())
-                .andExpect(jsonPath("$.data.vehicles.length()").value(1))
-                .andExpect(jsonPath("$.data.totalPages").value(2))
-                .andExpect(jsonPath("$.data.totalElements").value(3))
-                .andExpect(jsonPath("$.data.currentPage").value(1))
-                .andExpect(jsonPath("$.data.size").value(2));
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        VehiclesResponse response = objectMapper.readValue(
+                responseBody, VehiclesResponse.class
+        );
+
+        assertThat(response.vehicles()).hasSize(1);
+        assertThat(response.totalPages()).isEqualTo(2);
+        assertThat(response.totalElements()).isEqualTo(3);
+        assertThat(response.currentPage()).isEqualTo(1);
+        assertThat(response.size()).isEqualTo(2);
     }
 
     @Test
@@ -256,14 +301,22 @@ class VehicleControllerTest {
                 .willReturn(descResponse);
 
         // when & then
-        mockMvc.perform(get("/api/vehicles")
-                .param("sort", "carNumber,desc"))
+        MvcResult mvcResult = mockMvc.perform(
+                get("/api/vehicles")
+                        .param("sort", "carNumber,desc")
+                )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.vehicles").isArray())
-                .andExpect(jsonPath("$.data.vehicles.length()").value(2))
-                .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("34나5678"))
-                .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("12가3456"));
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        VehiclesResponse response = objectMapper.readValue(
+                responseBody, VehiclesResponse.class
+        );
+
+        assertThat(response.vehicles()).hasSize(2);
+        assertThat(response.vehicles().get(0).carNumber()).isEqualTo("34나5678");
+        assertThat(response.vehicles().get(1).carNumber()).isEqualTo("12가3456");
     }
 
     @Test
@@ -286,8 +339,7 @@ class VehicleControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("204"));
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -306,13 +358,19 @@ class VehicleControllerTest {
                 .when(vehicleService).updateVehicle(vehicleId, request);
 
         // when & then
-        mockMvc.perform(
+        MvcResult mvcResult = mockMvc.perform(
                 patch("/api/vehicles/{id}", vehicleId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                )
                 .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(ErrorCode.VEHICLE_NOT_FOUND.getStatusValue()))
-                .andExpect(jsonPath("$.message").value("차량 정보를 조회할 수 없습니다."));
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 }

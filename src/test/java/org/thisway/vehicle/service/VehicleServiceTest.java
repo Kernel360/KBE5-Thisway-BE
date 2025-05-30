@@ -1,5 +1,20 @@
 package org.thisway.vehicle.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,17 +40,6 @@ import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -327,7 +331,7 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.getVehicles(pageRequest));
 
-        assertEquals(ErrorCode.INVALID_PAGE_SIZE, exception.getErrorCode());
+        assertEquals(ErrorCode.PAGE_INVALID_PAGE_SIZE, exception.getErrorCode());
         verify(vehicleRepository, never()).findAllByActiveTrue(any());
     }
 
@@ -341,7 +345,7 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.getVehicles(pageRequest));
 
-        assertEquals(ErrorCode.INVALID_SORT_PROPERTY, exception.getErrorCode());
+        assertEquals(ErrorCode.PAGE_INVALID_SORT_PROPERTY, exception.getErrorCode());
         verify(vehicleRepository, never()).findAllByActiveTrue(any());
     }
 
@@ -406,7 +410,7 @@ class VehicleServiceTest {
         Vehicle mockVehicle = mock(Vehicle.class);
         when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
 
-        doThrow(new CustomException(ErrorCode.DUPLICATE_CAR_NUMBER))
+        doThrow(new CustomException(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER))
                 .when(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
 
         // when & then
@@ -415,7 +419,7 @@ class VehicleServiceTest {
 
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
         verify(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
-        assertEquals(ErrorCode.DUPLICATE_CAR_NUMBER, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER, exception.getErrorCode());
         verify(mockVehicle, never()).partialUpdate(any(), any());
     }
 
