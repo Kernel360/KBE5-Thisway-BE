@@ -16,6 +16,9 @@ import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.validation.VehicleUpdateValidator;
+
 import java.util.List;
 
 @Service
@@ -26,6 +29,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleUpdateValidator vehicleUpdateValidator;
 
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
@@ -75,6 +79,19 @@ public class VehicleService {
     public VehiclesResponse getVehicles(Pageable pageable) {
         validatePageable(pageable);
         return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
+    }
+
+    //TODO : 인증/인가(권한) 적용
+    //TODO : 수정 이력 추가
+    public void updateVehicle(Long id, VehicleUpdateRequest request) {
+        Vehicle vehicle = findActiveVehicle(id);
+        vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
+        vehicle.update(request);
+    }
+
+    private Vehicle findActiveVehicle(Long id) {
+        return vehicleRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
     }
 
     private void validatePageable(Pageable pageable) {

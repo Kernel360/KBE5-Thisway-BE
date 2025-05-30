@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.thisway.common.ApiResponse;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
@@ -38,5 +39,11 @@ public class VehicleController {
     @GetMapping
     public ApiResponse<VehiclesResponse> getVehicles(@PageableDefault Pageable pageable) {
         return ApiResponse.ok(vehicleService.getVehicles(pageable));
+    }
+
+    @PatchMapping("/{id}")
+    public ApiResponse<Void> updateVehicle(@PathVariable Long id, @RequestBody @Validated VehicleUpdateRequest request) {
+        vehicleService.updateVehicle(id, request);
+        return ApiResponse.noContent();
     }
 }
