@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+            return header.substring("Bearer ".length());
         }
         return null;
     }
@@ -75,6 +75,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // 로그인이나 회원가입 같이 JWT 검증이 필요 없는 요청은 필터를 건너뛴다.
         String path = request.getServletPath();
-        return "/api/auth/login".equals(path) || "/api/auth/register".equals(path);
+        return "/api/auth/login".equals(path);
     }
 }
