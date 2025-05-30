@@ -25,6 +25,8 @@ public enum ErrorCode {
     //차량
     VEHICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "차량 정보를 조회할 수 없습니다."),
     VEHICLE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 차량입니다."),
+    DUPLICATE_CAR_NUMBER(HttpStatus.BAD_REQUEST, "이미 등록된 차량 번호입니다"),
+    EMPTY_UPDATE_REQUEST(HttpStatus.BAD_REQUEST, "업데이트할 정보가 없습니다."),
 
     EMULATOR_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 에뮬레이터입니다." ),
 

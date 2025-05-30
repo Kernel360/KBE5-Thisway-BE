@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
@@ -256,5 +257,57 @@ class VehicleControllerTest {
                 .andExpect(jsonPath("$.data.vehicles.length()").value(2))
                 .andExpect(jsonPath("$.data.vehicles[0].carNumber").value("34나5678"))
                 .andExpect(jsonPath("$.data.vehicles[1].carNumber").value("12가3456"));
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 요청 성공")
+    void 차량_정보_수정_요청_성공() throws Exception {
+        // given
+        Long vehicleId = 1L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678",
+                "흰색",
+                "기아",
+                2024,
+                "K5"
+        );
+        doNothing().when(vehicleService).updateVehicle(vehicleId, request);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("204"));
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 요청 실패 - 차량을 찾을 수 없음")
+    void 차량_정보_수정_요청_실패_차량_미존재() throws Exception {
+        // given
+        Long vehicleId = 999L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678",
+                "흰색",
+                "기아",
+                2024,
+                "K5"
+        );
+        doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
+                .when(vehicleService).updateVehicle(vehicleId, request);
+
+        // when & then
+        mockMvc.perform(
+                        patch("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ErrorCode.VEHICLE_NOT_FOUND.getStatusValue()))
+                .andExpect(jsonPath("$.message").value("차량 정보를 조회할 수 없습니다."));
     }
 }
