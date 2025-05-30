@@ -19,17 +19,6 @@ public record MemberRegisterRequest(
 
         @NotNull String memo) {
 
-    public Member toMember(Company company) {
-        return Member.builder()
-                .company(company)
-                .name(name)
-                .email(email)
-                .password(password)
-                .phone(phone)
-                .memo(memo)
-                .build();
-    }
-
     public Member toMember(Company company, String encodedPassword) {
         return Member.builder()
                 .company(company)
