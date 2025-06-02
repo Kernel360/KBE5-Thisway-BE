@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +19,13 @@ import org.mockito.BDDMockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.thisway.common.ApiResponse;
+import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
@@ -33,10 +34,6 @@ import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.RequiredArgsConstructor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -68,14 +65,12 @@ class MemberControllerTest {
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MemberResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {
-                });
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        MemberResponse response = objectMapper.readValue(
+                responseBody, MemberResponse.class
+        );
 
-        MemberResponse memberResponse = response.data();
-        assertThat(memberResponse).isNotNull();
-        assertThat(memberResponse.id()).isEqualTo(id);
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(id);
     }
 
     @Test
@@ -87,17 +82,18 @@ class MemberControllerTest {
 
         // when
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/members/1"))
-                .andExpect(status().isOk())
+                        get ("/api/members/1")
+                )
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MemberResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {
-                });
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 
     @Test
@@ -119,14 +115,12 @@ class MemberControllerTest {
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MembersResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MembersResponse>>() {
-                });
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
+        MembersResponse response = objectMapper.readValue(
+                responseBody, MembersResponse.class
+        );
 
-        MembersResponse membersResponse = response.data();
-        assertThat(membersResponse).isNotNull();
-        assertThat(membersResponse.memberResponses()).hasSize(2);
+        assertThat(response).isNotNull();
+        assertThat(response.memberResponses()).hasSize(2);
     }
 
     @Test
@@ -140,16 +134,14 @@ class MemberControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/members")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                        .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isCreated())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {
-        });
-        assertThat(response.status()).isEqualTo(HttpStatus.CREATED.value());
     }
 
     @Test
@@ -159,15 +151,11 @@ class MemberControllerTest {
         // when
         MvcResult mvcResult = mockMvc.perform(
                 delete("/api/members/1"))
-                .andExpect(status().isOk())
+                .andExpect(status().isNoContent())
                 .andDo(print())
                 .andReturn();
 
         // then
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {
-        });
-        assertThat(response.status()).isEqualTo(HttpStatus.NO_CONTENT.value());
     }
 
     @Test
@@ -180,14 +168,15 @@ class MemberControllerTest {
 
         MvcResult mvcResult = mockMvc.perform(
                 delete("/api/members/1"))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {
-        });
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 }

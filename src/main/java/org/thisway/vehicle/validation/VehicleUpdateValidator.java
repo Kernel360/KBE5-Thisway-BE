@@ -22,14 +22,14 @@ public class VehicleUpdateValidator {
     private void validateCarNumberIfChanged(Vehicle vehicle, String newCarNumber) {
         if (newCarNumber != null && !newCarNumber.equals(vehicle.getCarNumber())) {
             if (vehicleRepository.existsByCarNumberAndActiveTrue(newCarNumber)) {
-                throw new CustomException(ErrorCode.DUPLICATE_CAR_NUMBER);
+                throw new CustomException(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER);
             }
         }
     }
 
     private void validateRequestNotEmpty(VehicleUpdateRequest request) {
         if (hasNoUpdates(request)) {
-            throw new CustomException(ErrorCode.EMPTY_UPDATE_REQUEST);
+            throw new CustomException(ErrorCode.VEHICLE_EMPTY_UPDATE_REQUEST);
         }
     }
 

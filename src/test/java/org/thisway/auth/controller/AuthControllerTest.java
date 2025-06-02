@@ -1,12 +1,13 @@
 package org.thisway.auth.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -26,8 +26,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.auth.dto.VerificationPayload;
 import org.thisway.auth.dto.request.PasswordChangeRequest;
 import org.thisway.auth.dto.request.SendVerifyCodeRequest;
+import org.thisway.common.ApiErrorResponse;
+import org.thisway.common.ErrorCode;
 import org.thisway.auth.service.EmailVerificationService;
-import org.thisway.common.ApiResponse;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
@@ -73,10 +74,6 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
-
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
     }
 
     @Test
@@ -89,13 +86,13 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(responseBody, ApiErrorResponse.class);
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 
     @Test
@@ -113,13 +110,13 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(responseBody, ApiErrorResponse.class);
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 
     @Test
@@ -141,9 +138,6 @@ public class AuthControllerTest {
                 .andDo(print())
                 .andReturn();
 
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
         Member updatedMember = memberRepository.findById(member.getId()).orElseThrow();
         assertThat(updatedMember.getPassword()).isEqualTo("theNewPassword");
     }
@@ -163,13 +157,9 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
-
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
 
     @Test
@@ -187,13 +177,8 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
-
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<?> response = objectMapper.readValue(responseBody, ApiResponse.class);
-        assertThat(response.status()).isEqualTo(HttpStatus.BAD_REQUEST.value());
     }
-
 }
