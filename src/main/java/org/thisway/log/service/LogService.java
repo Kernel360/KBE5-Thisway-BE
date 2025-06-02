@@ -23,6 +23,7 @@ import org.thisway.log.repository.LogRepository;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class LogService {
 
@@ -30,7 +31,6 @@ public class LogService {
     private final LogRepository logRepository;
     private final LogDataConverter converter;
 
-    @Transactional
     public void savePowerLog(PowerLogRequest request) {
         log.info("시동 정보 로그 수신: MDN={}, onTime={}, offTime={}",
                 request.mdn(), request.onTime(), request.offTime());
@@ -53,7 +53,6 @@ public class LogService {
         log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
     }
 
-    @Transactional
     public void saveGpsLog(GpsLogRequest request) {
         log.info("주기 정보 로그 수신: MDN={}, 항목 수={}", request.mdn(), request.cCnt());
 
@@ -74,7 +73,6 @@ public class LogService {
         log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogDataList.size());
     }
 
-    @Transactional
     public void saveGeofenceLog(GeofenceLogRequest request) {
         log.info("지오펜스 정보 로그 수신: MDN={}, geoGrpId={}, geoPId={}",
                 request.mdn(), request.geoGrpId(), request.geoPId());
