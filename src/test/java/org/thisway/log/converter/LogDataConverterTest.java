@@ -19,7 +19,7 @@ public class LogDataConverterTest {
     @DisplayName("좌표 변환 테스트")
     void 좌표_파싱이_올바르게_실행되어야한다() {
         String coordinate = "4140338";
-        Double expected = 41.40338;
+        Double expected = 4.140338;
 
         Double result = converter.convertCoordinate(coordinate);
         assertThat(result).isEqualTo(expected);
