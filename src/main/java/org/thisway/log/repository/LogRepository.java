@@ -1,7 +1,6 @@
 package org.thisway.log.repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -51,7 +50,7 @@ public class LogRepository {
                 + "gps_status, "
                 + "latitude, "
                 + "longitude, "
-                + "anger, "
+                + "angle, "
                 + "speed, "
                 + "total_trip_meter, "
                 + "battery_voltage, "
