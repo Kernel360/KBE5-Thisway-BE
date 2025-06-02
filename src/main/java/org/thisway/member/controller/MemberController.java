@@ -35,7 +35,6 @@ public class MemberController {
         return ApiResponse.ok(memberService.getMembers(pageable));
     }
 
-
     @PostMapping
     public ApiResponse<Void> registerMember(@RequestBody @Validated MemberRegisterRequest request) {
         memberService.registerMember(request);

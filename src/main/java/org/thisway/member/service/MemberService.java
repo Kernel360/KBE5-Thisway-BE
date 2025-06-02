@@ -2,6 +2,7 @@ package org.thisway.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
@@ -22,6 +23,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public MemberResponse getMemberDetail(Long id) {
@@ -45,7 +47,9 @@ public class MemberService {
                 .filter(BaseEntity::isActive)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
-        Member member = request.toMember(company);
+        String encryptedPassword = passwordEncoder.encode(request.password());
+
+        Member member = request.toMember(company, encryptedPassword);
 
         memberRepository.save(member);
     }

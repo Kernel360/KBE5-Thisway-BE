@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.thisway.common.BaseEntity;
 import org.thisway.company.entity.Company;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 
 @Entity
 @Getter
@@ -59,5 +60,22 @@ public class Vehicle extends BaseEntity {
         this.powerOn = powerOn;
         this.latitude = latitude;
         this.longitude = longitude;
+    }
+
+    public void update(VehicleUpdateRequest request) {
+        partialUpdate(request.carNumber(), request.color());
+
+        if (request.manufacturer() != null || request.modelYear() != null || request.model() != null) {
+            this.vehicleDetail.partialUpdate(request.manufacturer(), request.modelYear(), request.model());
+        }
+    }
+
+    public void partialUpdate(String carNumber, String color) {
+        if (carNumber != null) {
+            this.carNumber = carNumber;
+        }
+        if (color != null) {
+            this.color = color;
+        }
     }
 }

@@ -11,12 +11,14 @@ import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
 
 public class MemberFixture {
 
     public static MemberRegisterRequest createMemberRegisterRequestWithCompanyId(long companyId) {
         return new MemberRegisterRequest(
                 companyId,
+                MemberRole.MEMBER,
                 "홍길동",
                 "hong@example.com",
                 "Password123!",
@@ -28,6 +30,7 @@ public class MemberFixture {
     public static MemberRegisterRequest createMemberRegisterRequestWithCompanyIdAndEmail(long companyId, String email) {
         return new MemberRegisterRequest(
                 companyId,
+                MemberRole.MEMBER,
                 "홍길동",
                 email,
                 "Password123!",
@@ -39,6 +42,7 @@ public class MemberFixture {
     public static Member createMember(Company company) {
         return Member.builder()
                 .company(company)
+                .role(MemberRole.MEMBER)
                 .name("홍길동")
                 .email("hong@example.com")
                 .password("Password123!")
@@ -50,6 +54,7 @@ public class MemberFixture {
     public static Member createMemberWithEmail(Company company, String email) {
         return Member.builder()
                 .company(company)
+                .role(MemberRole.MEMBER)
                 .name("홍길동")
                 .email(email)
                 .password("Password123!")
@@ -62,6 +67,7 @@ public class MemberFixture {
         return new MemberResponse(
                 1L,
                 1L,
+                MemberRole.MEMBER,
                 "홍길동",
                 "hong@example.com",
                 "01012345678",

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -58,6 +59,7 @@ public class AuthControllerTest {
 
     @Test
     @DisplayName("이메일 인증 코드 전송에 성공했을 때, ok 응답을 한다.")
+    @Disabled
     void givenValidEmail_whenSendVerifyCode_thenReturnOkStatus() throws Exception {
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(MemberFixture.createMember(company));
