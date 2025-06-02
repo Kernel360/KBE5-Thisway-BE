@@ -18,13 +18,12 @@ public record GeofenceLogData(
 ) {
     public static GeofenceLogData from(
             GeofenceLogRequest request,
-            String mdn,
             Long vehicleId,
             LogDataConverter converter
     ) {
         return new GeofenceLogData(
                 vehicleId,
-                mdn,
+                request.mdn(),
                 converter.convertDateTimeWithSec(request.oTime()),
                 converter.convertToLong(request.geoGrpId()),
                 converter.convertToLong(request.geoPId()),

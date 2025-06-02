@@ -16,7 +16,6 @@ public record PowerLogData(
 ) {
     public static PowerLogData from(
             PowerLogRequest request,
-            String mdn,
             Long vehicleId,
             boolean powerStatus,
             String timeField,
@@ -26,7 +25,7 @@ public record PowerLogData(
 
         return new PowerLogData(
                 vehicleId,
-                mdn,
+                request.mdn(),
                 powerStatus,
                 powerTime,
                 request.gcd(),
