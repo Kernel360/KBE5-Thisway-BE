@@ -20,7 +20,10 @@ public class Emulator {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long mdn;
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String mdn;
 
     @ManyToOne
     @JoinColumn(name = "vehicle_id", nullable = false)
@@ -43,6 +46,8 @@ public class Emulator {
 
     @Builder
     public Emulator (
+            Long id,
+            String mdn,
             Vehicle vehicle,
             String terminalId,
             Integer manufactureId,
@@ -50,6 +55,8 @@ public class Emulator {
             Integer deviceId,
             String deviceFirmwareVersion
     ){
+        this.id = id;
+        this.mdn = mdn;
         this.vehicle = vehicle;
         this.terminalId = terminalId;
         this.manufactureId = manufactureId;
