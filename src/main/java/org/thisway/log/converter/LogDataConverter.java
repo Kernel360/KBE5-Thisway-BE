@@ -12,7 +12,7 @@ public class LogDataConverter {
 
     public Double convertCoordinate(String coordinate) {
         double value = Double.parseDouble(coordinate);
-        return value / 100000;
+        return value / 1_000_000.0;
     }
 
     public LocalDateTime convertDateTime(String dateTime) {
