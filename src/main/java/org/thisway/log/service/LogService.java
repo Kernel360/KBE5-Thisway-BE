@@ -40,13 +40,13 @@ public class LogService {
 
         if (request.onTime() != null && !request.onTime().isEmpty()){
             PowerLogData powerLogData = PowerLogData.from(
-                    request, mdn, vehicleId, true, request.onTime(), converter);
+                    request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
         }
 
         if (request.offTime() != null && !request.offTime().isEmpty()){
             PowerLogData powerLogData = PowerLogData.from(
-                    request, mdn, vehicleId, false, request.offTime(), converter);
+                    request, vehicleId, false, request.offTime(), converter);
             logRepository.savePowerLog(powerLogData);
         }
 
@@ -80,7 +80,7 @@ public class LogService {
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        GeofenceLogData geofenceLogData = GeofenceLogData.from(request, mdn, vehicleId, converter);
+        GeofenceLogData geofenceLogData = GeofenceLogData.from(request, vehicleId, converter);
         logRepository.saveGeofenceLog(geofenceLogData);
 
         log.info("지오펜스 정보 로그 저장 완료: MDN={}", request.mdn());
