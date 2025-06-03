@@ -16,6 +16,9 @@ import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.validation.VehicleUpdateValidator;
+
 import java.util.List;
 
 @Service
@@ -26,6 +29,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleUpdateValidator vehicleUpdateValidator;
 
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
@@ -77,15 +81,28 @@ public class VehicleService {
         return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
     }
 
+    //TODO : 인증/인가(권한) 적용
+    //TODO : 수정 이력 추가
+    public void updateVehicle(Long id, VehicleUpdateRequest request) {
+        Vehicle vehicle = findActiveVehicle(id);
+        vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
+        vehicle.update(request);
+    }
+
+    private Vehicle findActiveVehicle(Long id) {
+        return vehicleRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+    }
+
     private void validatePageable(Pageable pageable) {
         if (pageable.getPageSize() > MAX_PAGE_SIZE) {
-            throw new CustomException(ErrorCode.INVALID_PAGE_SIZE);
+            throw new CustomException(ErrorCode.PAGE_INVALID_PAGE_SIZE);
         }
 
         //TODO : 현재는 VehicleDetail에 있는 속성으로는 정렬 불가. 추가예정.
         pageable.getSort().forEach(order -> {
             if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
-                throw new CustomException(ErrorCode.INVALID_SORT_PROPERTY);
+                throw new CustomException(ErrorCode.PAGE_INVALID_SORT_PROPERTY);
             }
         });
     }

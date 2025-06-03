@@ -1,5 +1,20 @@
 package org.thisway.vehicle.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,23 +32,14 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import org.thisway.vehicle.validation.VehicleUpdateValidator;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -46,6 +52,9 @@ class VehicleServiceTest {
 
     @Mock
     private VehicleDetailRepository vehicleDetailRepository;
+
+    @Mock
+    private VehicleUpdateValidator vehicleUpdateValidator;
 
     @InjectMocks
     private VehicleService vehicleService;
@@ -322,7 +331,7 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.getVehicles(pageRequest));
 
-        assertEquals(ErrorCode.INVALID_PAGE_SIZE, exception.getErrorCode());
+        assertEquals(ErrorCode.PAGE_INVALID_PAGE_SIZE, exception.getErrorCode());
         verify(vehicleRepository, never()).findAllByActiveTrue(any());
     }
 
@@ -336,8 +345,101 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.getVehicles(pageRequest));
 
-        assertEquals(ErrorCode.INVALID_SORT_PROPERTY, exception.getErrorCode());
+        assertEquals(ErrorCode.PAGE_INVALID_SORT_PROPERTY, exception.getErrorCode());
         verify(vehicleRepository, never()).findAllByActiveTrue(any());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 성공")
+    void 차량_정보_수정_성공() {
+        // given
+        Long vehicleId = 1L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678",
+                "흰색",
+                null,
+                2024,
+                "K5"
+        );
+
+        VehicleDetail vehicleDetail = VehicleDetail.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .model("아반떼")
+                .build();
+
+        Vehicle vehicle = Vehicle.builder()
+                .vehicleDetail(vehicleDetail)
+                .carNumber("12가3456")
+                .color("검정")
+                .mileage(5000)
+                .build();
+
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
+        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        // when
+        vehicleService.updateVehicle(vehicleId, request);
+
+        // then
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        assertEquals("34가5678", vehicle.getCarNumber());
+        assertEquals("흰색", vehicle.getColor());
+        assertEquals("현대", vehicle.getVehicleDetail().getManufacturer());
+        assertEquals(2024, vehicle.getVehicleDetail().getModelYear());
+        assertEquals("K5", vehicle.getVehicleDetail().getModel());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 실패 - 차량 번호 중복")
+    void 차량_정보_수정_실패_차량번호_중복() {
+        // given
+        Long vehicleId = 1L;
+        String newCarNumber = "34가5678";
+
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                newCarNumber,
+                "흰색",
+                "기아",
+                2024,
+                "K5"
+        );
+
+        Vehicle mockVehicle = mock(Vehicle.class);
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(mockVehicle));
+
+        doThrow(new CustomException(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER))
+                .when(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.updateVehicle(vehicleId, request));
+
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleUpdateValidator).validateUpdateRequest(mockVehicle, request);
+        assertEquals(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER, exception.getErrorCode());
+        verify(mockVehicle, never()).partialUpdate(any(), any());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 실패 - 차량을 찾을 수 없음")
+    void 차량_정보_수정_실패_차량을_찾을_수_없음() {
+        // given
+        Long nonExistentVehicleId = 999L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                "34가5678", "흰색", "기아", 2024, "K5"
+        );
+
+        when(vehicleRepository.findByIdAndActiveTrue(nonExistentVehicleId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.updateVehicle(nonExistentVehicleId, request));
+
+        verify(vehicleRepository).findByIdAndActiveTrue(nonExistentVehicleId);
+        assertEquals(ErrorCode.VEHICLE_NOT_FOUND, exception.getErrorCode());
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {

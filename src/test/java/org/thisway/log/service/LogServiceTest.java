@@ -1,10 +1,13 @@
 package org.thisway.log.service;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,23 +19,27 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
 import org.thisway.emulator.entity.Emulator;
 import org.thisway.emulator.repository.EmulatorRepository;
+import org.thisway.log.converter.LogDataConverter;
+import org.thisway.log.domain.GeofenceLogData;
+import org.thisway.log.domain.GpsLogData;
+import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
+import org.thisway.log.repository.LogRepository;
 import org.thisway.vehicle.entity.Vehicle;
 
 @ExtendWith(MockitoExtension.class)
 public class LogServiceTest {
 
     @Mock
-    private JdbcTemplate jdbcTemplate;
+    private LogRepository logRepository;
+
+    @Mock
+    private LogDataConverter converter;
 
     @Mock
     private Emulator emulator;
@@ -47,61 +54,10 @@ public class LogServiceTest {
     private LogService logService;
 
     private static final String VALID_MDN = "01234567890";
-    private static final String INVALID_MDN = "012345678900";
     private static final Long VEHICLE_ID = 1L;
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-
-    @Nested
-    @DisplayName("유틸 메서드 테스트")
-    class UtilMethodTest {
-
-        @Test
-        @DisplayName("좌표 변환 테스트")
-        void 좌표_파싱이_올바르게_실행되어야한다() throws Exception {
-            String coordinate = "4140338";
-            Double expected = 41.40338;
-
-            Double result = ReflectionTestUtils.invokeMethod(logService, "parseCoordinate", coordinate);
-
-            assertThat(result).isEqualTo(expected);
-        }
-
-        @Test
-        @DisplayName("날짜 시간 변환 테스트")
-        void 날짜_파싱이_올바르게_실행되어야한다() throws Exception {
-            String dateTime = "202109010920";
-            String seconds = "33";
-            LocalDateTime expected = LocalDateTime.parse("20210901092033", DATE_TIME_FORMATTER);
-
-            LocalDateTime result = ReflectionTestUtils.invokeMethod(logService, "parseDateTime", dateTime, seconds);
-
-            assertThat(expected).isEqualTo(result);
-        }
-
-        @Test
-        @DisplayName("유효한 MDN으로 차량 ID 조회 테스트")
-        void 유효한_MDN이면_차량ID를_반환해야한다() throws Exception {
-            setupMocks();
-
-            Long result = ReflectionTestUtils.invokeMethod(logService, "getVehicleIdByMdn", Long.parseLong(VALID_MDN));
-
-            assertThat(result).isEqualTo(VEHICLE_ID);
-        }
-
-        @Test
-        @DisplayName("유효하지 않은 MDN으로 차량 ID 조회시 예외 발생")
-        void 유효하지_않은_MDN이면_예외를_발생시킨다() {
-            when(emulatorRepository.findByMdn(Long.parseLong(INVALID_MDN)))
-                    .thenReturn(Optional.empty());
-            assertThatExceptionOfType(CustomException.class).isThrownBy(() -> ReflectionTestUtils.invokeMethod(
-                            logService, "getVehicleIdByMdn", Long.parseLong(INVALID_MDN)))
-                    .extracting(CustomException::getErrorCode)
-                    .isEqualTo(ErrorCode.EMULATOR_NOT_FOUND);
-        }
-    }
 
     private void setupMocks() {
-        when(emulatorRepository.findByMdn(Long.parseLong(VALID_MDN))).thenReturn(java.util.Optional.of(emulator));
+        when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));
         when(emulator.getVehicle()).thenReturn(vehicle);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
     }
@@ -175,13 +131,14 @@ public class LogServiceTest {
 
         @Test
         @DisplayName("유효한 요청 시 GPS 로그 저장 성공 테스트")
-        void 유효한_요청이라면_GPS로그를_저장해야한다(){
+        void 유효한_요청이라면_GPS로그를_저장해야한다() {
             GpsLogRequest request = createValidGpsLogRequest(VALID_MDN, 1);
             setupMocks();
+            LocalDateTime occurredTime = LocalDateTime.of(2021, 9, 1, 9, 20);
+            when(converter.convertDateTime(anyString())).thenReturn(occurredTime);
 
             logService.saveGpsLog(request);
-
-            verify(jdbcTemplate).batchUpdate(anyString(), anyList());;
+            verify(logRepository).saveGpsLogs(anyList());
         }
 
         @Test
@@ -190,14 +147,14 @@ public class LogServiceTest {
             int entryCount = 10;
             GpsLogRequest request = createValidGpsLogRequest(VALID_MDN, entryCount);
             setupMocks();
-
-            ArgumentCaptor<List<Object[]>> batchArgsCaptor = ArgumentCaptor.forClass((Class)List.class);
+            LocalDateTime occurredTime = LocalDateTime.of(2021, 9, 1, 9, 20);
+            when(converter.convertDateTime(anyString())).thenReturn(occurredTime);
 
             logService.saveGpsLog(request);
-
-            verify(jdbcTemplate).batchUpdate(anyString(), batchArgsCaptor.capture());
-            List<Object[]> capturedBatchArgs = batchArgsCaptor.getValue();
-            assertThat(capturedBatchArgs.size()).isEqualTo(entryCount);
+            ArgumentCaptor<List<GpsLogData>> gpsLogDataListCaptor = ArgumentCaptor.forClass((Class)List.class);
+            verify(logRepository).saveGpsLogs(gpsLogDataListCaptor.capture());
+            List<GpsLogData> capturedGpsLogDataList = gpsLogDataListCaptor.getValue();
+            assertThat(capturedGpsLogDataList.size()).isEqualTo(entryCount);
         }
     }
 
@@ -210,10 +167,11 @@ public class LogServiceTest {
         void 유효한_요청이라면_시동로그를_저장해야한다() {
             PowerLogRequest request = createValidPowerLogRequest();
             setupMocks();
+            LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
+            when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
 
             logService.savePowerLog(request);
-
-            verify(jdbcTemplate).update(anyString(), any(Object[].class));
+            verify(logRepository).savePowerLog(any(PowerLogData.class));
         }
     }
 
@@ -225,10 +183,12 @@ public class LogServiceTest {
         void 유효한_요청이라면_지오펜스로그를_저장해야한다() {
             GeofenceLogRequest request = createValidGeofenceLogRequest();
             setupMocks();
+            LocalDateTime occurredTime = LocalDateTime.of(2021, 9, 1, 17, 40, 45);
+            when(converter.convertDateTimeWithSec(anyString())).thenReturn(occurredTime);
 
             logService.saveGeofenceLog(request);
 
-            verify(jdbcTemplate).update(anyString(), any(Object[].class));
+            verify(logRepository).saveGeofenceLog(any(GeofenceLogData.class));
         }
     }
 }

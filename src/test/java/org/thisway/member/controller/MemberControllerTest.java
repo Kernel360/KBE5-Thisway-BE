@@ -10,22 +10,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.thisway.common.ApiResponse;
+import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.dto.request.MemberRegisterRequest;
@@ -34,7 +34,9 @@ import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
 
-@WebMvcTest(MemberController.class)
+
+@SpringBootTest
+@AutoConfigureMockMvc
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class MemberControllerTest {
@@ -47,6 +49,7 @@ class MemberControllerTest {
 
     @Test
     @DisplayName("멤버 조회가 정상적으로 되었을 때, ok 응답과 정상적으로 데이터를 조회할 수 있다.")
+    @WithMockUser
     void 멤버_조회_테스트_성공() throws Exception {
         // when
         long id = 1L;
@@ -55,26 +58,24 @@ class MemberControllerTest {
                 .thenReturn(expectResponse);
 
         MvcResult mvcResult = mockMvc.perform(
-                        get("/api/members/1")
-                )
+                get("/api/members/1"))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MemberResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
+        MemberResponse response = objectMapper.readValue(
+                responseBody, MemberResponse.class
         );
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
 
-        MemberResponse memberResponse = response.data();
-        assertThat(memberResponse).isNotNull();
-        assertThat(memberResponse.id()).isEqualTo(id);
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(id);
     }
 
     @Test
     @DisplayName("멤버 조회시 없는 멤버 ID 요청이면, not found 응답을 한다.")
+    @WithMockUser
     void 멤버_조회_테스트_없는_멤버_ID() throws Exception {
         when(memberService.getMemberDetail(1L))
                 .thenThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -83,22 +84,23 @@ class MemberControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                         get ("/api/members/1")
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MemberResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MemberResponse>>() {}
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
         );
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 
     @Test
     @Disabled
     // todo: PageResponse 구조 결정 후 코드 및 주석 변경 or Disable 해제
     @DisplayName("멤버 전체 조회가 정상적으로 되었을 때, ok 응답과 함께 정상적으로 데이터를 조회할 수 있다")
+    @WithMockUser
     void 멤버_전체_조회_테스트_성공() throws Exception {
         // when
         MembersResponse expectResponse = MemberFixture.createMembersResponse(2);
@@ -106,26 +108,24 @@ class MemberControllerTest {
                 .thenReturn(expectResponse);
 
         MvcResult mvcResult = mockMvc.perform(
-                        get("/api/members")
-                )
+                get("/api/members"))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<MembersResponse> response = objectMapper.readValue(
-                responseBody, new TypeReference<ApiResponse<MembersResponse>>() {}
+        MembersResponse response = objectMapper.readValue(
+                responseBody, MembersResponse.class
         );
-        assertThat(response.status()).isEqualTo(HttpStatus.OK.value());
 
-        MembersResponse membersResponse = response.data();
-        assertThat(membersResponse).isNotNull();
-        assertThat(membersResponse.memberResponses()).hasSize(2);
+        assertThat(response).isNotNull();
+        assertThat(response.memberResponses()).hasSize(2);
     }
 
     @Test
     @DisplayName("멤버 등록이 정상적으로 되었을 때, created 응답을 한다.")
+    @WithMockUser
     void 멤버_등록_테스트_성공() throws Exception {
         // given
         MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyId(1L);
@@ -136,50 +136,47 @@ class MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
-        assertThat(response.status()).isEqualTo(HttpStatus.CREATED.value());
     }
 
     @Test
     @DisplayName("멤버 삭제가 정상적으로 되었을 때, no content 응답을 한다.")
+    @WithMockUser
     void 멤버_삭제_테스트_성공() throws Exception {
         // when
         MvcResult mvcResult = mockMvc.perform(
-                        delete("/api/members/1")
-                )
-                .andExpect(status().isOk())
+                delete("/api/members/1"))
+                .andExpect(status().isNoContent())
                 .andDo(print())
                 .andReturn();
 
         // then
-        String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
-        assertThat(response.status()).isEqualTo(HttpStatus.NO_CONTENT.value());
     }
 
     @Test
     @DisplayName("멤버 삭제시 없는 멤버의 ID 요청이면, not found 응답을 한다.")
+    @WithMockUser
     void 멤버_삭제_테스트_없는_멤버_ID() throws Exception {
         // when
         BDDMockito.willThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND))
                 .given(memberService).deleteMember(eq(1L));
 
         MvcResult mvcResult = mockMvc.perform(
-                        delete("/api/members/1")
-                )
-                .andExpect(status().isOk())
+                delete("/api/members/1"))
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
         // then
         String responseBody = mvcResult.getResponse().getContentAsString();
-        ApiResponse<Void> response = objectMapper.readValue(responseBody, new TypeReference<ApiResponse<Void>>() {});
-        assertThat(response.status()).isEqualTo(HttpStatus.NOT_FOUND.value());
+        ApiErrorResponse response = objectMapper.readValue(
+                responseBody, ApiErrorResponse.class
+        );
+        assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
     }
 }

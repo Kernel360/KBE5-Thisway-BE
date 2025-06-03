@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.thisway.common.CustomException;
@@ -26,15 +27,22 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
 
+import lombok.RequiredArgsConstructor;
+
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
 class MemberServiceTest {
 
     private final MemberService memberService;
+
     private final MemberRepository memberRepository;
+
     @Autowired
     private CompanyRepository companyRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -69,8 +77,7 @@ class MemberServiceTest {
         memberRepository.save(member);
         CustomException e = assertThrows(
                 CustomException.class,
-                () -> memberService.getMemberDetail(member.getId() + 1)
-        );
+                () -> memberService.getMemberDetail(member.getId() + 1));
 
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
         // then
@@ -85,8 +92,7 @@ class MemberServiceTest {
                 MemberFixture.createMemberWithEmail(company, "hong1@example.com"),
                 MemberFixture.createMemberWithEmail(company, "hong2@example.com"),
                 MemberFixture.createMemberWithEmail(company, "hong3@example.com"),
-                MemberFixture.createMemberWithEmail(company, "hong4@example.com")
-        );
+                MemberFixture.createMemberWithEmail(company, "hong4@example.com"));
 
         // when
         memberRepository.saveAll(members);
@@ -115,7 +121,7 @@ class MemberServiceTest {
         assertThat(allMember).hasSize(1);
         assertThat(savedMember.getId()).isNotNull();
         assertThat(savedMember.getEmail()).isEqualTo(request.email());
-        assertThat(savedMember.getPassword()).isEqualTo(request.password());
+        assertThat(passwordEncoder.matches(request.password(), savedMember.getPassword())).isTrue();
         assertThat(savedMember.getPhoneValue()).isEqualTo(request.phone());
     }
 
@@ -125,7 +131,8 @@ class MemberServiceTest {
         // given
         String email = "hong@example.com";
         Company company = companyRepository.save(CompanyFixture.createCompany());
-        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyIdAndEmail(company.getId(), email);
+        MemberRegisterRequest request = MemberFixture.createMemberRegisterRequestWithCompanyIdAndEmail(company.getId(),
+                email);
 
         // when & then
         memberRepository.save(MemberFixture.createMemberWithEmail(company, email));

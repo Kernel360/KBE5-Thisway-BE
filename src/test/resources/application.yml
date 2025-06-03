@@ -36,3 +36,8 @@ spring:
 custom:
   verification-code-expiration-millis: 100000
   verification-code-key-prefix: "test:"
+
+security:
+  jwt:
+    secret-key: szU3FELDRTw9sJzzP1cWuo/xUzIjSvMGGSWKlMCgku/vZwsSmi8BHsH/rnsAyTzTAQ2IGS0mgr/oxi4WsHMhcQ==
+    access-token-validity-ms: 360000
