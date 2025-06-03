@@ -1,8 +1,9 @@
 package org.thisway.member.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.thisway.common.ApiResponse;
 import org.thisway.member.dto.request.PasswordChangeRequest;
 import org.thisway.member.dto.request.SendVerificationCodeRequest;
 import org.thisway.member.service.PasswordService;
@@ -16,14 +17,16 @@ public class PasswordController {
     private final PasswordService passwordService;
 
     @PostMapping("/verify-code")
-    public ApiResponse<Void> sendVerifyCode(@RequestBody SendVerificationCodeRequest request) {
+    public ResponseEntity<Void> sendVerifyCode(@RequestBody SendVerificationCodeRequest request) {
         passwordService.sendVerificationCode(request.email());
-        return ApiResponse.ok();
+        return ResponseEntity.status(HttpStatus.OK)
+                .build();
     }
 
     @PutMapping("/password")
-    public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request) {
+    public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeRequest request) {
         passwordService.changePassword(request.email(), request.code(), request.newPassword());
-        return ApiResponse.ok();
+        return ResponseEntity.status(HttpStatus.OK)
+                .build();
     }
 }

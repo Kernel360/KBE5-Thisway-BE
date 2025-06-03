@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -112,7 +111,7 @@ public class PasswordServiceTest {
 
         CustomException e = assertThrows(CustomException.class, () ->
                 passwordService.changePassword(member.getEmail(), "654321", "theNewPassword"));
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INVALID_VERIFY_CODE);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE);
     }
 
     @Test
@@ -126,7 +125,7 @@ public class PasswordServiceTest {
 
         CustomException e = assertThrows(CustomException.class, () ->
                 passwordService.changePassword(member.getEmail(), "123456", "theNewPassword"));
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.INVALID_VERIFY_CODE);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE);
     }
 
 }

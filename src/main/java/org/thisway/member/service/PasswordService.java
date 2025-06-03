@@ -61,7 +61,7 @@ public class PasswordService {
 
             redisComponent.delete(prefix, email);
         } else {
-            throw new CustomException(ErrorCode.INVALID_VERIFY_CODE);
+            throw new CustomException(ErrorCode.AUTH_INVALID_VERIFICATION_CODE);
         }
     }
 

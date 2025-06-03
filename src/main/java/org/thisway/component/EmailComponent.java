@@ -33,7 +33,7 @@ public class EmailComponent {
             javaMailSender.send(mimeMessage);
 
         } catch (MessagingException | MailException | IllegalArgumentException e) {
-            throw new CustomException(ErrorCode.SERVER_ERROR);
+            throw new CustomException(ErrorCode.EMAIL_SEND_ERROR);
         }
     }
 

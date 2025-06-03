@@ -75,7 +75,7 @@ public class EmailComponentTest {
 
         CustomException e = assertThrows(CustomException.class, () -> emailComponent.sendMail(email,  subject, templateName, variables));
 
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.EMAIL_SEND_ERROR);
     }
 
     @Test
@@ -89,7 +89,7 @@ public class EmailComponentTest {
 
         CustomException e = assertThrows(CustomException.class, () -> emailComponent.sendMail(email,  subject, templateName, variables));
 
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.EMAIL_SEND_ERROR);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class EmailComponentTest {
 
         CustomException e = assertThrows(CustomException.class, () -> emailComponent.sendMail(email,  subject, templateName, variables));
 
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.EMAIL_SEND_ERROR);
     }
 
 }

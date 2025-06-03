@@ -62,7 +62,7 @@ public class RedisComponentTest {
         doThrow(new RuntimeException("redis에 저장 실패")).when(objectMapper).writeValueAsString(any());
 
         CustomException e = assertThrows(CustomException.class, () -> redisComponent.storeToRedis(prefix, key, expiryMillis, data));
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REDIS_STORE_ERROR);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class RedisComponentTest {
         doThrow(new RuntimeException("Redis 에러")).when(redisTemplate).opsForValue();
 
         CustomException e = assertThrows(CustomException.class, () -> redisComponent.retrieveFromRedis(prefix, key, String.class));
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.SERVER_ERROR);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REDIS_RETRIEVE_ERROR);
     }
 
 }

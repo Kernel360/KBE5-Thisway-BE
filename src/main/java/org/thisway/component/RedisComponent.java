@@ -21,7 +21,7 @@ public class RedisComponent {
             String json = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(prefix+key, json, expirationMills, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            throw new CustomException(ErrorCode.SERVER_ERROR);
+            throw new CustomException(ErrorCode.REDIS_STORE_ERROR);
         }
     }
 
@@ -34,12 +34,16 @@ public class RedisComponent {
             } else return null;
 
         } catch (Exception e) {
-            throw new CustomException(ErrorCode.SERVER_ERROR);
+            throw new CustomException(ErrorCode.REDIS_RETRIEVE_ERROR);
         }
     }
 
     public void delete(String prefix, String key) {
-        redisTemplate.delete(prefix+key);
+        try {
+            redisTemplate.delete(prefix+key);
+        } catch (Exception ignored) {
+            // 삭제하기 전 만료되어 redis 내부적으로 삭제된 데이터의 경우 에러 무시.
+        }
     }
 
 }
