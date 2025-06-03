@@ -1,5 +1,6 @@
 package org.thisway.vehicle.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -9,32 +10,33 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
+import org.thisway.emulator.repository.EmulatorRepository;
+import org.thisway.emulator.service.EmulatorService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
+import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
-import org.thisway.vehicle.dto.response.VehiclesResponse;
-import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class VehicleService {
 
-    private final VehicleRepository vehicleRepository;
-    private final CompanyRepository companyRepository;
-    private final VehicleDetailRepository vehicleDetailRepository;
-    private final VehicleUpdateValidator vehicleUpdateValidator;
-
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
             "id", "carNumber", "color", "mileage"
     );
+    private final VehicleRepository vehicleRepository;
+    private final CompanyRepository companyRepository;
+    private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleUpdateValidator vehicleUpdateValidator;
+    private final EmulatorService emulatorService;
+    private final EmulatorRepository emulatorRepository;
 
     public void registerVehicle(VehicleCreateRequest request) {
 
@@ -56,7 +58,7 @@ public class VehicleService {
 
         //TODO : 업체로 로그인 했을시 권한 확인 로직 추가
         Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(()-> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
 
         return VehicleResponse.fromVehicle(vehicle);
     }
@@ -79,6 +81,23 @@ public class VehicleService {
     public VehiclesResponse getVehicles(Pageable pageable) {
         validatePageable(pageable);
         return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
+    }
+
+    public void UpdateVehiclePowerState(Long id, boolean powerOn) {
+        Vehicle vehicle = findActiveVehicle(id);
+
+        if (vehicle.isPowerOn() != powerOn) {
+            vehicle.updatePowerOn(powerOn);
+
+            emulatorRepository.findByVehicleId(id)
+                    .ifPresent(emulator -> {
+                        if (powerOn) {
+                            emulatorService.startEmulator(id, emulator.getMdn());
+                        } else {
+                            emulatorService.stopEmulator(id, emulator.getMdn());
+                        }
+                    });
+        }
     }
 
     //TODO : 인증/인가(권한) 적용
