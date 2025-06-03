@@ -83,4 +83,11 @@ public class MemberFixture {
 
         return MembersResponse.from(page);
     }
+
+    public static Member createInactiveMember(Company company) {
+        Member member = createMember(company);
+        member.delete();
+
+        return member;
+    }
 }

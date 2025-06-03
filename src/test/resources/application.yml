@@ -34,4 +34,5 @@ spring:
     open-in-view: true
 
 custom:
-  auth-code-expiration-millis: 600000
+  verification-code-expiration-millis: 100000
+  verification-code-key-prefix: "test:"
