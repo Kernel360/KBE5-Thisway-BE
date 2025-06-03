@@ -2,6 +2,7 @@ package org.thisway.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
@@ -25,6 +26,7 @@ public class PasswordService {
 
     private final EmailComponent emailComponent;
     private final RedisComponent redisComponent;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${custom.verification-code-expiration-millis}")
     private long authCodeExpirationMills;
@@ -35,7 +37,6 @@ public class PasswordService {
     public void sendVerificationCode(String email) {
         // todo: 이메일 regex 처리 예정.
 
-        // todo: ErrorCode 논의 후 변경 예정.
         memberRepository.findByEmailAndActiveTrue(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -56,7 +57,8 @@ public class PasswordService {
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
             // todo: 비밀번호 regex 처리
 
-            member.updatePassword(newPassword);
+            String encryptedPassword = passwordEncoder.encode(newPassword);
+            member.updatePassword(encryptedPassword);
             memberRepository.save(member);
 
             redisComponent.delete(prefix, email);

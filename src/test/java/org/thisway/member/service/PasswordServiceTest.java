@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class PasswordServiceTest {
     private final RedisComponent redisComponent;
     @MockitoSpyBean
     private final EmailComponent emailComponent;
+    private final PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
@@ -94,7 +96,10 @@ public class PasswordServiceTest {
 
         assertThatCode(() -> passwordService.changePassword(member.getEmail(), "123456", "theNewPassword"))
                 .doesNotThrowAnyException();
-        assertThat(memberRepository.findByEmailAndActiveTrue(member.getEmail()).get().getPassword()).isEqualTo("theNewPassword");
+        assertThat(passwordEncoder.matches(
+                "theNewPassword",
+                memberRepository.findByEmailAndActiveTrue(member.getEmail()).get().getPassword())
+        ).isTrue();
 
         verify(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
         verify(redisComponent).delete(anyString(), anyString());
