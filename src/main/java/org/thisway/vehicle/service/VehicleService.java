@@ -10,8 +10,6 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
-import org.thisway.vehicle.api.EmulatorFinder;
-import org.thisway.vehicle.api.EmulatorOperations;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -35,8 +33,6 @@ public class VehicleService {
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
     private final VehicleUpdateValidator vehicleUpdateValidator;
-    private final EmulatorOperations emulatorOperations;
-    private final EmulatorFinder emulatorFinder;
 
     public void registerVehicle(VehicleCreateRequest request) {
 
@@ -88,15 +84,6 @@ public class VehicleService {
 
         if (vehicle.isPowerOn() != powerOn) {
             vehicle.updatePowerOn(powerOn);
-
-            emulatorFinder.findByVehicleId(id)
-                    .ifPresent(emulator -> {
-                        if (powerOn) {
-                            emulatorOperations.startEmulator(id, emulator.getMdn());
-                        } else {
-                            emulatorOperations.stopEmulator(id, emulator.getMdn());
-                        }
-                    });
         }
     }
 
