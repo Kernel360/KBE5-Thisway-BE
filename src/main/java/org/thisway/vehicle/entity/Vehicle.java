@@ -78,4 +78,8 @@ public class Vehicle extends BaseEntity {
             this.color = color;
         }
     }
+
+    public void updatePowerOn(boolean powerOn) {
+        this.powerOn = powerOn;
+    }
 }
