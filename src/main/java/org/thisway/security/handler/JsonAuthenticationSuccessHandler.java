@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.thisway.security.utils.JwtTokenUtil;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +30,6 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
             HttpServletRequest request,
             HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
-        // Handle successful authentication
         String subject = authentication.getName();
         Map<String, Object> claims = new HashMap<>();
 
@@ -38,14 +39,19 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
                         auth.getAuthority(),
                         true));
 
-        // log.info("Authentication successful for user: {} {}", subject,
-        // authentication.getAuthorities());
-        log.info("creating JWT for user: {} with claims: {}", subject, claims);
-
         String jwt = jwtTokenUtil.createAccessToken(subject, claims);
 
         response.setStatus(HttpServletResponse.SC_OK);
-        response.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("token", jwt);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(payload);
+        response.getWriter().write(json);
+        response.getWriter().flush();
     }
 
 }
