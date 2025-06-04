@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -70,5 +71,9 @@ public class Member extends BaseEntity {
 
     public void updatePassword(String password) {
         this.password = password;
+    }
+
+    public Set<MemberRole> getLowerOrEqualRoles() {
+        return role.getLowerOrEqualRoles();
     }
 }

@@ -1,9 +1,26 @@
 package org.thisway.member.entity;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public enum MemberRole {
 
-    ADMIN,
-    COMPANY_ADMIN,
-    COMPANY_CHEF,
-    MEMBER,
+    ADMIN(4),
+    COMPANY_ADMIN(3),
+    COMPANY_CHEF(2),
+    MEMBER(1),
+    ;
+
+    private final int level;
+
+    public Set<MemberRole> getLowerOrEqualRoles() {
+        return Arrays.stream(MemberRole.values())
+                .filter(role -> role.level <= this.level)
+                .collect(Collectors.toSet());
+    }
 }

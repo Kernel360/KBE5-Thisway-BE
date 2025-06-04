@@ -2,9 +2,10 @@ package org.thisway.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
 
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
@@ -24,10 +26,10 @@ import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
-
-import lombok.RequiredArgsConstructor;
+import org.thisway.security.service.SecurityService;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @RequiredArgsConstructor
@@ -35,6 +37,9 @@ import lombok.RequiredArgsConstructor;
 class MemberServiceTest {
 
     private final MemberService memberService;
+
+    @MockitoBean
+    private final SecurityService securityService;
 
     private final MemberRepository memberRepository;
 
@@ -92,14 +97,70 @@ class MemberServiceTest {
                 MemberFixture.createMemberWithEmail(company, "hong1@example.com"),
                 MemberFixture.createMemberWithEmail(company, "hong2@example.com"),
                 MemberFixture.createMemberWithEmail(company, "hong3@example.com"),
-                MemberFixture.createMemberWithEmail(company, "hong4@example.com"));
+                MemberFixture.createMemberWithEmail(company, "hong4@example.com")
+        );
+        memberRepository.saveAll(members);
+
+        Member admin = MemberFixture.createMember(company, MemberRole.ADMIN);
+        given(securityService.getCurrentMember()).willReturn(admin);
 
         // when
-        memberRepository.saveAll(members);
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
         assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(members.size());
+        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
+        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("업체 최고 관리자가 멤버가 페이징 조회할 경우, admin을 제외한 멤버 정보가 정상적으로 조회된다")
+    void 멤버_페이징_조회_권한_필터_테스트_성공_업체_최고_관리자() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        List<Member> members = List.of(
+                MemberFixture.createMemberWithEmail(company, MemberRole.ADMIN, "hong1@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong2@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong3@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong4@example.com")
+        );
+        memberRepository.saveAll(members);
+
+        Member companyAdmin = MemberFixture.createMember(company, MemberRole.COMPANY_ADMIN);
+        given(securityService.getCurrentMember()).willReturn(companyAdmin);
+
+        // when
+        MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
+
+        // then
+        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
+        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
+        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+    }
+
+
+    @Test
+    @DisplayName("업체 최고 관리자가 멤버가 페이징 조회할 경우, 본인의 업체만 조회한다.")
+    void 멤버_페이징_조회_업체_필터_테스트_성공_업체_최고_관리자() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Company otherCompany = companyRepository.save(CompanyFixture.createCompany());
+        List<Member> members = List.of(
+                MemberFixture.createMemberWithEmail(otherCompany, "hong1@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong2@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong3@example.com"),
+                MemberFixture.createMemberWithEmail(company, "hong4@example.com")
+        );
+        memberRepository.saveAll(members);
+
+        Member companyAdmin = MemberFixture.createMember(company, MemberRole.COMPANY_ADMIN);
+        given(securityService.getCurrentMember()).willReturn(companyAdmin);
+
+        // when
+        MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
+
+        // then
+        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
         assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
         assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
     }
