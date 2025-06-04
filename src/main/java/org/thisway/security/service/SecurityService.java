@@ -5,6 +5,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.entity.Member;
@@ -12,6 +13,7 @@ import org.thisway.member.repository.MemberRepository;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SecurityService {
 
     private final MemberRepository memberRepository;
@@ -30,6 +32,7 @@ public class SecurityService {
         return (UserDetails) authentication.getPrincipal();
     }
 
+    @Transactional(readOnly = true)
     public Member getCurrentMember() {
         return memberRepository.findByEmailAndActiveTrue(getCurrentUserDetails().getUsername())
                 .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_AUTHENTICATION));
