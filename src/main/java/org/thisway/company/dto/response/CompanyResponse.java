@@ -3,6 +3,7 @@ package org.thisway.company.dto.response;
 import org.thisway.company.entity.Company;
 
 public record CompanyResponse(
+        Long id,
         String name,
         String crn,
         String contact,
@@ -14,6 +15,7 @@ public record CompanyResponse(
 
     public static CompanyResponse from(Company company) {
         return new CompanyResponse(
+                company.getId(),
                 company.getName(),
                 company.getCrn(),
                 company.getContact(),
