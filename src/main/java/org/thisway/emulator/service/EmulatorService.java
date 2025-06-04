@@ -6,19 +6,22 @@ import org.springframework.web.client.RestClient;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.emulator.repository.EmulatorRepository;
+import org.thisway.vehicle.api.EmulatorOperations;
 
 @Service
 @RequiredArgsConstructor
-public class EmulatorService {
+public class EmulatorService implements EmulatorOperations {
 
     private final EmulatorRepository emulatorRepository;
     private final RestClient restClient;
 
+    @Override
     public void startEmulator(Long vehicleId, String mdn) {
         validateEmulatorExists(vehicleId);
         callEmulatorApi(mdn, "start");
     }
 
+    @Override
     public void stopEmulator(Long vehicleId, String mdn) {
         validateEmulatorExists(vehicleId);
         callEmulatorApi(mdn, "stop");
