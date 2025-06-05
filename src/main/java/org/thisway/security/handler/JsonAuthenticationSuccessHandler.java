@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.utils.JwtTokenUtil;
@@ -30,11 +31,12 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
         String subject = authentication.getName();
         Map<String, Object> claims = new HashMap<>();
 
-        authentication
-                .getAuthorities()
-                .forEach(auth -> claims.put(
-                        auth.getAuthority(),
-                        true));
+        claims.put("roles",
+                authentication.getAuthorities()
+                        .stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList()
+        );
 
         if (authentication.getPrincipal() instanceof MemberDetails memberDetails) {
             claims.put("companyId", memberDetails.getCompanyId());

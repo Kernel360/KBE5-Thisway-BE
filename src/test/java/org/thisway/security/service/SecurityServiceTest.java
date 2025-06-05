@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,12 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.security.dto.request.MemberDetails;
 
 class SecurityServiceTest {
 
@@ -42,7 +41,10 @@ class SecurityServiceTest {
     void 현재_회원_조회_성공() {
         // given
         String email = "email@example.com";
-        UserDetails user = new User(email, "password", new ArrayList<>());
+        MemberDetails user = MemberDetails.builder()
+                .username(email)
+                .role(MemberRole.MEMBER)
+                .build();
         Member member = mock(Member.class);
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -79,7 +81,10 @@ class SecurityServiceTest {
     void 현재_회원_조회_실패_DB에_없음() {
         // given
         String email = "email@example.com";
-        UserDetails user = new User(email, "password", new ArrayList<>());
+        MemberDetails user = MemberDetails.builder()
+                .username(email)
+                .role(MemberRole.MEMBER)
+                .build();
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())
@@ -92,6 +97,7 @@ class SecurityServiceTest {
                 securityService.getCurrentMember()
         );
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_INVALID_AUTHENTICATION);
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.AUTH_INVALID_AUTHENTICATION);
     }
 }

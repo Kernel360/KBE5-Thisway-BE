@@ -8,7 +8,6 @@ import lombok.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.util.Assert;
 import org.thisway.member.entity.MemberRole;
 
 @Getter
@@ -30,11 +29,7 @@ public class MemberDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Assert.isTrue(
-                !role.name().startsWith("ROLE_"),
-                () -> role + " cannot start with ROLE_ (it is automatically added)"
-        );
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override

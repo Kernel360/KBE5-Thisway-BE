@@ -82,15 +82,17 @@ class JwtAuthenticationFilterTest {
         given(claims.get(
                 "roles",
                 List.class))
-                .willReturn(List.of("USER"));
+                .willReturn(List.of("MEMBER"));
+        given(claims.get("companyId", Long.class))
+                .willReturn(1L);
 
         given(jwtTokenProvider.validateTokenAndGetClaims("valid-token"))
                 .willReturn(claims);
 
         // when & then
         mockMvc.perform(get("/dummy")
-                .header("Authorization",
-                        "Bearer valid-token"))
+                        .header("Authorization",
+                                "Bearer valid-token"))
                 .andExpect(result -> {
                     assertThat(result
                             .getResponse()
@@ -104,7 +106,7 @@ class JwtAuthenticationFilterTest {
                     assertThat(auth.getName()).isEqualTo("alice");
                     assertThat(auth.getAuthorities())
                             .extracting("authority")
-                            .containsExactly("USER");
+                            .containsExactly("MEMBER");
                 });
     }
 
