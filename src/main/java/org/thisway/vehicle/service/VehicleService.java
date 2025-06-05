@@ -79,7 +79,7 @@ public class VehicleService {
         vehicle.update(request);
     }
 
-    public void UpdateVehiclePowerState(Long id, boolean powerOn) {
+    public void updateVehiclePowerState(Long id, boolean powerOn) {
         Vehicle vehicle = findActiveVehicle(id);
 
         if (vehicle.isPowerOn() != powerOn) {
