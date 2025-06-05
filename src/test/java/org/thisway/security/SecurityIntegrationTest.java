@@ -1,11 +1,10 @@
 package org.thisway.security;
 
-import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -70,8 +69,7 @@ class SecurityIntegrationTest {
                 .content(objectMapper.writeValueAsString(login)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(header().exists(HttpHeaders.AUTHORIZATION))
-                .andExpect(header().string(HttpHeaders.AUTHORIZATION, startsWith("Bearer ")));
+                .andExpect(jsonPath("$.token").isString());
     }
 
     @Test
@@ -88,8 +86,7 @@ class SecurityIntegrationTest {
 
         mockMvc.perform(
                 get("/api/members/1")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                )
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk());
     }
 

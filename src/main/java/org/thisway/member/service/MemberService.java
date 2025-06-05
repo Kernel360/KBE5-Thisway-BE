@@ -1,6 +1,8 @@
 package org.thisway.member.service;
 
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,13 +16,16 @@ import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.security.service.SecurityService;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class MemberService {
 
+    private final SecurityService securityService;
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
@@ -35,7 +40,17 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MembersResponse getMembers(Pageable pageable) {
-        return MembersResponse.from(memberRepository.findAllByActiveTrue(pageable));
+        Member currentMember = securityService.getCurrentMember();
+
+        Page<Member> members;
+        if (currentMember.getRole() != MemberRole.ADMIN) {
+            Set<MemberRole> targetRoles = currentMember.getLowerOrEqualRoles();
+            members = memberRepository.findAllByActiveTrueAndRoleInAndCompany(targetRoles, currentMember.getCompany(), pageable);
+        } else {
+            members = memberRepository.findAllByActiveTrue(pageable);
+        }
+
+        return MembersResponse.from(members);
     }
 
     public void registerMember(MemberRegisterRequest request) {

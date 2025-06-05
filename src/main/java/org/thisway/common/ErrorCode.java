@@ -14,14 +14,12 @@ public enum ErrorCode {
 
     /* 서버 에러 */
     SERVER_ERROR("00000", "서버에러 입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-
     // 이메일 에러 x7xxx
     EMAIL_SEND_ERROR("07000", "이메일 발송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // DB 에러 x8xxx
     REDIS_STORE_ERROR("08000", "데이터를 저장하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     REDIS_RETRIEVE_ERROR("08001", "저장된 데이터를 가져오는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-
 
     /* 비즈니스 에러 */
     // 업체 에러 x1xxx
@@ -35,6 +33,8 @@ public enum ErrorCode {
 
     // 인증 에러 x3xxx
     AUTH_INVALID_VERIFICATION_CODE("13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
+    AUTH_UNAUTHENTICATED("13001","인증된 사용자가 아닙니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_INVALID_AUTHENTICATION("13002","잘못된 인증정보입니다.", HttpStatus.UNAUTHORIZED),
 
     // 차량 x4xxx
     VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),
