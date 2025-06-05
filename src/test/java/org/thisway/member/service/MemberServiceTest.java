@@ -19,6 +19,7 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.common.PageInfo;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
@@ -108,9 +109,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(members.size());
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(4);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
     @Test
@@ -133,9 +138,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(3);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
 
@@ -160,9 +169,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(3);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
     @Test

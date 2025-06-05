@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
@@ -28,6 +27,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.common.PageInfo;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
@@ -58,7 +58,7 @@ class MemberControllerTest {
                 .thenReturn(expectResponse);
 
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/members/1"))
+                        get("/api/members/1"))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
@@ -82,7 +82,7 @@ class MemberControllerTest {
 
         // when
         MvcResult mvcResult = mockMvc.perform(
-                        get ("/api/members/1")
+                        get("/api/members/1")
                 )
                 .andExpect(status().isBadRequest())
                 .andDo(print())
@@ -97,8 +97,6 @@ class MemberControllerTest {
     }
 
     @Test
-    @Disabled
-    // todo: PageResponse 구조 결정 후 코드 및 주석 변경 or Disable 해제
     @DisplayName("멤버 전체 조회가 정상적으로 되었을 때, ok 응답과 함께 정상적으로 데이터를 조회할 수 있다")
     @WithMockUser
     void 멤버_전체_조회_테스트_성공() throws Exception {
@@ -108,7 +106,8 @@ class MemberControllerTest {
                 .thenReturn(expectResponse);
 
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/members"))
+                        get("/api/members")
+                )
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn();
@@ -120,7 +119,13 @@ class MemberControllerTest {
         );
 
         assertThat(response).isNotNull();
-        assertThat(response.memberResponses()).hasSize(2);
+
+        PageInfo pageInfo = response.pageInfo();
+        assertThat(pageInfo.totalElements()).isEqualTo(2);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(1);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
     @Test
@@ -132,9 +137,9 @@ class MemberControllerTest {
 
         // when
         MvcResult mvcResult = mockMvc.perform(
-                post("/api/members")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        post("/api/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isCreated())
                 .andDo(print())
@@ -150,7 +155,7 @@ class MemberControllerTest {
     void 멤버_삭제_테스트_성공() throws Exception {
         // when
         MvcResult mvcResult = mockMvc.perform(
-                delete("/api/members/1"))
+                        delete("/api/members/1"))
                 .andExpect(status().isNoContent())
                 .andDo(print())
                 .andReturn();
@@ -167,7 +172,7 @@ class MemberControllerTest {
                 .given(memberService).deleteMember(eq(1L));
 
         MvcResult mvcResult = mockMvc.perform(
-                delete("/api/members/1"))
+                        delete("/api/members/1"))
                 .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
