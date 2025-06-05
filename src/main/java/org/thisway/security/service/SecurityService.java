@@ -18,7 +18,7 @@ public class SecurityService {
 
     private final MemberRepository memberRepository;
 
-    private MemberDetails getCurrentUserDetails() {
+    public MemberDetails getCurrentMemberDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null
@@ -34,7 +34,7 @@ public class SecurityService {
 
     @Transactional(readOnly = true)
     public Member getCurrentMember() {
-        return memberRepository.findByEmailAndActiveTrue(getCurrentUserDetails().getUsername())
+        return memberRepository.findByEmailAndActiveTrue(getCurrentMemberDetails().getUsername())
                 .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_AUTHENTICATION));
     }
 }

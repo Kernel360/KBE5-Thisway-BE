@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
+import org.thisway.member.dto.response.MemberSummaryResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 
@@ -50,5 +51,11 @@ public class MemberController {
         memberService.deleteMember(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<MemberSummaryResponse> summary() {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(MemberSummaryResponse.from(memberService.summary()));
     }
 }

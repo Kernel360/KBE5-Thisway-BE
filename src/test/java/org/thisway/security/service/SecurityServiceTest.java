@@ -2,6 +2,7 @@ package org.thisway.security.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +38,41 @@ class SecurityServiceTest {
     }
 
     @Test
+    @DisplayName("인증되지 않은 상태에서 현재 회원 정보를 조회하면 예외가 발생한다.")
+    void 현재_회원_디테일_조회_성공() {
+        // given
+        String email = "email@example.com";
+        MemberDetails user = MemberDetails.builder()
+                .username(email)
+                .role(MemberRole.MEMBER)
+                .build();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())
+        );
+
+        // when
+        MemberDetails currentMemberDetails = securityService.getCurrentMemberDetails();
+
+        // then
+        assertThat(currentMemberDetails.getUsername()).isEqualTo(email);
+        assertThat(currentMemberDetails.getRole()).isEqualTo(MemberRole.MEMBER);
+    }
+
+    @Test
+    @DisplayName("인증되지 않은 상태에서 현재 회원 정보를 조회하면 예외가 발생한다.")
+    void 현재_회원_디테일_조회_실패_인증안됨() {
+        // given
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class, () ->
+                securityService.getCurrentMemberDetails()
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_UNAUTHENTICATED);
+    }
+
+    @Test
     @DisplayName("인증된 사용자의 Member 정보를 성공적으로 조회할 수 있다.")
     void 현재_회원_조회_성공() {
         // given
@@ -51,8 +87,8 @@ class SecurityServiceTest {
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())
         );
 
-        when(memberRepository.findByEmailAndActiveTrue(email))
-                .thenReturn(Optional.of(member));
+        given(memberRepository.findByEmailAndActiveTrue(email))
+                .willReturn(Optional.of(member));
 
         // when
         Member result = securityService.getCurrentMember();
@@ -60,20 +96,6 @@ class SecurityServiceTest {
         // then
         assertThat(result).isEqualTo(member);
         verify(memberRepository).findByEmailAndActiveTrue(email);
-    }
-
-    @Test
-    @DisplayName("인증되지 않은 상태에서 현재 회원 정보를 조회하면 예외가 발생한다.")
-    void 현재_회원_조회_실패_인증안됨() {
-        // given
-        SecurityContextHolder.clearContext(); // 인증정보 없음
-
-        // when & then
-        CustomException exception = assertThrows(CustomException.class, () ->
-                securityService.getCurrentMember()
-        );
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AUTH_UNAUTHENTICATED);
     }
 
     @Test
