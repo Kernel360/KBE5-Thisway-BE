@@ -1,5 +1,6 @@
 package org.thisway.vehicle.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,31 +11,28 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
+import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
-import org.thisway.vehicle.dto.response.VehiclesResponse;
-import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class VehicleService {
 
-    private final VehicleRepository vehicleRepository;
-    private final CompanyRepository companyRepository;
-    private final VehicleDetailRepository vehicleDetailRepository;
-    private final VehicleUpdateValidator vehicleUpdateValidator;
-
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
             "id", "carNumber", "color", "mileage"
     );
+    private final VehicleRepository vehicleRepository;
+    private final CompanyRepository companyRepository;
+    private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleUpdateValidator vehicleUpdateValidator;
 
     public void registerVehicle(VehicleCreateRequest request) {
 
@@ -56,7 +54,7 @@ public class VehicleService {
 
         //TODO : 업체로 로그인 했을시 권한 확인 로직 추가
         Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(()-> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
 
         return VehicleResponse.fromVehicle(vehicle);
     }
@@ -87,6 +85,14 @@ public class VehicleService {
         Vehicle vehicle = findActiveVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
         vehicle.update(request);
+    }
+
+    public void UpdateVehiclePowerState(Long id, boolean powerOn) {
+        Vehicle vehicle = findActiveVehicle(id);
+
+        if (vehicle.isPowerOn() != powerOn) {
+            vehicle.updatePowerOn(powerOn);
+        }
     }
 
     private Vehicle findActiveVehicle(Long id) {
