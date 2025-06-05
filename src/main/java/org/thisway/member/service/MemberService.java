@@ -12,12 +12,14 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
+import org.thisway.member.dto.MemberSummaryDto;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
 
 @Service
@@ -45,7 +47,8 @@ public class MemberService {
         Page<Member> members;
         if (currentMember.getRole() != MemberRole.ADMIN) {
             Set<MemberRole> targetRoles = currentMember.getLowerOrEqualRoles();
-            members = memberRepository.findAllByActiveTrueAndRoleInAndCompany(targetRoles, currentMember.getCompany(), pageable);
+            members = memberRepository.findAllByActiveTrueAndRoleInAndCompany(targetRoles, currentMember.getCompany(),
+                    pageable);
         } else {
             members = memberRepository.findAllByActiveTrue(pageable);
         }
@@ -74,5 +77,24 @@ public class MemberService {
                 .filter(BaseEntity::isActive)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND))
                 .delete();
+    }
+
+    public MemberSummaryDto summary() {
+        MemberDetails currentMemberDetails = securityService.getCurrentMemberDetails();
+        long companyId = currentMemberDetails.getCompanyId();
+
+        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.ADMIN);
+        long companyChefCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_CHEF);
+        long memberCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.MEMBER);
+
+        return MemberSummaryDto.builder()
+                .companyAdminCount(companyAdminCount)
+                .companyChefCount(companyChefCount)
+                .memberCount(memberCount)
+                .build();
+    }
+
+    private long countActiveAndCompanyIdAndRole(long companyId, MemberRole role) {
+        return memberRepository.countByActiveTrueAndCompanyIdAndRole(companyId, role);
     }
 }
