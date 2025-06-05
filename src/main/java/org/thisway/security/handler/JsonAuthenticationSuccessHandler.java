@@ -1,20 +1,17 @@
 package org.thisway.security.handler;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.thisway.security.utils.JwtTokenUtil;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.thisway.security.dto.request.MemberDetails;
+import org.thisway.security.utils.JwtTokenUtil;
 
 @Slf4j
 public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -38,6 +35,15 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
                 .forEach(auth -> claims.put(
                         auth.getAuthority(),
                         true));
+
+        if (authentication.getPrincipal() instanceof MemberDetails memberDetails) {
+            claims.put("companyId", memberDetails.getCompanyId());
+        } else {
+            log.error(
+                    "Authentication principal is not instance of MemberDetails: {}",
+                    authentication.getPrincipal().getClass().getName()
+            );
+        }
 
         String jwt = jwtTokenUtil.createAccessToken(subject, claims);
 
