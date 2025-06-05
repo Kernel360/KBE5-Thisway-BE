@@ -1,6 +1,5 @@
 package org.thisway.vehicle.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,6 +9,9 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
+import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
+import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -20,51 +22,41 @@ import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class VehicleService {
 
-    private static final int MAX_PAGE_SIZE = 20;
-    private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
-            "id", "carNumber", "color", "mileage"
-    );
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleDetailRepository vehicleDetailRepository;
     private final VehicleUpdateValidator vehicleUpdateValidator;
+    private final SecurityService securityService;
+
+    private static final int MAX_PAGE_SIZE = 20;
+    private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
+            "id", "carNumber", "color", "mileage"
+    );
 
     public void registerVehicle(VehicleCreateRequest request) {
-
+        Member member = getCurrentMember();
+        Company company = validateMemberCompanyAndPermission(member);
         VehicleDetail vehicleDetail = request.toVehicleDetailEntity();
-
         VehicleDetail savedVehicleDetail = vehicleDetailRepository.save(vehicleDetail);
-
-        //TODO: (하드코딩)업체로 로그인한 이후에 차량을 등록 -> 인가 시 업체 Id나 사업자등록번호를 받아서 유효성 검증 후 구현
-        Company company = companyRepository.findById(1L)
-                .filter(BaseEntity::isActive)
-                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
-
         Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
         vehicleRepository.save(vehicle);
     }
 
     @Transactional(readOnly = true)
     public VehicleResponse getVehicleDetail(Long id) {
-
-        //TODO : 업체로 로그인 했을시 권한 확인 로직 추가
-        Vehicle vehicle = vehicleRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
-
+        Vehicle vehicle = getAuthorizedVehicle(id);
         return VehicleResponse.fromVehicle(vehicle);
     }
 
     public void deleteVehicle(Long id) {
-
-        //TODO: 권한 검증 추가 예정(인증된 사용자만 삭제할 권한이 있도록)
-        //TODO: 삭제 이력은 남겨야할 것 같음. 누가, 언제 삭제했는지.
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+        Vehicle vehicle = getAuthorizedVehicle(id);
 
         if (!vehicle.isActive()) {
             throw new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED);
@@ -76,13 +68,13 @@ public class VehicleService {
     @Transactional(readOnly = true)
     public VehiclesResponse getVehicles(Pageable pageable) {
         validatePageable(pageable);
-        return VehiclesResponse.from(vehicleRepository.findAllByActiveTrue(pageable));
+        Member member = getCurrentMember();
+        Company company = getMemberCompany(member);
+        return VehiclesResponse.from(vehicleRepository.findAllByCompanyAndActiveTrue(company, pageable));
     }
 
-    //TODO : 인증/인가(권한) 적용
-    //TODO : 수정 이력 추가
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
-        Vehicle vehicle = findActiveVehicle(id);
+        Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
         vehicle.update(request);
     }
@@ -105,11 +97,54 @@ public class VehicleService {
             throw new CustomException(ErrorCode.PAGE_INVALID_PAGE_SIZE);
         }
 
-        //TODO : 현재는 VehicleDetail에 있는 속성으로는 정렬 불가. 추가예정.
         pageable.getSort().forEach(order -> {
             if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
                 throw new CustomException(ErrorCode.PAGE_INVALID_SORT_PROPERTY);
             }
         });
+    }
+
+    private Member getCurrentMember() {
+        return securityService.getCurrentMember();
+    }
+
+    private Company getMemberCompany(Member member) {
+        Company memberCompany = member.getCompany();
+        if (memberCompany == null) {
+            throw new CustomException(ErrorCode.COMPANY_NOT_FOUND);
+        }
+        return memberCompany;
+    }
+
+    private Company validateMemberCompanyAndPermission(Member member) {
+        Company memberCompany = getMemberCompany(member);
+        validateCompanyAdminPermission(member);
+
+        return companyRepository.findById(memberCompany.getId())
+                .filter(BaseEntity::isActive)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
+    }
+
+    private void validateCompanyAdminPermission(Member member) {
+        if (!member.getRole().getLowerOrEqualRoles().contains(MemberRole.COMPANY_ADMIN)) {
+            throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
+        }
+    }
+
+    private Vehicle getAuthorizedVehicle(Long id) {
+        Member member = getCurrentMember();
+        Company memberCompany = getMemberCompany(member);
+        validateCompanyAdminPermission(member);
+        Vehicle vehicle = findActiveVehicle(id);
+        validateVehicleCompanyMatch(vehicle, memberCompany);
+
+        return vehicle;
+    }
+
+    private void validateVehicleCompanyMatch(Vehicle vehicle, Company memberCompany) {
+        Company vehicleCompany = vehicle.getCompany();
+        if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompany.getId())) {
+            throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
+        }
     }
 }
