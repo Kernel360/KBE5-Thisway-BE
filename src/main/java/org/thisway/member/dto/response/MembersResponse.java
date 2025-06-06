@@ -2,15 +2,22 @@ package org.thisway.member.dto.response;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import org.springframework.data.domain.Page;
+import org.thisway.common.PageInfo;
 import org.thisway.member.entity.Member;
 
 public record MembersResponse(
         @JsonProperty(value = "members")
-        Page<MemberResponse> memberResponses
+        List<MemberResponse> memberResponses,
+
+        PageInfo pageInfo
 ) {
 
     public static MembersResponse from(Page<Member> members) {
-        return new MembersResponse(members.map(MemberResponse::from));
+        List<MemberResponse> memberResponse = members.map(MemberResponse::from).toList();
+        PageInfo pageInfo = PageInfo.from(members);
+
+        return new MembersResponse(memberResponse, pageInfo);
     }
 }
