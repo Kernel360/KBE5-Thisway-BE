@@ -1,8 +1,13 @@
 package org.thisway.security.filter;
 
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,14 +15,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.thisway.member.entity.MemberRole;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.utils.JwtTokenUtil;
-
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -40,17 +40,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // sub(Claims) 존재 여부 검사
         String username = claims.getSubject();
 
-        if (username == null || username.isBlank())
+        if (username == null || username.isBlank()) {
             throw new BadCredentialsException("Invalid JWT token: missing subject");
+        }
 
         @SuppressWarnings("unchecked")
         List<String> roles = claims.get("roles", List.class);
         // List<String> roles = (List<String>) claims.get("roles");
-        if (roles == null)
+        if (roles == null) {
             roles = List.of();
+        }
+
+        Long companyId = claims.get("companyId", Long.class);
+        if (companyId == null) {
+            throw new BadCredentialsException("Invalid JWT token: missing companyId");
+        }
+
+        MemberRole role = MemberRole.valueOf(roles.getFirst());
+
+        MemberDetails memberDetails = MemberDetails.builder()
+                .username(username)
+                .companyId(companyId)
+                .role(role)
+                .build();
+
         String[] authorities = roles.toArray(String[]::new);
         Authentication auth = new UsernamePasswordAuthenticationToken(
-                username,
+                memberDetails,
                 null,
                 AuthorityUtils.createAuthorityList(authorities));
 

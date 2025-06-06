@@ -27,9 +27,11 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.member.dto.MemberSummaryDto;
 import org.thisway.common.PageInfo;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
+import org.thisway.member.dto.response.MemberSummaryResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.MemberService;
 import org.thisway.member.support.MemberFixture;
@@ -172,7 +174,8 @@ class MemberControllerTest {
                 .given(memberService).deleteMember(eq(1L));
 
         MvcResult mvcResult = mockMvc.perform(
-                        delete("/api/members/1"))
+                        delete("/api/members/1")
+                )
                 .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
@@ -183,5 +186,37 @@ class MemberControllerTest {
                 responseBody, ApiErrorResponse.class
         );
         assertThat(response.code()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND.getCode());
+    }
+
+    @Test
+    @DisplayName("멤버 요약을 성공적으로 조회할 수 있다.")
+    @WithMockUser
+    void 멤버_요약_조회_테스트_성공() throws Exception {
+        // given
+        MemberSummaryDto memberSummaryDto = MemberSummaryDto.builder()
+                .companyAdminCount(2L)
+                .companyChefCount(3L)
+                .memberCount(4L)
+                .build();
+        // when
+        when(memberService.summary())
+                .thenReturn(memberSummaryDto);
+
+        MvcResult mvcResult = mockMvc.perform(
+                        get("/api/members/summary")
+                )
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // then
+        String responseBody = mvcResult.getResponse().getContentAsString();
+        MemberSummaryResponse response = objectMapper.readValue(
+                responseBody, MemberSummaryResponse.class
+        );
+
+        assertThat(response.companyAdminCount()).isEqualTo(memberSummaryDto.companyAdminCount());
+        assertThat(response.companyChefCount()).isEqualTo(memberSummaryDto.companyChefCount());
+        assertThat(response.memberCount()).isEqualTo(memberSummaryDto.memberCount());
     }
 }

@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 public enum MemberRole {
 
     ADMIN(4),
-    COMPANY_ADMIN(3),
-    COMPANY_CHEF(2),
+    COMPANY_CHEF(3),
+    COMPANY_ADMIN(2),
     MEMBER(1),
     ;
 
