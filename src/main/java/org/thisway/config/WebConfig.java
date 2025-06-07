@@ -17,7 +17,11 @@ public class WebConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173/",
-                "http://127.0.0.1:5173/"));
+                "https://localhost:5173/",
+                "http://127.0.0.1:5173/",
+                "https://127.0.0.1:5173/",
+                "https://clsz.xyz",
+                "https://api.clsz.xyz"));
 
         config.setAllowedMethods(List.of(
                 "GET",
