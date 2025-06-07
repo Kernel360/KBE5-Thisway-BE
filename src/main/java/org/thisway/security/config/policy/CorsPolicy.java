@@ -1,4 +1,4 @@
-package org.thisway.config;
+package org.thisway.security.config.policy;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-public class WebConfig {
+public class CorsPolicy {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -38,7 +38,7 @@ public class WebConfig {
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
 
         return source;
     }
