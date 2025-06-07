@@ -23,14 +23,7 @@ public record VehicleCreateRequest(
         String carNumber,
 
         @NotBlank
-        String color,
-
-        @NotNull
-        Integer mileage,
-
-        Double latitude,
-
-        Double longitude
+        String color
 ) {
         public VehicleDetail toVehicleDetailEntity() {
                 return VehicleDetail.builder()
@@ -46,9 +39,6 @@ public record VehicleCreateRequest(
                         .company(company)
                         .carNumber(this.carNumber)
                         .color(this.color)
-                        .mileage(this.mileage)
-                        .latitude(this.latitude)
-                        .longitude(this.longitude)
                         .build();
         }
 }
