@@ -1,6 +1,6 @@
 package org.thisway.security.service;
 
-import org.springframework.security.core.userdetails.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
-
-import lombok.RequiredArgsConstructor;
+import org.thisway.security.dto.request.MemberDetails;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +22,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = memberRepository.findByEmailAndActiveTrue(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        return User
-                .withUsername(member.getEmail())
-                .roles(member.getRole().name())
+        return MemberDetails.builder()
+                .username(member.getEmail())
+                .role(member.getRole())
+                .companyId(member.getCompany().getId())
                 .password(member.getPassword())
                 .build();
     }

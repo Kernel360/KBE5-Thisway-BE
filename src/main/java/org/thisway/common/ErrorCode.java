@@ -35,6 +35,7 @@ public enum ErrorCode {
     AUTH_INVALID_VERIFICATION_CODE("13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
     AUTH_UNAUTHENTICATED("13001","인증된 사용자가 아닙니다.", HttpStatus.UNAUTHORIZED),
     AUTH_INVALID_AUTHENTICATION("13002","잘못된 인증정보입니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_UNAUTHORIZED("13003", "접근 권한이 없습니다.", HttpStatus.UNAUTHORIZED),
 
     // 차량 x4xxx
     VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),

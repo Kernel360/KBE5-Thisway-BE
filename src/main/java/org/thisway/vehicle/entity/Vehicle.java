@@ -31,7 +31,6 @@ public class Vehicle extends BaseEntity {
     @Column(nullable = false)
     private String color;
 
-    @Column(nullable = false)
     private Integer mileage;
 
     @Column(nullable = false)
@@ -77,5 +76,9 @@ public class Vehicle extends BaseEntity {
         if (color != null) {
             this.color = color;
         }
+    }
+
+    public void updatePowerOn(boolean powerOn) {
+        this.powerOn = powerOn;
     }
 }

@@ -19,9 +19,11 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.common.PageInfo;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
+import org.thisway.member.dto.MemberSummaryDto;
 import org.thisway.member.dto.request.MemberRegisterRequest;
 import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
@@ -29,6 +31,7 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
@@ -108,9 +111,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(members.size());
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(4);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
     @Test
@@ -133,9 +140,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(3);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
 
@@ -160,9 +171,13 @@ class MemberServiceTest {
         MembersResponse membersResponse = memberService.getMembers(PageRequest.of(0, 2));
 
         // then
-        assertThat(membersResponse.memberResponses().getTotalElements()).isEqualTo(3);
-        assertThat(membersResponse.memberResponses().getNumberOfElements()).isEqualTo(2);
-        assertThat(membersResponse.memberResponses().getSize()).isEqualTo(2);
+        PageInfo pageInfo = membersResponse.pageInfo();
+
+        assertThat(pageInfo.totalElements()).isEqualTo(3);
+        assertThat(pageInfo.numberOfElements()).isEqualTo(2);
+        assertThat(pageInfo.totalPages()).isEqualTo(2);
+        assertThat(pageInfo.currentPage()).isEqualTo(0);
+        assertThat(pageInfo.size()).isEqualTo(2);
     }
 
     @Test
@@ -229,4 +244,30 @@ class MemberServiceTest {
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
     }
 
+    @Test
+    @DisplayName("멤버 요약을 성공적으로 조회할 수 있다.")
+    void 멤버_요약_조회_테스트_성공() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        List<Member> members = List.of(
+                MemberFixture.createMemberWithEmail(company, MemberRole.COMPANY_CHEF, "email1@email.com"),
+                MemberFixture.createMemberWithEmail(company, MemberRole.MEMBER, "email2@email.com"),
+                MemberFixture.createMemberWithEmail(company, MemberRole.MEMBER, "email3@email.com")
+        );
+        memberRepository.saveAll(members);
+
+        MemberDetails memberDetails = MemberDetails.builder()
+                .companyId(company.getId())
+                .role(MemberRole.COMPANY_CHEF)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(memberDetails);
+
+        // when
+        MemberSummaryDto summaryDto = memberService.summary();
+
+        // then
+        assertThat(summaryDto.companyChefCount()).isEqualTo(1);
+        assertThat(summaryDto.companyAdminCount()).isEqualTo(0);
+        assertThat(summaryDto.memberCount()).isEqualTo(2);
+    }
 }
