@@ -12,6 +12,8 @@ import org.thisway.component.RedisComponent;
 import org.thisway.member.dto.VerificationPayload;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.validation.EmailValidation;
+import org.thisway.member.validation.PasswordValidation;
 
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
@@ -35,7 +37,9 @@ public class PasswordService {
 
     @Transactional(readOnly = true)
     public void sendVerificationCode(String email) {
-        // todo: 이메일 regex 처리 예정.
+        if (!EmailValidation.isValidEmail(email)) {
+            throw new CustomException(ErrorCode.MEMBER_INVALID_EMAIL);
+        }
 
         memberRepository.findByEmailAndActiveTrue(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -50,12 +54,17 @@ public class PasswordService {
     }
 
     public void changePassword(String email, String code, String newPassword) {
-        // todo: 이메일 regex 처리
+        if (!EmailValidation.isValidEmail(email)) {
+            throw new CustomException(ErrorCode.MEMBER_INVALID_EMAIL);
+        }
 
         if (verifyCode(email, code)) {
             Member member = memberRepository.findByEmailAndActiveTrue(email)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-            // todo: 비밀번호 regex 처리
+
+            if (!PasswordValidation.isValidPassword(newPassword)) {
+                throw new CustomException(ErrorCode.MEMBER_INVALID_PASSWORD);
+            }
 
             String encryptedPassword = passwordEncoder.encode(newPassword);
             member.updatePassword(encryptedPassword);

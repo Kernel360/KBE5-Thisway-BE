@@ -30,6 +30,8 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND("12000","사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     MEMBER_ALREADY_EXIST_BY_EMAIL("12001","이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_INVALID_PHONE_NUMBER("12003","유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_INVALID_EMAIL("12004","이메일 주소의 형식이 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_INVALID_PASSWORD("12005", "비밀번호가 유효하지 않습니다. 비밀번호는 알파벳, 숫자, 특수 문자(!@#$%^&*)를 각각 1개 이상 포함하여 8~20자로 구성되어야 합니다.", HttpStatus.BAD_REQUEST),
 
     // 인증 에러 x3xxx
     AUTH_INVALID_VERIFICATION_CODE("13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),

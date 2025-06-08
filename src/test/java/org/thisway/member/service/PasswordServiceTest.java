@@ -94,10 +94,10 @@ public class PasswordServiceTest {
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 10000);
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
 
-        assertThatCode(() -> passwordService.changePassword(member.getEmail(), "123456", "theNewPassword"))
+        assertThatCode(() -> passwordService.changePassword(member.getEmail(), "123456", "theNewPassword123!"))
                 .doesNotThrowAnyException();
         assertThat(passwordEncoder.matches(
-                "theNewPassword",
+                "theNewPassword123!",
                 memberRepository.findByEmailAndActiveTrue(member.getEmail()).get().getPassword())
         ).isTrue();
 
