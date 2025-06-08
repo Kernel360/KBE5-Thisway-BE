@@ -53,7 +53,7 @@ class SecurityIntegrationTest {
         // 로그인 테스트용 모의 유저 설정
         UserDetails user = User.withUsername("user@example.com")
                 .password(passwordEncoder.encode("secret"))
-                .roles("USER")
+                .roles("MEMBER")
                 .build();
 
         given(customUserDetailsService.loadUserByUsername("user@example.com"))
@@ -78,7 +78,6 @@ class SecurityIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // TODO: 처리 필요: 에러 형식 변경 과정에서 모든 응답 코드 OK 에서 적절한 응답코드로 변경됨에 따라 수정
     @Test
     @Disabled
     void 유효한_토큰으로_보호된_엔드포인트_접근시_200반환() throws Exception {
