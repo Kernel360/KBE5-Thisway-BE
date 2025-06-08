@@ -24,8 +24,7 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public JsonAuthenticationFilter(
-            AuthenticationManager authManager) {
+    public JsonAuthenticationFilter(AuthenticationManager authManager) {
         super(DEFAULT_ANT_PATH_REQUEST_MATCHER);
         setAuthenticationManager(authManager);
     }
@@ -33,12 +32,15 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
     @Override
     public Authentication attemptAuthentication(
             HttpServletRequest request,
-            HttpServletResponse response) throws AuthenticationException, IOException {
+            HttpServletResponse response
+    ) throws AuthenticationException, IOException {
 
-        // startsWith("application/json")
-        if (!request.getContentType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
+        String contentType = request.getContentType();
+
+        if (contentType == null
+                || !contentType.toLowerCase()
+                        .startsWith(MediaType.APPLICATION_JSON_VALUE))
             throw new AuthenticationServiceException("Unsupported content type: " + request.getContentType());
-        }
 
         LoginRequest loginRequest = objectMapper.readValue(
                 request.getInputStream(),
