@@ -115,6 +115,7 @@ class AdminMemberControllerTest {
         // given
         AdminMemberRegisterRequest request = new AdminMemberRegisterRequest(
                 1L,
+                MemberRole.COMPANY_CHEF,
                 "name",
                 "email",
                 "password",

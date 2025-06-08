@@ -3,11 +3,15 @@ package org.thisway.member.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.thisway.member.dto.AdminMemberRegisterDto;
+import org.thisway.member.entity.MemberRole;
 
 public record AdminMemberRegisterRequest(
 
         @NotNull
         Long companyId,
+
+        @NotNull
+        MemberRole role,
 
         @NotBlank
         String name,
@@ -28,6 +32,7 @@ public record AdminMemberRegisterRequest(
     public AdminMemberRegisterDto toMemberRegisterDto() {
         return AdminMemberRegisterDto.builder()
                 .companyId(companyId)
+                .role(role)
                 .name(name)
                 .email(email)
                 .password(password)

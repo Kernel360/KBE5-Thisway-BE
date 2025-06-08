@@ -28,6 +28,10 @@ public class AdminMemberService {
             MemberRole.ADMIN,
             MemberRole.COMPANY_CHEF
     );
+    private static final Set<MemberRole> ADMIN_REGISTER_AUTHORITIES = Set.of(
+            MemberRole.ADMIN,
+            MemberRole.COMPANY_CHEF
+    );
 
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
@@ -51,9 +55,13 @@ public class AdminMemberService {
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
         validateEmail(request.email());
 
+        if (!ADMIN_REGISTER_AUTHORITIES.contains(request.role())) {
+            throw new CustomException(ErrorCode.MEMBER_REGISTER_DENIED);
+        }
+
         Member member = Member.builder()
                 .company(company)
-                .role(MemberRole.COMPANY_CHEF)
+                .role(request.role())
                 .name(request.name())
                 .email(request.email())
                 .password(encodePassword)

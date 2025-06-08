@@ -122,6 +122,7 @@ class AdminMemberServiceTest {
 
         AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
                 .companyId(companyForRegister.getId())
+                .role(MemberRole.COMPANY_CHEF)
                 .name("name")
                 .email("email")
                 .password("password")
@@ -190,6 +191,31 @@ class AdminMemberServiceTest {
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("멤버를 등록할 때, 허용하지 않는 생성 권한의 경우 예외를 던진다.")
+    void 멤버_등록_테스트_허용하지_않는_생성_권한() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+
+        AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
+                .companyId(company.getId())
+                .name("name")
+                .role(MemberRole.MEMBER)
+                .email("email")
+                .password("password")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.registerMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_REGISTER_DENIED);
     }
 
     @Test
