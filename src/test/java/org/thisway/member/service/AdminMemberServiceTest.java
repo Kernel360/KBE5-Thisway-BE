@@ -20,6 +20,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.AdminMemberRegisterDto;
+import org.thisway.member.dto.AdminMemberUpdateDto;
 import org.thisway.member.dto.MemberDto;
 import org.thisway.member.dto.MembersDto;
 import org.thisway.member.entity.Member;
@@ -189,5 +190,133 @@ class AdminMemberServiceTest {
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 수 있다.")
+    void 멤버_수정_테스트() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.COMPANY_CHEF)
+                        .name("preUpdateName")
+                        .email("pre@update.email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+                .id(member.getId())
+                .name("updatedName")
+                .email("updated@email.email")
+                .phone("01087654321")
+                .memo("updatedMemo")
+                .build();
+
+        // when
+        adminMemberService.updateMember(request);
+
+        // then
+        Member updatedMember = memberRepository.findAll().getFirst();
+
+        assertThat(updatedMember.getName()).isEqualTo("updatedName");
+        assertThat(updatedMember.getEmail()).isEqualTo("updated@email.email");
+        assertThat(updatedMember.getPhoneValue()).isEqualTo("01087654321");
+        assertThat(updatedMember.getMemo()).isEqualTo("updatedMemo");
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 때, 없는 멤버 ID의 경우 예외를 발생시킨다.")
+    void 멤버_수정_테스트_없는_멤버() {
+        //given
+        long invalidMemberId = 1L;
+        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+                .id(invalidMemberId)
+                .name("name")
+                .email("updated@email.email")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.updateMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 때, 이미 존재하는 이메일의 경우 예외가 발생한다.")
+    void 멤버_수정_테스트_중복된_이메일() {
+        //given
+        String alreadyExistEmail = "already@exist.email";
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.COMPANY_CHEF)
+                        .name("preUpdateName")
+                        .email(alreadyExistEmail)
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+                .id(member.getId())
+                .name("name")
+                .email(alreadyExistEmail)
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.updateMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("업체 최고 관리자 정보를 수정할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
+    void 업체_최고_관리자_수정_최고_관리자_이외의_수정() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.MEMBER)
+                        .name("preUpdateName")
+                        .email("pre@update.email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+                .id(member.getId())
+                .name("updatedName")
+                .email("updated@email.email")
+                .phone("01087654321")
+                .memo("updatedMemo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.updateMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
     }
 }
