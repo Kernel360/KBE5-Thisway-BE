@@ -46,8 +46,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자 상세 정보를 조회할 수 있다")
-    void 업체_최고_관리자_조회_성공() {
+    @DisplayName("멤버 상세 정보를 조회할 수 있다")
+    void 멤버_조회_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
@@ -66,8 +66,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자 상세 정보를 조회할 때, 없는 사용자일 경우 예외를 던진다.")
-    void 업체_최고_관리자_조회_없는_사용자() {
+    @DisplayName("멤버 상세 정보를 조회할 때, 없는 사용자일 경우 예외를 던진다.")
+    void 멤버_조회_테스트_없는_사용자() {
         // given
         long invalidMemberId = 1L;
         Company company = companyRepository.save(CompanyFixture.createCompany());
@@ -82,8 +82,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자 상세 정보를 조회할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
-    void 업체_최고_관리자_조회_최고_관리자_이외의_정보() {
+    @DisplayName("멤버 상세 정보를 조회할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
+    void 멤버_조회_테스트_최고_관리자_이외의_정보() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.MEMBER));
@@ -98,8 +98,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("COMPANY_CHEF 멤버 목록을 조회할 수 있다")
-    void 멤버_목록_조회_성공() {
+    @DisplayName("멤버 목록을 조회할 수 있다")
+    void 멤버_목록_조회_테스트_성공() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
@@ -287,8 +287,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자 정보를 수정할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
-    void 업체_최고_관리자_수정_최고_관리자_이외의_수정() {
+    @DisplayName("멤버 정보를 수정할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
+    void 멤버_수정_테스트_최고_관리자_이외의_수정() {
         //given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(
@@ -321,8 +321,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자를 삭제할 수 있다.")
-    void 업체_최고_관리자_삭제_테스트() {
+    @DisplayName("멤버를 삭제할 수 있다.")
+    void 멤버_삭제_테스트() {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
@@ -351,8 +351,8 @@ class AdminMemberServiceTest {
     }
 
     @Test
-    @DisplayName("업체 최고 관리자 정보를 삭제할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
-    void 업체_최고_관리자_삭제_테스트_최고_관리자_이외의_삭제() {
+    @DisplayName("멤버 정보를 삭제할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
+    void 멤버_삭제_테스트_최고_관리자_이외의_삭제() {
         //given
         Company company = companyRepository.save(CompanyFixture.createCompany());
         Member member = memberRepository.save(
