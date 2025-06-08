@@ -1,5 +1,6 @@
 package org.thisway.member.dto.response;
 
+import org.thisway.member.dto.MemberDto;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
@@ -22,6 +23,18 @@ public record MemberResponse(
                 member.getEmail(),
                 member.getPhoneValue(),
                 member.getMemo()
+        );
+    }
+
+    public static MemberResponse from(MemberDto member) {
+        return new MemberResponse(
+                member.id(),
+                member.companyId(),
+                member.role(),
+                member.name(),
+                member.email(),
+                member.phone(),
+                member.memo()
         );
     }
 }
