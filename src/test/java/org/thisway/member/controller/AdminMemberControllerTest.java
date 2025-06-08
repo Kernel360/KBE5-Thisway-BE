@@ -25,6 +25,7 @@ import org.thisway.common.PageInfo;
 import org.thisway.member.dto.MemberDto;
 import org.thisway.member.dto.MembersDto;
 import org.thisway.member.dto.request.AdminMemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.AdminMemberService;
@@ -40,6 +41,39 @@ class AdminMemberControllerTest {
 
     @MockitoBean
     private AdminMemberService adminMemberService;
+
+    @Test
+    @DisplayName("멤버 상세 정보를 조회할 수 있다.")
+    @WithMockUser(authorities = "ADMIN")
+    void 멤버_상세_정보_조회_테스트() throws Exception {
+        // given
+        Long memberId = 1L;
+        MemberDto memberDto = new MemberDto(memberId, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
+
+        given(adminMemberService.getMemberDetail(memberId))
+                .willReturn(memberDto);
+
+        // when
+        String responseBody = mockMvc.perform(get("/api/admin/members/" + memberId))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        MemberResponse response = objectMapper.readValue(
+                responseBody, MemberResponse.class
+        );
+
+        // then
+        assertThat(response.id()).isEqualTo(memberId);
+        assertThat(response.companyId()).isEqualTo(memberDto.companyId());
+        assertThat(response.role()).isEqualTo(memberDto.role());
+        assertThat(response.name()).isEqualTo(memberDto.name());
+        assertThat(response.email()).isEqualTo(memberDto.email());
+        assertThat(response.phone()).isEqualTo(memberDto.phone());
+        assertThat(response.memo()).isEqualTo(memberDto.memo());
+    }
 
     @Test
     @DisplayName("멤버 리스트를 조회할 수 있다.")

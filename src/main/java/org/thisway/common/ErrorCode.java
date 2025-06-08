@@ -21,14 +21,16 @@ public enum ErrorCode {
     COMPANY_ALREADY_EXIST("11001", "이미 존재하는 회사입니다.", HttpStatus.BAD_REQUEST),
 
     // 멤버 에러 x2xxx
-    MEMBER_NOT_FOUND("12000","사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
-    MEMBER_ALREADY_EXIST_BY_EMAIL("12001","이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
-    MEMBER_INVALID_PHONE_NUMBER("12003","유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_NOT_FOUND("12000", "사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_ALREADY_EXIST_BY_EMAIL("12001", "이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_INVALID_PHONE_NUMBER("12003", "유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_ACCESS_DENIED("12004", "해당 멤버에 대한 접근 권한이 없습니다.\n", HttpStatus.FORBIDDEN),
+
 
     // 인증 에러 x3xxx
-    AUTH_INVALID_VERIFY_CODE("13000","잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
-    AUTH_UNAUTHENTICATED("13001","인증된 사용자가 아닙니다.", HttpStatus.UNAUTHORIZED),
-    AUTH_INVALID_AUTHENTICATION("13002","잘못된 인증정보입니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_INVALID_VERIFY_CODE("13000", "잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
+    AUTH_UNAUTHENTICATED("13001", "인증된 사용자가 아닙니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_INVALID_AUTHENTICATION("13002", "잘못된 인증정보입니다.", HttpStatus.UNAUTHORIZED),
 
     // 차량 x4xxx
     VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),

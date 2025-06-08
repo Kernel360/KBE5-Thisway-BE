@@ -7,11 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.dto.request.AdminMemberRegisterRequest;
+import org.thisway.member.dto.response.MemberResponse;
 import org.thisway.member.dto.response.MembersResponse;
 import org.thisway.member.service.AdminMemberService;
 
@@ -21,6 +23,14 @@ import org.thisway.member.service.AdminMemberService;
 public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberResponse> getMemberDetail(@PathVariable Long id) {
+        MemberResponse response = MemberResponse.from(adminMemberService.getMemberDetail(id));
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
+    }
 
     @GetMapping
     public ResponseEntity<MembersResponse> getMembers(

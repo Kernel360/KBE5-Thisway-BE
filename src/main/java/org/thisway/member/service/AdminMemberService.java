@@ -1,5 +1,6 @@
 package org.thisway.member.service;
 
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.dto.AdminMemberRegisterDto;
+import org.thisway.member.dto.MemberDto;
 import org.thisway.member.dto.MembersDto;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
@@ -21,9 +23,27 @@ import org.thisway.member.repository.MemberRepository;
 @Transactional
 public class AdminMemberService {
 
+    private static final Set<MemberRole> ADMIN_ACCESS_AUTHORITIES = Set.of(
+            MemberRole.ADMIN,
+            MemberRole.COMPANY_CHEF
+    );
+
     private final MemberRepository memberRepository;
     private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public MemberDto getMemberDetail(Long id) {
+        MemberDto member = memberRepository.findByIdAndActiveTrue(id)
+                .map(MemberDto::from)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!ADMIN_ACCESS_AUTHORITIES.contains(member.role())) {
+            throw new CustomException(ErrorCode.MEMBER_ACCESS_DENIED);
+        }
+
+        return member;
+    }
 
     @Transactional(readOnly = true)
     public MembersDto getMembers(Pageable pageable) {
