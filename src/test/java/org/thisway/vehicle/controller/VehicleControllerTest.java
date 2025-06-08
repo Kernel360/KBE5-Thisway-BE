@@ -1,22 +1,7 @@
 // java
 package org.thisway.vehicle.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -39,6 +24,19 @@ import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -65,8 +63,7 @@ class VehicleControllerTest {
     @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_성공() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, 37.5665, 126.9780);
+                "현대", 2022, "아반떼", "12가3456", "흰색");
         doNothing().when(vehicleService).registerVehicle(request);
 
         mockMvc.perform(
@@ -82,8 +79,7 @@ class VehicleControllerTest {
     @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_실패() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, 37.5665, 126.9780);
+                "현대", 2022, "아반떼", "12가3456", "흰색");
         doThrow(new CustomException(ErrorCode.COMPANY_NOT_FOUND))
                 .when(vehicleService).registerVehicle(request);
 

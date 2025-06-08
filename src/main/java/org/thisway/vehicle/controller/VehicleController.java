@@ -66,7 +66,7 @@ public class VehicleController {
     @PatchMapping("/{id}/power")
     public ResponseEntity<Void> updatePowerOn(@PathVariable Long id,
                                               @RequestParam boolean powerOn) {
-        vehicleService.UpdateVehiclePowerState(id, powerOn);
+        vehicleService.updateVehiclePowerState(id, powerOn);
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
