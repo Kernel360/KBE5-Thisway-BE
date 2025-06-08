@@ -74,6 +74,12 @@ public class AdminMemberService {
         member.updateMemo(request.memo());
     }
 
+    public void deleteMember(Long id) {
+        Member member = getActiveMember(id);
+
+        member.delete();
+    }
+
     private void validateEmail(String email) {
         if (memberRepository.existsByEmail(email)) {
             throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);

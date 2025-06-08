@@ -319,4 +319,60 @@ class AdminMemberServiceTest {
         CustomException e = (CustomException) thrown;
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
     }
+
+    @Test
+    @DisplayName("업체 최고 관리자를 삭제할 수 있다.")
+    void 업체_최고_관리자_삭제_테스트() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
+
+        // when
+        adminMemberService.deleteMember(member.getId());
+
+        // then
+        member = memberRepository.findById(member.getId()).get();
+        assertThat(member.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("멤버를 삭제할 때, 없는 멤버 ID의 경우 예외를 발생시킨다.")
+    void 멤버_삭제_테스트_없는_멤버() {
+        //given
+        long invalidMemberId = 1L;
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.deleteMember(invalidMemberId));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("업체 최고 관리자 정보를 삭제할 때, 최고 관리자 이외의 정보일 경우 예외를 던진다.")
+    void 업체_최고_관리자_삭제_테스트_최고_관리자_이외의_삭제() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.MEMBER)
+                        .name("name")
+                        .email("email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("memo")
+                        .build()
+        );
+
+        // when
+        Throwable thrown = catchThrowable(() -> adminMemberService.deleteMember(member.getId()));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+    }
 }
