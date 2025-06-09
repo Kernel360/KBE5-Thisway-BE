@@ -1,6 +1,9 @@
 package org.thisway.log.repository;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.verify;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -14,19 +17,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.thisway.log.domain.GeofenceLogData;
 import org.thisway.log.domain.GpsLogData;
+import org.thisway.log.domain.GpsStatus;
 import org.thisway.log.domain.PowerLogData;
 
 @ExtendWith(MockitoExtension.class)
 public class LogRepositoryTest {
 
-    @Mock
-    private JdbcTemplate jdbcTemplate;
-
-    @InjectMocks
-    private LogRepository logRepository;
-
     private static final Long VEHICLE_ID = 1L;
     private static final String MDN = "01234567890";
+    @Mock
+    private JdbcTemplate jdbcTemplate;
+    @InjectMocks
+    private LogRepository logRepository;
 
     @Test
     @DisplayName("GPS 로그 저장 테스트")
@@ -35,7 +37,7 @@ public class LogRepositoryTest {
                 new GpsLogData(
                         VEHICLE_ID,
                         MDN,
-                        "A",
+                        GpsStatus.NORMAL,
                         41.40338,
                         2.17403,
                         270,
@@ -47,7 +49,7 @@ public class LogRepositoryTest {
                 new GpsLogData(
                         VEHICLE_ID,
                         MDN,
-                        "A",
+                        GpsStatus.NORMAL,
                         41.40338,
                         2.17403,
                         270,
@@ -70,7 +72,7 @@ public class LogRepositoryTest {
                 MDN,
                 true,
                 LocalDateTime.now(),
-                "A",
+                GpsStatus.NORMAL,
                 41.40338,
                 2.17403,
                 10000
@@ -90,7 +92,7 @@ public class LogRepositoryTest {
                 1L,
                 1L,
                 (byte) 1,
-                "A",
+                GpsStatus.NORMAL,
                 41.40338,
                 2.17403,
                 200

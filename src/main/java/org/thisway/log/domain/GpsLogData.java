@@ -7,7 +7,7 @@ import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 public record GpsLogData(
         Long vehicleId,
         String mdn,
-        String gpsStatus,
+        GpsStatus gpsStatus,
         Double latitude,
         Double longitude,
         Integer angle,
@@ -26,7 +26,7 @@ public record GpsLogData(
         return new GpsLogData(
                 vehicleId,
                 mdn,
-                entry.gcd(),
+                converter.convertToGpsStatus(entry.gcd()),
                 converter.convertCoordinate(entry.lat()),
                 converter.convertCoordinate(entry.lon()),
                 converter.convertToInteger(entry.ang()),

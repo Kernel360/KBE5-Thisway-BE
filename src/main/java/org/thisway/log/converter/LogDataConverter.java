@@ -3,12 +3,13 @@ package org.thisway.log.converter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Component;
+import org.thisway.log.domain.GpsStatus;
 
 @Component
 public class LogDataConverter {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyMMddHHmm");
-    private static final DateTimeFormatter DATE_TIME_FORMATTER_WITH_SEC = DateTimeFormatter.ofPattern("yyMMddHHmmss");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER_WITH_SEC = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     public Double convertCoordinate(String coordinate) {
         double value = Double.parseDouble(coordinate);
@@ -35,5 +36,7 @@ public class LogDataConverter {
         return Byte.parseByte(value);
     }
 
-
+    public GpsStatus convertToGpsStatus(String code) {
+        return GpsStatus.fromCode(code);
+    }
 }

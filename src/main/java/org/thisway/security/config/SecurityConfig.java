@@ -59,6 +59,7 @@ public class SecurityConfig {
                                         "Forbidden")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/company-chef/**").hasAuthority("COMPANY_CHEF")
                         .anyRequest().authenticated())
                 .build();
