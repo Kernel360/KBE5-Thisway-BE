@@ -115,7 +115,7 @@ public class PasswordServiceTest {
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
 
         CustomException e = assertThrows(CustomException.class, () ->
-                passwordService.changePassword(member.getEmail(), "654321", "theNewPassword"));
+                passwordService.changePassword(member.getEmail(), "654321", "theNewPassword123!"));
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE);
     }
 
@@ -129,8 +129,22 @@ public class PasswordServiceTest {
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
 
         CustomException e = assertThrows(CustomException.class, () ->
-                passwordService.changePassword(member.getEmail(), "123456", "theNewPassword"));
+                passwordService.changePassword(member.getEmail(), "123456", "theNewPassword123!"));
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE);
+    }
+
+    @Test
+    @DisplayName("비밀번호 형식이 알파벳, 숫자, 특수문자를 포함하여 8-20자에 해당하지 않으면 member_invalid_password 에러가 발생한다.")
+    void 비밀번호_형식_오류시_비밀번호_변경_실패() {
+        Company company = companyRepository.save(createCompany());
+        Member member = memberRepository.save(MemberFixture.createMember(company));
+
+        VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 10000);
+        doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
+
+        CustomException e = assertThrows(CustomException.class, () ->
+                passwordService.changePassword(member.getEmail(), "123456", "theNewPassword"));
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_INVALID_PASSWORD);
     }
 
 }
