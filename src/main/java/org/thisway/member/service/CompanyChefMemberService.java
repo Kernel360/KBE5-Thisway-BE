@@ -35,6 +35,7 @@ public class CompanyChefMemberService {
         return CompanyChefMemberDetailOutput.from(getActiveMember(id));
     }
 
+    @Transactional(readOnly = true)
     public CompanyChefMembersOutput getMembers(Pageable pageable) {
         long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
         Page<Member> members = memberRepository.findAllByActiveTrueAndRoleInAndCompanyId(
