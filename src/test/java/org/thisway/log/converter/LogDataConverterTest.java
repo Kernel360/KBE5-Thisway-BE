@@ -28,7 +28,7 @@ public class LogDataConverterTest {
     @Test
     @DisplayName("날짜 시간 변환 테스트 (초 미포함)")
     void 날짜_시간_파싱이_올바르게_실행되어야한다() {
-        String dateTime = "2109010920";
+        String dateTime = "202109010920";
         LocalDateTime expected = LocalDateTime.of(2021, 9, 1, 9, 20);
 
         LocalDateTime result = converter.convertDateTime(dateTime);
@@ -38,7 +38,7 @@ public class LogDataConverterTest {
     @Test
     @DisplayName("날짜 시간 변환 테스트 (초 포함)")
     void 날짜_시간_초_파싱이_올바르게_실행되어야한다() {
-        String dateTime = "210901092033";
+        String dateTime = "20210901092033";
         LocalDateTime expected = LocalDateTime.of(2021, 9, 1, 9, 20, 33);
 
         LocalDateTime result = converter.convertDateTimeWithSec(dateTime);

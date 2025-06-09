@@ -38,13 +38,13 @@ public class LogService {
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        if (request.onTime() != null && !request.onTime().isEmpty()){
+        if (request.onTime() != null && !request.onTime().isEmpty()) {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
         }
 
-        if (request.offTime() != null && !request.offTime().isEmpty()){
+        if (request.offTime() != null && !request.offTime().isEmpty()) {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, false, request.offTime(), converter);
             logRepository.savePowerLog(powerLogData);
@@ -54,16 +54,28 @@ public class LogService {
     }
 
     public void saveGpsLog(GpsLogRequest request) {
-        log.info("주기 정보 로그 수신: MDN={}, 항목 수={}", request.mdn(), request.cCnt());
+        log.info("주기 정보 로그 수신: MDN={}, 항목 수={}, 시간={}", request.mdn(), request.cCnt(), request.oTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
         List<GpsLogData> gpsLogDataList = new ArrayList<>();
 
-        for (GpsLogEntry entry : request.cList()) {
-            LocalDateTime occurredTime = converter.convertDateTime(request.oTime());
+        LocalDateTime occurredTime;
+        try {
+            if (request.oTime().length() == 14) {
+                occurredTime = converter.convertDateTimeWithSec(request.oTime());
+                log.info("초 단위 시간 형식 감지: {}", request.oTime());
+            } else {
+                occurredTime = converter.convertDateTime(request.oTime());
+                log.info("분 단위 시간 형식 감지: {}", request.oTime());
+            }
+        } catch (Exception e) {
+            log.error("시간 형식 변환 오류: {}, 오류 메시지: {}", request.oTime(), e.getMessage());
+            throw new CustomException(ErrorCode.SERVER_ERROR);
+        }
 
+        for (GpsLogEntry entry : request.cList()) {
             GpsLogData gpsLogData = GpsLogData.from(entry, mdn, vehicleId, occurredTime, converter);
             gpsLogDataList.add(gpsLogData);
         }
