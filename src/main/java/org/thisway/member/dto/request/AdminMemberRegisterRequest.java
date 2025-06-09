@@ -29,7 +29,7 @@ public record AdminMemberRegisterRequest(
         String memo
 ) {
 
-    public AdminMemberRegisterInput toMemberRegisterDto() {
+    public AdminMemberRegisterInput toMemberRegisterInput() {
         return AdminMemberRegisterInput.builder()
                 .companyId(companyId)
                 .role(role)

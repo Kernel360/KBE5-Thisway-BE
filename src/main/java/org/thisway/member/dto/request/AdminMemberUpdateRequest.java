@@ -19,7 +19,7 @@ public record AdminMemberUpdateRequest(
         String memo
 ) {
 
-    public AdminMemberUpdateInput toMemberUpdateDto(long id) {
+    public AdminMemberUpdateInput toMemberUpdateInput(long id) {
         return AdminMemberUpdateInput.builder()
                 .id(id)
                 .name(name)

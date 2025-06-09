@@ -49,7 +49,7 @@ public class AdminMemberController {
     public ResponseEntity<Void> registerMember(
             @RequestBody @Validated AdminMemberRegisterRequest request
     ) {
-        adminMemberService.registerMember(request.toMemberRegisterDto());
+        adminMemberService.registerMember(request.toMemberRegisterInput());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
@@ -60,7 +60,7 @@ public class AdminMemberController {
             @PathVariable long id,
             @RequestBody @Validated AdminMemberUpdateRequest request
     ) {
-        adminMemberService.updateMember(request.toMemberUpdateDto(id));
+        adminMemberService.updateMember(request.toMemberUpdateInput(id));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
