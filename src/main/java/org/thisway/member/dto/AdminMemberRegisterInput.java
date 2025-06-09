@@ -4,7 +4,7 @@ import lombok.Builder;
 import org.thisway.member.entity.MemberRole;
 
 @Builder
-public record AdminMemberRegisterDto(
+public record AdminMemberRegisterInput(
         Long companyId,
         MemberRole role,
         String name,

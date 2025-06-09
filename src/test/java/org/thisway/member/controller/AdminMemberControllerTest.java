@@ -24,8 +24,8 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.MemberDto;
-import org.thisway.member.dto.MembersDto;
+import org.thisway.member.dto.MemberOutput;
+import org.thisway.member.dto.MembersOutput;
 import org.thisway.member.dto.request.AdminMemberRegisterRequest;
 import org.thisway.member.dto.request.AdminMemberUpdateRequest;
 import org.thisway.member.dto.response.MemberResponse;
@@ -51,10 +51,10 @@ class AdminMemberControllerTest {
     void 멤버_상세_정보_조회_테스트() throws Exception {
         // given
         Long memberId = 1L;
-        MemberDto memberDto = new MemberDto(memberId, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
+        MemberOutput memberOutput = new MemberOutput(memberId, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
 
         given(adminMemberService.getMemberDetail(memberId))
-                .willReturn(memberDto);
+                .willReturn(memberOutput);
 
         // when
         String responseBody = mockMvc.perform(get("/api/admin/members/" + memberId))
@@ -70,12 +70,12 @@ class AdminMemberControllerTest {
 
         // then
         assertThat(response.id()).isEqualTo(memberId);
-        assertThat(response.companyId()).isEqualTo(memberDto.companyId());
-        assertThat(response.role()).isEqualTo(memberDto.role());
-        assertThat(response.name()).isEqualTo(memberDto.name());
-        assertThat(response.email()).isEqualTo(memberDto.email());
-        assertThat(response.phone()).isEqualTo(memberDto.phone());
-        assertThat(response.memo()).isEqualTo(memberDto.memo());
+        assertThat(response.companyId()).isEqualTo(memberOutput.companyId());
+        assertThat(response.role()).isEqualTo(memberOutput.role());
+        assertThat(response.name()).isEqualTo(memberOutput.name());
+        assertThat(response.email()).isEqualTo(memberOutput.email());
+        assertThat(response.phone()).isEqualTo(memberOutput.phone());
+        assertThat(response.memo()).isEqualTo(memberOutput.memo());
     }
 
     @Test
@@ -83,12 +83,12 @@ class AdminMemberControllerTest {
     @WithMockUser(authorities = "ADMIN")
     void 멤버_리스트_조회_테스트() throws Exception {
         // given
-        MemberDto memberDto = new MemberDto(1L, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
+        MemberOutput memberOutput = new MemberOutput(1L, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
         PageInfo pageInfo = new PageInfo(1, 1, 1, 0, 10);
-        MembersDto membersDto = new MembersDto(List.of(memberDto), pageInfo);
+        MembersOutput membersOutput = new MembersOutput(List.of(memberOutput), pageInfo);
 
         given(adminMemberService.getMembers(any()))
-                .willReturn(membersDto);
+                .willReturn(membersOutput);
 
         // when
         String responseBody = mockMvc.perform(get("/api/admin/members"))

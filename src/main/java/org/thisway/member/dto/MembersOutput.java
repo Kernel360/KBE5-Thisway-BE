@@ -5,16 +5,16 @@ import org.springframework.data.domain.Page;
 import org.thisway.common.PageInfo;
 import org.thisway.member.entity.Member;
 
-public record MembersDto(
-        List<MemberDto> members,
+public record MembersOutput(
+        List<MemberOutput> members,
 
         PageInfo pageInfo
 ) {
 
-    public static MembersDto from(Page<Member> memberPage) {
-        List<MemberDto> members = memberPage.map(MemberDto::from).toList();
+    public static MembersOutput from(Page<Member> memberPage) {
+        List<MemberOutput> members = memberPage.map(MemberOutput::from).toList();
         PageInfo pageInfo = PageInfo.from(memberPage);
 
-        return new MembersDto(members, pageInfo);
+        return new MembersOutput(members, pageInfo);
     }
 }

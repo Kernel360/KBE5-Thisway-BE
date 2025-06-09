@@ -2,7 +2,7 @@ package org.thisway.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.member.dto.AdminMemberRegisterDto;
+import org.thisway.member.dto.AdminMemberRegisterInput;
 import org.thisway.member.entity.MemberRole;
 
 public record AdminMemberRegisterRequest(
@@ -29,8 +29,8 @@ public record AdminMemberRegisterRequest(
         String memo
 ) {
 
-    public AdminMemberRegisterDto toMemberRegisterDto() {
-        return AdminMemberRegisterDto.builder()
+    public AdminMemberRegisterInput toMemberRegisterDto() {
+        return AdminMemberRegisterInput.builder()
                 .companyId(companyId)
                 .role(role)
                 .name(name)

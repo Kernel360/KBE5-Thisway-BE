@@ -19,10 +19,10 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
-import org.thisway.member.dto.AdminMemberRegisterDto;
-import org.thisway.member.dto.AdminMemberUpdateDto;
-import org.thisway.member.dto.MemberDto;
-import org.thisway.member.dto.MembersDto;
+import org.thisway.member.dto.AdminMemberRegisterInput;
+import org.thisway.member.dto.AdminMemberUpdateInput;
+import org.thisway.member.dto.MemberOutput;
+import org.thisway.member.dto.MembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -53,7 +53,7 @@ class AdminMemberServiceTest {
         Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
 
         // when
-        MemberDto result = adminMemberService.getMemberDetail(member.getId());
+        MemberOutput result = adminMemberService.getMemberDetail(member.getId());
 
         // then
         assertThat(result.id()).isEqualTo(member.getId());
@@ -107,7 +107,7 @@ class AdminMemberServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        MembersDto result = adminMemberService.getMembers(pageable);
+        MembersOutput result = adminMemberService.getMembers(pageable);
 
         // then
         assertThat(result.pageInfo().numberOfElements()).isEqualTo(1);
@@ -120,7 +120,7 @@ class AdminMemberServiceTest {
         //given
         Company companyForRegister = companyRepository.save(CompanyFixture.createCompany());
 
-        AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
+        AdminMemberRegisterInput request = AdminMemberRegisterInput.builder()
                 .companyId(companyForRegister.getId())
                 .role(MemberRole.COMPANY_CHEF)
                 .name("name")
@@ -151,7 +151,7 @@ class AdminMemberServiceTest {
         //given
         Long invalidCompanyId = 1L;
 
-        AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
+        AdminMemberRegisterInput request = AdminMemberRegisterInput.builder()
                 .companyId(invalidCompanyId)
                 .name("name")
                 .email("email")
@@ -176,7 +176,7 @@ class AdminMemberServiceTest {
         Company company = companyRepository.save(CompanyFixture.createCompany());
         memberRepository.save(MemberFixture.createMemberWithEmail(company, alreadyExistEmail));
 
-        AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
+        AdminMemberRegisterInput request = AdminMemberRegisterInput.builder()
                 .companyId(company.getId())
                 .name("name")
                 .email(alreadyExistEmail)
@@ -199,7 +199,7 @@ class AdminMemberServiceTest {
         // given
         Company company = companyRepository.save(CompanyFixture.createCompany());
 
-        AdminMemberRegisterDto request = AdminMemberRegisterDto.builder()
+        AdminMemberRegisterInput request = AdminMemberRegisterInput.builder()
                 .companyId(company.getId())
                 .name("name")
                 .role(MemberRole.MEMBER)
@@ -235,7 +235,7 @@ class AdminMemberServiceTest {
                         .build()
         );
 
-        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+        AdminMemberUpdateInput request = AdminMemberUpdateInput.builder()
                 .id(member.getId())
                 .name("updatedName")
                 .email("updated@email.email")
@@ -260,7 +260,7 @@ class AdminMemberServiceTest {
     void 멤버_수정_테스트_없는_멤버() {
         //given
         long invalidMemberId = 1L;
-        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+        AdminMemberUpdateInput request = AdminMemberUpdateInput.builder()
                 .id(invalidMemberId)
                 .name("name")
                 .email("updated@email.email")
@@ -296,7 +296,7 @@ class AdminMemberServiceTest {
                         .build()
         );
 
-        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+        AdminMemberUpdateInput request = AdminMemberUpdateInput.builder()
                 .id(member.getId())
                 .name("name")
                 .email(alreadyExistEmail)
@@ -330,7 +330,7 @@ class AdminMemberServiceTest {
                         .build()
         );
 
-        AdminMemberUpdateDto request = AdminMemberUpdateDto.builder()
+        AdminMemberUpdateInput request = AdminMemberUpdateInput.builder()
                 .id(member.getId())
                 .name("updatedName")
                 .email("updated@email.email")

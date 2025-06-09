@@ -2,7 +2,7 @@ package org.thisway.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.member.dto.AdminMemberUpdateDto;
+import org.thisway.member.dto.AdminMemberUpdateInput;
 
 public record AdminMemberUpdateRequest(
 
@@ -19,8 +19,8 @@ public record AdminMemberUpdateRequest(
         String memo
 ) {
 
-    public AdminMemberUpdateDto toMemberUpdateDto(long id) {
-        return AdminMemberUpdateDto.builder()
+    public AdminMemberUpdateInput toMemberUpdateDto(long id) {
+        return AdminMemberUpdateInput.builder()
                 .id(id)
                 .name(name)
                 .email(email)

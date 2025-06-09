@@ -11,10 +11,10 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
-import org.thisway.member.dto.AdminMemberRegisterDto;
-import org.thisway.member.dto.AdminMemberUpdateDto;
-import org.thisway.member.dto.MemberDto;
-import org.thisway.member.dto.MembersDto;
+import org.thisway.member.dto.AdminMemberRegisterInput;
+import org.thisway.member.dto.AdminMemberUpdateInput;
+import org.thisway.member.dto.MemberOutput;
+import org.thisway.member.dto.MembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -38,18 +38,18 @@ public class AdminMemberService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public MemberDto getMemberDetail(Long id) {
-        return MemberDto.from(getActiveMember(id));
+    public MemberOutput getMemberDetail(Long id) {
+        return MemberOutput.from(getActiveMember(id));
     }
 
     @Transactional(readOnly = true)
-    public MembersDto getMembers(Pageable pageable) {
+    public MembersOutput getMembers(Pageable pageable) {
         Page<Member> members = memberRepository.findAllByActiveTrueAndRoleIn(ADMIN_ACCESS_AUTHORITIES, pageable);
 
-        return MembersDto.from(members);
+        return MembersOutput.from(members);
     }
 
-    public void registerMember(AdminMemberRegisterDto request) {
+    public void registerMember(AdminMemberRegisterInput request) {
         String encodePassword = passwordEncoder.encode(request.password());
         Company company = companyRepository.findByIdAndActiveTrue(request.companyId())
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
@@ -72,7 +72,7 @@ public class AdminMemberService {
         memberRepository.save(member);
     }
 
-    public void updateMember(AdminMemberUpdateDto request) {
+    public void updateMember(AdminMemberUpdateInput request) {
         Member member = getActiveMember(request.id());
 
         if (!member.getEmail().equals(request.email())) {

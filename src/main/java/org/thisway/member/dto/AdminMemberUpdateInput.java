@@ -3,7 +3,7 @@ package org.thisway.member.dto;
 import lombok.Builder;
 
 @Builder
-public record AdminMemberUpdateDto(
+public record AdminMemberUpdateInput(
         long id,
         String name,
         String email,

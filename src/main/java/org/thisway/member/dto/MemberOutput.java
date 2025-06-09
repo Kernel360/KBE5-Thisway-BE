@@ -3,7 +3,7 @@ package org.thisway.member.dto;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
-public record MemberDto(
+public record MemberOutput(
         Long id,
         Long companyId,
         MemberRole role,
@@ -13,8 +13,8 @@ public record MemberDto(
         String memo
 ) {
 
-    public static MemberDto from(Member member) {
-        return new MemberDto(
+    public static MemberOutput from(Member member) {
+        return new MemberOutput(
                 member.getId(),
                 member.getCompany().getId(),
                 member.getRole(),
