@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -164,6 +165,16 @@ class CompanyChefMemberControllerTest {
                         .content(requestBody)
                 )
                 .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("멤버를 삭제할 수 있다.")
+    @WithMockUser(authorities = "COMPANY_CHEF")
+    void 멤버_삭제_테스트() throws Exception {
+        // when & then
+        mockMvc.perform(delete("/api/company-chef/members/" + 1L))
+                .andExpect(status().isNoContent())
                 .andDo(print());
     }
 }

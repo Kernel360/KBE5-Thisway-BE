@@ -91,6 +91,12 @@ public class CompanyChefMemberService {
         member.updateMemo(request.memo());
     }
 
+    public void deleteMember(Long id) {
+        Member member = getActiveMember(id);
+
+        member.delete();
+    }
+
     private Member getActiveMember(long id) {
         Member member = memberRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));

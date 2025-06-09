@@ -386,4 +386,72 @@ class CompanyChefMemberServiceTest {
         CustomException e = (CustomException) thrown;
         Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
     }
+
+    @Test
+    @DisplayName("멤버를 삭제할 수 있다.")
+    void 멤버_삭제_테스트() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
+
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(company.getId())
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
+
+        // when
+        companyChefMemberService.deleteMember(member.getId());
+
+        // then
+        member = memberRepository.findById(member.getId()).get();
+        Assertions.assertThat(member.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("멤버를 삭제할 때, 없는 멤버 ID의 경우 예외를 발생시킨다.")
+    void 멤버_삭제_테스트_없는_멤버() {
+        //given
+        long invalidMemberId = 1L;
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(invalidMemberId));
+
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버 정보를 삭제할 때, ADMIN 정보일 경우 예외를 던진다.")
+    void 멤버_삭제_테스트_최고_관리자_이외의_삭제() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.ADMIN)
+                        .name("name")
+                        .email("email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("memo")
+                        .build()
+        );
+
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(company.getId())
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(member.getId()));
+
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+    }
 }
