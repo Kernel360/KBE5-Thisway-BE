@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,6 +22,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.CompanyChefMemberRegisterInput;
 import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
@@ -35,6 +37,7 @@ import org.thisway.security.service.SecurityService;
 class CompanyChefMemberServiceTest {
 
     private final CompanyChefMemberService companyChefMemberService;
+    private final PasswordEncoder passwordEncoder;
 
     @MockitoBean
     private final SecurityService securityService;
@@ -149,5 +152,89 @@ class CompanyChefMemberServiceTest {
         // then
         assertThat(result.pageInfo().numberOfElements()).isEqualTo(1);
         assertThat(result.pageInfo().size()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("멤버를 등록할 수 있다.")
+    void 멤버_등록_테스트() {
+        //given
+        Company companyForRegister = companyRepository.save(CompanyFixture.createCompany());
+
+        CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
+                .role(MemberRole.COMPANY_CHEF)
+                .name("name")
+                .email("email")
+                .password("password")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        Member authenticatedMember = MemberFixture.createMember(companyForRegister);
+        given(securityService.getCurrentMember())
+                .willReturn(authenticatedMember);
+
+        // when
+        companyChefMemberService.registerMember(request);
+
+        // then
+        Member registeredMember = memberRepository.findAll().getFirst();
+
+        assertThat(registeredMember.getCompany().getId()).isEqualTo(companyForRegister.getId());
+        assertThat(registeredMember.getRole()).isEqualTo(MemberRole.COMPANY_CHEF);
+        assertThat(registeredMember.getName()).isEqualTo("name");
+        assertThat(registeredMember.getEmail()).isEqualTo("email");
+        assertThat(passwordEncoder.matches("password", registeredMember.getPassword())).isTrue();
+        assertThat(registeredMember.getPhoneValue()).isEqualTo("01012345678");
+        assertThat(registeredMember.getMemo()).isEqualTo("memo");
+    }
+
+    @Test
+    @DisplayName("멤버를 등록할 때, 이미 존재하는 이메일의 등록 요청일 경우 예외가 발생한다.")
+    void 멤버_등록_테스트_중복된_이메일() {
+        //given
+        String alreadyExistEmail = "email@email.com";
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        memberRepository.save(MemberFixture.createMemberWithEmail(company, alreadyExistEmail));
+
+        CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
+                .name("name")
+                .email(alreadyExistEmail)
+                .password("password")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        Member authenticatedMember = MemberFixture.createMember(company);
+        given(securityService.getCurrentMember())
+                .willReturn(authenticatedMember);
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.registerMember(request));
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("멤버를 등록할 때, 허용하지 않는 생성 권한의 경우 예외를 던진다.")
+    void 멤버_등록_테스트_허용하지_않는_생성_권한() {
+        // given
+        CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
+                .name("name")
+                .role(MemberRole.ADMIN)
+                .email("email")
+                .password("password")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.registerMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_REGISTER_DENIED);
     }
 }

@@ -3,7 +3,9 @@ package org.thisway.member.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +23,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
 import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.dto.response.CompanyChefMembersResponse;
@@ -114,5 +117,29 @@ class CompanyChefMemberControllerTest {
         assertThat(response.pageInfo()).isEqualTo(pageInfo);
         assertThat(response.members()).hasSize(1);
         assertThat(response.members().getFirst().id()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("멤버를 등록할 수 있다.")
+    @WithMockUser(authorities = "COMPANY_CHEF")
+    void 멤버_등록_테스트() throws Exception {
+        // given
+        CompanyChefMemberRegisterRequest request = new CompanyChefMemberRegisterRequest(
+                MemberRole.COMPANY_CHEF,
+                "name",
+                "email",
+                "password",
+                "phone",
+                "memo"
+        );
+        String requestBody = objectMapper.writeValueAsString(request);
+
+        // when & then
+        mockMvc.perform(post("/api/company-chef/members")
+                        .contentType(APPLICATION_JSON)
+                        .content(requestBody)
+                )
+                .andExpect(status().isCreated())
+                .andDo(print());
     }
 }

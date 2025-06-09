@@ -4,11 +4,14 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.company.entity.Company;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.CompanyChefMemberRegisterInput;
 import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
@@ -26,7 +29,14 @@ public class CompanyChefMemberService {
             MemberRole.MEMBER
     );
 
+    private static final Set<MemberRole> COMPANY_CHEF_REGISTER_AUTHORITIES = Set.of(
+            MemberRole.COMPANY_CHEF,
+            MemberRole.COMPANY_ADMIN,
+            MemberRole.MEMBER
+    );
+
     private final SecurityService securityService;
+    private final PasswordEncoder passwordEncoder;
 
     private final MemberRepository memberRepository;
 
@@ -45,6 +55,28 @@ public class CompanyChefMemberService {
         return CompanyChefMembersOutput.from(members);
     }
 
+    public void registerMember(CompanyChefMemberRegisterInput request) {
+        String encodePassword = passwordEncoder.encode(request.password());
+        validateEmail(request.email());
+
+        if (!COMPANY_CHEF_REGISTER_AUTHORITIES.contains(request.role())) {
+            throw new CustomException(ErrorCode.MEMBER_REGISTER_DENIED);
+        }
+
+        Company company = securityService.getCurrentMember().getCompany();
+        Member member = Member.builder()
+                .company(company)
+                .role(request.role())
+                .name(request.name())
+                .email(request.email())
+                .password(encodePassword)
+                .phone(request.phone())
+                .memo(request.memo())
+                .build();
+
+        memberRepository.save(member);
+    }
+
     private Member getActiveMember(long id) {
         Member member = memberRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -57,5 +89,11 @@ public class CompanyChefMemberService {
         }
 
         return member;
+    }
+
+    private void validateEmail(String email) {
+        if (memberRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+        }
     }
 }

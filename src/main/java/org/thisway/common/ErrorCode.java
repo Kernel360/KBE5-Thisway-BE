@@ -25,6 +25,7 @@ public enum ErrorCode {
     MEMBER_ALREADY_EXIST_BY_EMAIL("12001", "이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_INVALID_PHONE_NUMBER("12003", "유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_ACCESS_DENIED("12004", "해당 멤버에 대한 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    MEMBER_REGISTER_DENIED("12005", "해당 멤버에 대한 생성 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
     // 인증 에러 x3xxx
     AUTH_INVALID_VERIFY_CODE("13000", "잘못된 인증코드입니다.", HttpStatus.BAD_REQUEST),
