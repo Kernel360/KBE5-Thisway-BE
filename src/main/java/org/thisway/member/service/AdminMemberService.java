@@ -73,9 +73,12 @@ public class AdminMemberService {
     }
 
     public void updateMember(AdminMemberUpdateDto request) {
-        validateEmail(request.email());
-
         Member member = getActiveMember(request.id());
+
+        if (!member.getEmail().equals(request.email())) {
+            validateEmail(request.email());
+        }
+
         member.updateName(request.name());
         member.updateEmail(request.email());
         member.updatePhone(request.phone());

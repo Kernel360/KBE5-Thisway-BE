@@ -283,12 +283,13 @@ class AdminMemberServiceTest {
         //given
         String alreadyExistEmail = "already@exist.email";
         Company company = companyRepository.save(CompanyFixture.createCompany());
+        memberRepository.save(MemberFixture.createMemberWithEmail(company, alreadyExistEmail));
         Member member = memberRepository.save(
                 Member.builder()
                         .company(company)
                         .role(MemberRole.COMPANY_CHEF)
                         .name("preUpdateName")
-                        .email(alreadyExistEmail)
+                        .email("preUpdateEmail@email.com")
                         .password("password")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
