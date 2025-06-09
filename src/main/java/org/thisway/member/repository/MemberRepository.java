@@ -10,6 +10,9 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
+
+    Optional<Member> findByIdAndActiveTrue(Long id);
+
     Optional<Member> findByEmailAndActiveTrue(String email);
 
     boolean existsByEmail(String email);
