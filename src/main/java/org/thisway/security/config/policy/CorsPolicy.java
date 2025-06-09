@@ -28,7 +28,8 @@ public class CorsPolicy {
                 "POST",
                 "PUT",
                 "DELETE",
-                "OPTIONS"));
+                "OPTIONS",
+                "PATCH"));
 
         config.setAllowedHeaders(List.of(
                 "Content-Type",
