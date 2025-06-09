@@ -3,6 +3,7 @@ package org.thisway.log.converter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Component;
+import org.thisway.log.domain.GpsStatus;
 
 @Component
 public class LogDataConverter {
@@ -35,5 +36,7 @@ public class LogDataConverter {
         return Byte.parseByte(value);
     }
 
-
+    public GpsStatus convertToGpsStatus(String code) {
+        return GpsStatus.fromCode(code);
+    }
 }

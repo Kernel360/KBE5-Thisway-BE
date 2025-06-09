@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thisway.log.domain.GpsStatus;
 
 @ExtendWith(MockitoExtension.class)
 public class LogDataConverterTest {
@@ -73,5 +74,29 @@ public class LogDataConverterTest {
 
         Byte result = converter.convertToByte(value);
         assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("문자열을 GpsStatus로 변환 테스트")
+    void GpsStatus_변환이_올바르게_실행되어야한다() {
+        String normalCode = "A";
+        GpsStatus expectedNormal = GpsStatus.NORMAL;
+        GpsStatus resultNormal = converter.convertToGpsStatus(normalCode);
+        assertThat(resultNormal).isEqualTo(expectedNormal);
+
+        String abnormalCode = "V";
+        GpsStatus expectedAbnormal = GpsStatus.ABNORMAL;
+        GpsStatus resultAbnormal = converter.convertToGpsStatus(abnormalCode);
+        assertThat(resultAbnormal).isEqualTo(expectedAbnormal);
+
+        String notInstalledCode = "0";
+        GpsStatus expectedNotInstalled = GpsStatus.NOT_INSTALLED;
+        GpsStatus resultNotInstalled = converter.convertToGpsStatus(notInstalledCode);
+        assertThat(resultNotInstalled).isEqualTo(expectedNotInstalled);
+
+        String abnormalOnIgnition = "P";
+        GpsStatus expectedAbnormalOnIgnition = GpsStatus.ABNORMAL_ON_IGNITION;
+        GpsStatus resultAbnormalOnIgnition = converter.convertToGpsStatus(abnormalOnIgnition);
+        assertThat(resultAbnormalOnIgnition).isEqualTo(expectedAbnormalOnIgnition);
     }
 }
