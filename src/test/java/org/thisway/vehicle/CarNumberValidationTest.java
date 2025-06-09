@@ -29,8 +29,7 @@ public class CarNumberValidationTest {
     void 차량번호검증_통과(){
         //given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색",
-                1000, 37.5665, 126.9780);
+                "현대", 2022, "아반떼", "12가3456", "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -50,8 +49,7 @@ public class CarNumberValidationTest {
     void 다양한_유효한_차량번호_검증(String carNumber) {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", carNumber, "흰색",
-                1000, 37.5665, 126.9780);
+                "현대", 2022, "아반떼", carNumber, "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -75,8 +73,7 @@ public class CarNumberValidationTest {
     void 잘못된_차량번호_검증(String carNumber) {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", carNumber, "흰색",
-                1000,37.5665, 126.9780);
+                "현대", 2022, "아반떼", carNumber, "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
