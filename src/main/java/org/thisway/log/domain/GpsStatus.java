@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum GpsStatus {
     NORMAL("A", "정상"),
     ABNORMAL("V", "비정상"),
-    NOT_INSTALLED("0", "미장착");
+    NOT_INSTALLED("0", "미장착"),
+    ABNORMAL_ON_IGNITION("P", "시동 OFF시 비정상");
 
     private final String code;
     private final String description;
