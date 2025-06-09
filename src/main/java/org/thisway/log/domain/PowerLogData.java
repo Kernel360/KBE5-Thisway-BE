@@ -9,7 +9,7 @@ public record PowerLogData(
         String mdn,
         boolean powerStatus,
         LocalDateTime powerTime,
-        String gpsStatus,
+        GpsStatus gpsStatus,
         Double latitude,
         Double longitude,
         Integer totalTripMeter
@@ -28,7 +28,7 @@ public record PowerLogData(
                 request.mdn(),
                 powerStatus,
                 powerTime,
-                request.gcd(),
+                converter.convertToGpsStatus(request.gcd()),
                 converter.convertCoordinate(request.lat()),
                 converter.convertCoordinate(request.lon()),
                 converter.convertToInteger(request.sum())

@@ -73,6 +73,23 @@ public class Member extends BaseEntity {
         this.password = password;
     }
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updatePhone(String phone) {
+        this.phone = new PhoneNumber(phone);
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
+
     public Set<MemberRole> getLowerOrEqualRoles() {
         return role.getLowerOrEqualRoles();
     }
