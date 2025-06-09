@@ -21,6 +21,7 @@ public class RequestAuthorizationPolicy {
         rules.addAll(MemberAuthorizationPolicy.getRules());
         rules.addAll(CompanyAuthorizationPolicy.getRules());
         rules.addAll(VehicleAuthorizationPolicy.getRules());
+        rules.addAll(ActuatorAuthorizationPolicy.getRules());
 
         return rules;
     }
