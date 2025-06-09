@@ -46,15 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         @SuppressWarnings("unchecked")
         List<String> roles = claims.get("roles", List.class);
-        // List<String> roles = (List<String>) claims.get("roles");
-        if (roles == null) {
+        if (roles == null)
             roles = List.of();
-        }
 
         Long companyId = claims.get("companyId", Long.class);
-        if (companyId == null) {
+        if (companyId == null)
             throw new BadCredentialsException("Invalid JWT token: missing companyId");
-        }
 
         MemberRole role = MemberRole.valueOf(roles.getFirst());
 
@@ -64,7 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .role(role)
                 .build();
 
-        String[] authorities = roles.toArray(String[]::new);
+        String[] authorities = roles.stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .toArray(String[]::new);
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 memberDetails,
                 null,

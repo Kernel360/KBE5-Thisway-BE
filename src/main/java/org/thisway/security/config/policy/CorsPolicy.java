@@ -1,4 +1,4 @@
-package org.thisway.config;
+package org.thisway.security.config.policy;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
-public class WebConfig {
+public class CorsPolicy {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -17,14 +17,19 @@ public class WebConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173/",
-                "http://127.0.0.1:5173/"));
+                "https://localhost:5173/",
+                "http://127.0.0.1:5173/",
+                "https://127.0.0.1:5173/",
+                "https://clsz.xyz",
+                "https://api.clsz.xyz"));
 
         config.setAllowedMethods(List.of(
                 "GET",
                 "POST",
                 "PUT",
                 "DELETE",
-                "OPTIONS"));
+                "OPTIONS",
+                "PATCH"));
 
         config.setAllowedHeaders(List.of(
                 "Content-Type",
@@ -34,7 +39,7 @@ public class WebConfig {
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/api/**", config);
 
         return source;
     }

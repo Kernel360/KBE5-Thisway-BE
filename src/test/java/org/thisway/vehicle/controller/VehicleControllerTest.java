@@ -60,7 +60,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 등록 요청 성공")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_성공() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", "12가3456", "흰색");
@@ -76,7 +76,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 등록 요청 실패 - 업체 미존재")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_실패() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 "현대", 2022, "아반떼", "12가3456", "흰색");
@@ -94,7 +94,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 상세 조회 API 성공")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_상세_조회_성공() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -113,16 +113,14 @@ class VehicleControllerTest {
         // when & then
         MvcResult mvcResult = mockMvc.perform(
                 get("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                )
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         VehicleResponse response = objectMapper.readValue(
-                responseBody, VehicleResponse.class
-        );
+                responseBody, VehicleResponse.class);
 
         assertThat(response.manufacturer()).isEqualTo("기아");
         assertThat(response.modelYear()).isEqualTo(2024);
@@ -134,7 +132,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 상세 조회 API 실패 - 차량 없음")
-    @WithMockUser
+    @WithMockUser(roles = { "MEMBER" })
     void 차량_상세_조회_실패() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -144,56 +142,51 @@ class VehicleControllerTest {
         // when & then
         MvcResult mvcResult = mockMvc.perform(
                 get("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                )
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         ApiErrorResponse response = objectMapper.readValue(
-                responseBody, ApiErrorResponse.class
-        );
+                responseBody, ApiErrorResponse.class);
         assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 
     @Test
     @DisplayName("차량 삭제 요청 성공")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_삭제_요청_성공() throws Exception {
         doNothing().when(vehicleService).deleteVehicle(1L);
 
         mockMvc.perform(
-                delete("/api/vehicles/1")
-                )
+                delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("차량 삭제 요청 실패 - 차량 미존재")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_삭제_요청_실패() throws Exception {
         doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
                 .when(vehicleService).deleteVehicle(1L);
 
         MvcResult mvcResult = mockMvc.perform(
-                delete("/api/vehicles/1")
-                )
+                delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         ApiErrorResponse response = objectMapper.readValue(
-                responseBody, ApiErrorResponse.class
-        );
+                responseBody, ApiErrorResponse.class);
         assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 
     @Test
     @DisplayName("차량 삭제 요청 실패 - 이미 삭제된 차량")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 이미_삭제된_차량_삭제_요청_실패() throws Exception {
         // given
         doThrow(new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED))
@@ -201,22 +194,20 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                        delete("/api/vehicles/1")
-                )
+                delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         ApiErrorResponse response = objectMapper.readValue(
-                responseBody, ApiErrorResponse.class
-        );
+                responseBody, ApiErrorResponse.class);
         assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_ALREADY_DELETED.getMessage());
     }
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 기본 페이지네이션")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_목록_조회_성공_기본_페이지네이션() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
@@ -229,16 +220,14 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                        get("/api/vehicles")
-                )
+                get("/api/vehicles"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         VehiclesResponse response = objectMapper.readValue(
-                responseBody, VehiclesResponse.class
-        );
+                responseBody, VehiclesResponse.class);
 
         assertThat(response.vehicles()).hasSize(2);
         assertThat(response.totalPages()).isEqualTo(1);
@@ -249,7 +238,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 두 번째 페이지")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_목록_조회_성공_두번째_페이지() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
@@ -263,16 +252,14 @@ class VehicleControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                 get("/api/vehicles")
                         .param("page", "3")
-                        .param("size", "2")
-                )
+                        .param("size", "2"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         VehiclesResponse response = objectMapper.readValue(
-                responseBody, VehiclesResponse.class
-        );
+                responseBody, VehiclesResponse.class);
 
         assertThat(response.vehicles()).hasSize(1);
         assertThat(response.totalPages()).isEqualTo(2);
@@ -283,7 +270,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 정렬 적용")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_목록_조회_성공_정렬_적용() throws Exception {
         // given
         List<VehicleResponse> descendingOrder = List.of(
@@ -299,16 +286,14 @@ class VehicleControllerTest {
         // when & then
         MvcResult mvcResult = mockMvc.perform(
                 get("/api/vehicles")
-                        .param("sort", "carNumber,desc")
-                )
+                        .param("sort", "carNumber,desc"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         VehiclesResponse response = objectMapper.readValue(
-                responseBody, VehiclesResponse.class
-        );
+                responseBody, VehiclesResponse.class);
 
         assertThat(response.vehicles()).hasSize(2);
         assertThat(response.vehicles().get(0).carNumber()).isEqualTo("34나5678");
@@ -317,7 +302,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 정보 수정 요청 성공")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_정보_수정_요청_성공() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -340,7 +325,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 정보 수정 요청 실패 - 차량을 찾을 수 없음")
-    @WithMockUser
+    @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_정보_수정_요청_실패_차량_미존재() throws Exception {
         // given
         Long vehicleId = 999L;
@@ -357,16 +342,14 @@ class VehicleControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                 patch("/api/vehicles/{id}", vehicleId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                )
+                        .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
         ApiErrorResponse response = objectMapper.readValue(
-                responseBody, ApiErrorResponse.class
-        );
+                responseBody, ApiErrorResponse.class);
         assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
     }
 }
