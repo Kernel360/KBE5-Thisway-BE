@@ -24,12 +24,12 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.MemberOutput;
-import org.thisway.member.dto.MembersOutput;
+import org.thisway.member.dto.AdminMemberDetailOutput;
+import org.thisway.member.dto.AdminMembersOutput;
 import org.thisway.member.dto.request.AdminMemberRegisterRequest;
 import org.thisway.member.dto.request.AdminMemberUpdateRequest;
-import org.thisway.member.dto.response.MemberResponse;
-import org.thisway.member.dto.response.MembersResponse;
+import org.thisway.member.dto.response.AdminMemberDetailResponse;
+import org.thisway.member.dto.response.AdminMembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.AdminMemberService;
 
@@ -51,10 +51,12 @@ class AdminMemberControllerTest {
     void 멤버_상세_정보_조회_테스트() throws Exception {
         // given
         Long memberId = 1L;
-        MemberOutput memberOutput = new MemberOutput(memberId, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
+        AdminMemberDetailOutput adminMemberDetailOutput = new AdminMemberDetailOutput(memberId, "companyName",
+                MemberRole.MEMBER,
+                "name", "email", "phone", "memo");
 
         given(adminMemberService.getMemberDetail(memberId))
-                .willReturn(memberOutput);
+                .willReturn(adminMemberDetailOutput);
 
         // when
         String responseBody = mockMvc.perform(get("/api/admin/members/" + memberId))
@@ -64,18 +66,18 @@ class AdminMemberControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        MemberResponse response = objectMapper.readValue(
-                responseBody, MemberResponse.class
+        AdminMemberDetailResponse response = objectMapper.readValue(
+                responseBody, AdminMemberDetailResponse.class
         );
 
         // then
         assertThat(response.id()).isEqualTo(memberId);
-        assertThat(response.companyId()).isEqualTo(memberOutput.companyId());
-        assertThat(response.role()).isEqualTo(memberOutput.role());
-        assertThat(response.name()).isEqualTo(memberOutput.name());
-        assertThat(response.email()).isEqualTo(memberOutput.email());
-        assertThat(response.phone()).isEqualTo(memberOutput.phone());
-        assertThat(response.memo()).isEqualTo(memberOutput.memo());
+        assertThat(response.companyName()).isEqualTo(adminMemberDetailOutput.companyName());
+        assertThat(response.role()).isEqualTo(adminMemberDetailOutput.role());
+        assertThat(response.name()).isEqualTo(adminMemberDetailOutput.name());
+        assertThat(response.email()).isEqualTo(adminMemberDetailOutput.email());
+        assertThat(response.phone()).isEqualTo(adminMemberDetailOutput.phone());
+        assertThat(response.memo()).isEqualTo(adminMemberDetailOutput.memo());
     }
 
     @Test
@@ -83,12 +85,14 @@ class AdminMemberControllerTest {
     @WithMockUser(authorities = "ADMIN")
     void 멤버_리스트_조회_테스트() throws Exception {
         // given
-        MemberOutput memberOutput = new MemberOutput(1L, 1L, MemberRole.MEMBER, "name", "email", "phone", "memo");
+        AdminMemberDetailOutput adminMemberDetailOutput = new AdminMemberDetailOutput(1L, "companyName",
+                MemberRole.MEMBER, "name",
+                "email", "phone", "memo");
         PageInfo pageInfo = new PageInfo(1, 1, 1, 0, 10);
-        MembersOutput membersOutput = new MembersOutput(List.of(memberOutput), pageInfo);
+        AdminMembersOutput adminMembersOutput = new AdminMembersOutput(List.of(adminMemberDetailOutput), pageInfo);
 
         given(adminMemberService.getMembers(any()))
-                .willReturn(membersOutput);
+                .willReturn(adminMembersOutput);
 
         // when
         String responseBody = mockMvc.perform(get("/api/admin/members"))
@@ -98,8 +102,8 @@ class AdminMemberControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        MembersResponse response = objectMapper.readValue(
-                responseBody, MembersResponse.class
+        AdminMembersResponse response = objectMapper.readValue(
+                responseBody, AdminMembersResponse.class
         );
 
         // then

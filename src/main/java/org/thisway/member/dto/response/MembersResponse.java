@@ -3,7 +3,6 @@ package org.thisway.member.dto.response;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.MembersOutput;
 import org.thisway.member.entity.Member;
 
 public record MembersResponse(
@@ -17,10 +16,5 @@ public record MembersResponse(
         PageInfo pageInfo = PageInfo.from(memberPage);
 
         return new MembersResponse(members, pageInfo);
-    }
-
-    public static MembersResponse from(MembersOutput membersOutput) {
-        List<MemberResponse> members = membersOutput.members().stream().map(MemberResponse::from).toList();
-        return new MembersResponse(members, membersOutput.pageInfo());
     }
 }

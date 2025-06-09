@@ -21,8 +21,8 @@ import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.AdminMemberRegisterInput;
 import org.thisway.member.dto.AdminMemberUpdateInput;
-import org.thisway.member.dto.MemberOutput;
-import org.thisway.member.dto.MembersOutput;
+import org.thisway.member.dto.AdminMemberDetailOutput;
+import org.thisway.member.dto.AdminMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -53,11 +53,11 @@ class AdminMemberServiceTest {
         Member member = memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
 
         // when
-        MemberOutput result = adminMemberService.getMemberDetail(member.getId());
+        AdminMemberDetailOutput result = adminMemberService.getMemberDetail(member.getId());
 
         // then
         assertThat(result.id()).isEqualTo(member.getId());
-        assertThat(result.companyId()).isEqualTo(member.getCompany().getId());
+        assertThat(result.companyName()).isEqualTo(member.getCompany().getName());
         assertThat(result.role()).isEqualTo(member.getRole());
         assertThat(result.name()).isEqualTo(member.getName());
         assertThat(result.email()).isEqualTo(member.getEmail());
@@ -107,7 +107,7 @@ class AdminMemberServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // when
-        MembersOutput result = adminMemberService.getMembers(pageable);
+        AdminMembersOutput result = adminMemberService.getMembers(pageable);
 
         // then
         assertThat(result.pageInfo().numberOfElements()).isEqualTo(1);

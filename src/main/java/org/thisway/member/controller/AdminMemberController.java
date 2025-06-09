@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.dto.request.AdminMemberRegisterRequest;
 import org.thisway.member.dto.request.AdminMemberUpdateRequest;
-import org.thisway.member.dto.response.MemberResponse;
-import org.thisway.member.dto.response.MembersResponse;
+import org.thisway.member.dto.response.AdminMemberDetailResponse;
+import org.thisway.member.dto.response.AdminMembersResponse;
 import org.thisway.member.service.AdminMemberService;
 
 @RestController
@@ -28,18 +28,18 @@ public class AdminMemberController {
     private final AdminMemberService adminMemberService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<MemberResponse> getMemberDetail(@PathVariable Long id) {
-        MemberResponse response = MemberResponse.from(adminMemberService.getMemberDetail(id));
+    public ResponseEntity<AdminMemberDetailResponse> getMemberDetail(@PathVariable Long id) {
+        AdminMemberDetailResponse response = AdminMemberDetailResponse.from(adminMemberService.getMemberDetail(id));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
     }
 
     @GetMapping
-    public ResponseEntity<MembersResponse> getMembers(
+    public ResponseEntity<AdminMembersResponse> getMembers(
             @PageableDefault Pageable pageable
     ) {
-        MembersResponse response = MembersResponse.from(adminMemberService.getMembers(pageable));
+        AdminMembersResponse response = AdminMembersResponse.from(adminMemberService.getMembers(pageable));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);

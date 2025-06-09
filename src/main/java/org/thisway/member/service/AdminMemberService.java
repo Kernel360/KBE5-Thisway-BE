@@ -13,8 +13,8 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.dto.AdminMemberRegisterInput;
 import org.thisway.member.dto.AdminMemberUpdateInput;
-import org.thisway.member.dto.MemberOutput;
-import org.thisway.member.dto.MembersOutput;
+import org.thisway.member.dto.AdminMemberDetailOutput;
+import org.thisway.member.dto.AdminMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -38,15 +38,15 @@ public class AdminMemberService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public MemberOutput getMemberDetail(Long id) {
-        return MemberOutput.from(getActiveMember(id));
+    public AdminMemberDetailOutput getMemberDetail(Long id) {
+        return AdminMemberDetailOutput.from(getActiveMember(id));
     }
 
     @Transactional(readOnly = true)
-    public MembersOutput getMembers(Pageable pageable) {
+    public AdminMembersOutput getMembers(Pageable pageable) {
         Page<Member> members = memberRepository.findAllByActiveTrueAndRoleIn(ADMIN_ACCESS_AUTHORITIES, pageable);
 
-        return MembersOutput.from(members);
+        return AdminMembersOutput.from(members);
     }
 
     public void registerMember(AdminMemberRegisterInput request) {
