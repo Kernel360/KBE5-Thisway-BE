@@ -93,5 +93,10 @@ public class LogDataConverterTest {
         GpsStatus expectedNotInstalled = GpsStatus.NOT_INSTALLED;
         GpsStatus resultNotInstalled = converter.convertToGpsStatus(notInstalledCode);
         assertThat(resultNotInstalled).isEqualTo(expectedNotInstalled);
+
+        String abnormalOnIgnition = "P";
+        GpsStatus expectedAbnormalOnIgnition = GpsStatus.ABNORMAL_ON_IGNITION;
+        GpsStatus resultAbnormalOnIgnition = converter.convertToGpsStatus(abnormalOnIgnition);
+        assertThat(resultAbnormalOnIgnition).isEqualTo(expectedAbnormalOnIgnition);
     }
 }
