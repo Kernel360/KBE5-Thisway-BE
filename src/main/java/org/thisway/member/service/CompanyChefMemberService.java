@@ -12,6 +12,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.CompanyChefMemberRegisterInput;
+import org.thisway.member.dto.CompanyChefMemberUpdateInput;
 import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
@@ -75,6 +76,19 @@ public class CompanyChefMemberService {
                 .build();
 
         memberRepository.save(member);
+    }
+
+    public void updateMember(CompanyChefMemberUpdateInput request) {
+        Member member = getActiveMember(request.id());
+
+        if (!member.getEmail().equals(request.email())) {
+            validateEmail(request.email());
+        }
+
+        member.updateName(request.name());
+        member.updateEmail(request.email());
+        member.updatePhone(request.phone());
+        member.updateMemo(request.memo());
     }
 
     private Member getActiveMember(long id) {

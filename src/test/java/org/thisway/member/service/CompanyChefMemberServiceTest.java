@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import lombok.RequiredArgsConstructor;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.CompanyChefMemberRegisterInput;
+import org.thisway.member.dto.CompanyChefMemberUpdateInput;
 import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
@@ -236,5 +238,152 @@ class CompanyChefMemberServiceTest {
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_REGISTER_DENIED);
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 수 있다.")
+    void 멤버_수정_테스트() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.COMPANY_CHEF)
+                        .name("preUpdateName")
+                        .email("pre@update.email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
+                .id(member.getId())
+                .name("updatedName")
+                .email("updated@email.email")
+                .phone("01087654321")
+                .memo("updatedMemo")
+                .build();
+
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(company.getId())
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
+
+        // when
+        companyChefMemberService.updateMember(request);
+
+        // then
+        Member updatedMember = memberRepository.findAll().getFirst();
+
+        Assertions.assertThat(updatedMember.getName()).isEqualTo("updatedName");
+        Assertions.assertThat(updatedMember.getEmail()).isEqualTo("updated@email.email");
+        Assertions.assertThat(updatedMember.getPhoneValue()).isEqualTo("01087654321");
+        Assertions.assertThat(updatedMember.getMemo()).isEqualTo("updatedMemo");
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 때, 없는 멤버 ID의 경우 예외를 발생시킨다.")
+    void 멤버_수정_테스트_없는_멤버() {
+        //given
+        long invalidMemberId = 1L;
+        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
+                .id(invalidMemberId)
+                .name("name")
+                .email("updated@email.email")
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.updateMember(request));
+
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("멤버를 수정할 때, 이미 존재하는 이메일의 경우 예외가 발생한다.")
+    void 멤버_수정_테스트_중복된_이메일() {
+        //given
+        String alreadyExistEmail = "already@exist.email";
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        memberRepository.save(MemberFixture.createMemberWithEmail(company, alreadyExistEmail));
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.COMPANY_CHEF)
+                        .name("preUpdateName")
+                        .email("preUpdateEmail@email.com")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
+                .id(member.getId())
+                .name("name")
+                .email(alreadyExistEmail)
+                .phone("01012345678")
+                .memo("memo")
+                .build();
+
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(company.getId())
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.updateMember(request));
+
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("멤버 정보를 수정할 때, ADMIN 일 경우 예외를 던진다.")
+    void 멤버_수정_테스트_최고_관리자_이외의_수정() {
+        //given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        Member member = memberRepository.save(
+                Member.builder()
+                        .company(company)
+                        .role(MemberRole.ADMIN)
+                        .name("preUpdateName")
+                        .email("pre@update.email")
+                        .password("password")
+                        .phone("01012345678")
+                        .memo("preUpdatedMemo")
+                        .build()
+        );
+
+        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
+                .id(member.getId())
+                .name("updatedName")
+                .email("updated@email.email")
+                .phone("01087654321")
+                .memo("updatedMemo")
+                .build();
+
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(company.getId())
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.updateMember(request));
+
+        // then
+        Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException e = (CustomException) thrown;
+        Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
     }
 }

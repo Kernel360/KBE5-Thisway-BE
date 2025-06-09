@@ -9,10 +9,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
+import org.thisway.member.dto.request.CompanyChefMemberUpdateRequest;
 import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
 import org.thisway.member.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.service.CompanyChefMemberService;
@@ -51,6 +53,17 @@ public class CompanyChefMemberController {
         companyChefMemberService.registerMember(request.toMemberRegisterInput());
 
         return ResponseEntity.status(HttpStatus.CREATED)
+                .build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateMember(
+            @PathVariable long id,
+            @RequestBody @Validated CompanyChefMemberUpdateRequest request
+    ) {
+        companyChefMemberService.updateMember(request.toMemberUpdateInput(id));
+
+        return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
 }
