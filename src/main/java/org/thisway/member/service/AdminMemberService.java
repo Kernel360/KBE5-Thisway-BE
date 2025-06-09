@@ -44,7 +44,7 @@ public class AdminMemberService {
 
     @Transactional(readOnly = true)
     public MembersDto getMembers(Pageable pageable) {
-        Page<Member> members = memberRepository.findAllByActiveTrueAndRole(MemberRole.COMPANY_CHEF, pageable);
+        Page<Member> members = memberRepository.findAllByActiveTrueAndRoleIn(ADMIN_ACCESS_AUTHORITIES, pageable);
 
         return MembersDto.from(members);
     }
