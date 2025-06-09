@@ -13,6 +13,7 @@ import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.security.service.SecurityService;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,8 @@ public class CompanyChefMemberService {
             MemberRole.MEMBER
     );
 
+    private final SecurityService securityService;
+
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
@@ -33,7 +36,10 @@ public class CompanyChefMemberService {
     }
 
     public CompanyChefMembersOutput getMembers(Pageable pageable) {
-        Page<Member> members = memberRepository.findAllByActiveTrueAndRoleIn(COMPANY_CHEF_ACCESS_AUTHORITIES, pageable);
+        long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
+        Page<Member> members = memberRepository.findAllByActiveTrueAndRoleInAndCompanyId(
+                COMPANY_CHEF_ACCESS_AUTHORITIES, authenticatedMemberCompanyId, pageable
+        );
 
         return CompanyChefMembersOutput.from(members);
     }
@@ -42,7 +48,10 @@ public class CompanyChefMemberService {
         Member member = memberRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if (!COMPANY_CHEF_ACCESS_AUTHORITIES.contains(member.getRole())) {
+        long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
+        if (!COMPANY_CHEF_ACCESS_AUTHORITIES.contains(member.getRole())
+                || authenticatedMemberCompanyId != member.getCompany().getId()
+        ) {
             throw new CustomException(ErrorCode.MEMBER_ACCESS_DENIED);
         }
 
