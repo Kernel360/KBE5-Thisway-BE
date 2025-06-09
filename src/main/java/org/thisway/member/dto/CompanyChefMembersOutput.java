@@ -1,9 +1,8 @@
-package org.thisway.member.dto.response;
+package org.thisway.member.dto;
 
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.entity.Member;
 
 public record CompanyChefMembersOutput(

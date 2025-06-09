@@ -28,7 +28,7 @@ import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.dto.request.CompanyChefMemberUpdateRequest;
 import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
-import org.thisway.member.dto.response.CompanyChefMembersOutput;
+import org.thisway.member.dto.CompanyChefMembersOutput;
 import org.thisway.member.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.CompanyChefMemberService;

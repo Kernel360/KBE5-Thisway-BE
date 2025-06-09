@@ -13,7 +13,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.CompanyChefMemberRegisterInput;
 import org.thisway.member.dto.CompanyChefMemberUpdateInput;
-import org.thisway.member.dto.response.CompanyChefMembersOutput;
+import org.thisway.member.dto.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
