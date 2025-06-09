@@ -106,7 +106,7 @@ class JwtAuthenticationFilterTest {
                     assertThat(auth.getName()).isEqualTo("alice");
                     assertThat(auth.getAuthorities())
                             .extracting("authority")
-                            .containsExactly("MEMBER");
+                            .containsExactly("ROLE_MEMBER");
                 });
     }
 
