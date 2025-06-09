@@ -55,10 +55,11 @@ public class SecurityConfig {
                                         req,
                                         res,
                                         accessEx) -> res.sendError(
-                                                HttpStatus.FORBIDDEN.value(),
-                                                "Forbidden")))
+                                        HttpStatus.FORBIDDEN.value(),
+                                        "Forbidden")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/company-chef/**").hasAuthority("COMPANY_CHEF")
                         .anyRequest().authenticated())
                 .build();
     }
