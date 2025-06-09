@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.thisway.common.CustomException;
@@ -17,6 +19,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.response.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -87,5 +90,22 @@ class CompanyChefMemberServiceTest {
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+    }
+
+    @Test
+    @DisplayName("멤버 목록을 조회할 수 있다")
+    void 멤버_목록_조회_테스트_성공() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        memberRepository.save(MemberFixture.createMember(company, MemberRole.COMPANY_CHEF));
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // when
+        CompanyChefMembersOutput result = companyChefMemberService.getMembers(pageable);
+
+        // then
+        assertThat(result.pageInfo().numberOfElements()).isEqualTo(1);
+        assertThat(result.pageInfo().size()).isEqualTo(10);
     }
 }

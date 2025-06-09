@@ -19,6 +19,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Page<Member> findAllByActiveTrue(Pageable pageable);
 
+    Page<Member> findAllByActiveTrueAndRoleIn(Set<MemberRole> role, Pageable pageable);
+
     Page<Member> findAllByActiveTrueAndRoleInAndCompany(Set<MemberRole> roles, Company company, Pageable pageable);
 
     long countByActiveTrueAndCompanyIdAndRole(long company, MemberRole role);
