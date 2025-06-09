@@ -20,7 +20,7 @@ public class LogRepository {
                 powerLogData.mdn(),
                 powerLogData.powerStatus(),
                 powerLogData.powerTime(),
-                powerLogData.gpsStatus(),
+                powerLogData.gpsStatus().getCode(),
                 powerLogData.latitude(),
                 powerLogData.longitude(),
                 powerLogData.totalTripMeter()
@@ -63,7 +63,7 @@ public class LogRepository {
         return new Object[]{
                 gpsLogData.vehicleId(),
                 gpsLogData.mdn(),
-                gpsLogData.gpsStatus(),
+                gpsLogData.gpsStatus().getCode(),
                 gpsLogData.latitude(),
                 gpsLogData.longitude(),
                 gpsLogData.angle(),
@@ -82,7 +82,7 @@ public class LogRepository {
                 geofenceLogData.geofenceGroupId(),
                 geofenceLogData.geofenceId(),
                 geofenceLogData.eventVal(),
-                geofenceLogData.gpsStatus(),
+                geofenceLogData.gpsStatus().getCode(),
                 geofenceLogData.latitude(),
                 geofenceLogData.longitude(),
                 geofenceLogData.angle()
