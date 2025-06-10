@@ -20,7 +20,6 @@ import org.thisway.security.filter.JwtAuthenticationFilter;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http,
@@ -62,4 +61,5 @@ public class SecurityConfig {
                         })
                 .build();
     }
+
 }

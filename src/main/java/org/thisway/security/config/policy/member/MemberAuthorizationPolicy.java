@@ -67,6 +67,42 @@ public class MemberAuthorizationPolicy {
                         HttpMethod.DELETE,
                         List.of("/api/admin/members/{id}"),
                         "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/company-chef/members/{id}"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.POST,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.PUT,
+                        List.of("/api/company-chef/members/{id}"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/company-chef/members/summary"),
+                        "COMPANY_CHEF"
                 )
         );
     }

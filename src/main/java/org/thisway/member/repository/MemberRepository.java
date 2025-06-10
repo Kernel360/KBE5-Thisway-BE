@@ -10,6 +10,7 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
+
     Optional<Member> findByIdAndActiveTrue(Long id);
 
     Optional<Member> findByEmailAndActiveTrue(String email);
@@ -21,6 +22,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<Member> findAllByActiveTrueAndRoleIn(Set<MemberRole> role, Pageable pageable);
 
     Page<Member> findAllByActiveTrueAndRoleInAndCompany(Set<MemberRole> roles, Company company, Pageable pageable);
+
+    Page<Member> findAllByActiveTrueAndRoleInAndCompanyId(Set<MemberRole> roles, long companyId, Pageable pageable);
 
     long countByActiveTrueAndCompanyIdAndRole(long company, MemberRole role);
 }
