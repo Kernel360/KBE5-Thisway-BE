@@ -112,7 +112,7 @@ jobs:
           port: 22
           script: |
             # (1) 기존에 띄운 앱 프로세스가 있으면 종료
-            pkill -f 'app.jar' || echo "No existing process"
+            pkill -f 'thisway.*\.jar' || echo "No existing process"
 
             # (2) 새로 애플리케이션 실행 (백그라운드 + 로그 파일 기록)
             nohup java -jar /home/ec2-user/thisway*.jar \
