@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
 import org.thisway.company.dto.request.AdminCompanyUpdateRequest;
 import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyResponse;
+import org.thisway.company.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
 @RestController
@@ -28,19 +28,28 @@ public class AdminCompanyController {
     private final AdminCompanyService adminCompanyService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<AdminCompanyResponse> getCompanyDetail(@PathVariable Long id) {
+    public ResponseEntity<AdminCompanyDetailResponse> getCompanyDetail(@PathVariable Long id) {
+        AdminCompanyDetailResponse response = AdminCompanyDetailResponse.from(
+                adminCompanyService.getCompanyDetail(id)
+        );
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminCompanyService.getCompanyDetail(id));
+                .body(response);
     }
 
     @GetMapping
     public ResponseEntity<AdminCompaniesResponse> getCompanies(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(adminCompanyService.getCompanies(pageable));
+        AdminCompaniesResponse response = AdminCompaniesResponse.from(
+                adminCompanyService.getCompanies(pageable)
+        );
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
     }
 
     @PostMapping
     public ResponseEntity<Void> registerCompany(@RequestBody @Validated AdminCompanyRegisterRequest request) {
-        adminCompanyService.registerCompany(request);
+        adminCompanyService.registerCompany(request.toCompanyRegisterInput());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
     }

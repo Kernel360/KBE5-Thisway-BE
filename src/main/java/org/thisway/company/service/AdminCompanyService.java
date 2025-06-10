@@ -7,10 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
+import org.thisway.company.dto.AdminCompaniesOutput;
+import org.thisway.company.dto.AdminCompanyDetailOutput;
+import org.thisway.company.dto.AdminCompanyRegisterInput;
 import org.thisway.company.dto.AdminCompanyUpdateInput;
-import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
-import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyResponse;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 
@@ -22,19 +22,19 @@ public class AdminCompanyService {
     private final CompanyRepository companyRepository;
 
     @Transactional(readOnly = true)
-    public AdminCompanyResponse getCompanyDetail(Long id) {
+    public AdminCompanyDetailOutput getCompanyDetail(Long id) {
         return companyRepository.findById(id)
                 .filter(BaseEntity::isActive)
-                .map(AdminCompanyResponse::from)
+                .map(AdminCompanyDetailOutput::from)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
     }
 
     @Transactional(readOnly = true)
-    public AdminCompaniesResponse getCompanies(Pageable pageable) {
-        return AdminCompaniesResponse.from(companyRepository.findAllByActiveTrue(pageable));
+    public AdminCompaniesOutput getCompanies(Pageable pageable) {
+        return AdminCompaniesOutput.from(companyRepository.findAllByActiveTrue(pageable));
     }
 
-    public void registerCompany(AdminCompanyRegisterRequest request) {
+    public void registerCompany(AdminCompanyRegisterInput request) {
         Boolean existingCompany = companyRepository.existsByCrn(request.crn());
         if (existingCompany) {
             throw new CustomException(ErrorCode.COMPANY_ALREADY_EXIST);

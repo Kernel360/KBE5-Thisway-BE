@@ -18,9 +18,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
-import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyResponse;
+import org.thisway.company.dto.AdminCompaniesOutput;
+import org.thisway.company.dto.AdminCompanyDetailOutput;
+import org.thisway.company.dto.AdminCompanyRegisterInput;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
@@ -39,7 +39,7 @@ class AdminCompanyServiceTest {
                 .thenReturn(Optional.of(company));
 
         // when
-        AdminCompanyResponse response = adminCompanyService.getCompanyDetail(1L);
+        AdminCompanyDetailOutput response = adminCompanyService.getCompanyDetail(1L);
 
         // then
         assertThat(response.id()).isEqualTo(company.getId());
@@ -79,17 +79,17 @@ class AdminCompanyServiceTest {
                 .thenReturn(page);
 
         // when
-        AdminCompaniesResponse result = adminCompanyService.getCompanies(PageRequest.of(0, 10));
+        AdminCompaniesOutput result = adminCompanyService.getCompanies(PageRequest.of(0, 10));
 
         // then
-        assertThat(result.adminCompanyRespons()).hasSize(1);
+        assertThat(result.companies()).hasSize(1);
     }
 
     @Test
     @DisplayName("신규 업체 등록에 성공한다.")
     void 업체_등록_성공() {
         // given
-        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
+        AdminCompanyRegisterInput request = new AdminCompanyRegisterInput(
                 "company",
                 "123456",
                 "010-1234-5678",
@@ -112,7 +112,7 @@ class AdminCompanyServiceTest {
     @DisplayName("이미 존재하는 사업자등록번호로 등록 시 예외가 발생한다.")
     void 업체_등록_실패() {
         // given
-        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
+        AdminCompanyRegisterInput request = new AdminCompanyRegisterInput(
                 "company",
                 "123456",
                 "010-1234-5678",

@@ -1,8 +1,8 @@
-package org.thisway.company.dto.response;
+package org.thisway.company.dto;
 
 import org.thisway.company.entity.Company;
 
-public record AdminCompanyResponse(
+public record AdminCompanyDetailOutput(
         Long id,
         String name,
         String crn,
@@ -13,8 +13,8 @@ public record AdminCompanyResponse(
         Integer gpsCycle
 ) {
 
-    public static AdminCompanyResponse from(Company company) {
-        return new AdminCompanyResponse(
+    public static AdminCompanyDetailOutput from(Company company) {
+        return new AdminCompanyDetailOutput(
                 company.getId(),
                 company.getName(),
                 company.getCrn(),

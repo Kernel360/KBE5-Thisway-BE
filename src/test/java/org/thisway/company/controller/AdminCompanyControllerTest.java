@@ -22,9 +22,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thisway.common.PageInfo;
+import org.thisway.company.dto.AdminCompaniesOutput;
+import org.thisway.company.dto.AdminCompanyDetailOutput;
 import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
 import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyResponse;
+import org.thisway.company.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
 @WebMvcTest(AdminCompanyController.class)
@@ -44,7 +46,7 @@ class AdminCompanyControllerTest {
     void 업체_상세정보_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
-        AdminCompanyResponse expectedResponse = new AdminCompanyResponse(
+        AdminCompanyDetailOutput expectedResponse = new AdminCompanyDetailOutput(
                 companyId,
                 "name",
                 "crn",
@@ -69,8 +71,8 @@ class AdminCompanyControllerTest {
                 .getContentAsString();
 
         // then
-        AdminCompanyResponse actualResponse = objectMapper.readValue(
-                responseBody, AdminCompanyResponse.class
+        AdminCompanyDetailResponse actualResponse = objectMapper.readValue(
+                responseBody, AdminCompanyDetailResponse.class
         );
         assertThat(actualResponse)
                 .usingRecursiveComparison()
@@ -83,7 +85,7 @@ class AdminCompanyControllerTest {
         // given
         Long companyId = 1L;
 
-        AdminCompanyResponse adminCompanyResponse = new AdminCompanyResponse(
+        AdminCompanyDetailOutput adminCompanyDetailResponse = new AdminCompanyDetailOutput(
                 companyId,
                 "name",
                 "crn",
@@ -95,7 +97,7 @@ class AdminCompanyControllerTest {
         );
 
         PageInfo pageInfo = new PageInfo(0, 10, 1, 1, 1);
-        AdminCompaniesResponse expectedResponse = new AdminCompaniesResponse(List.of(adminCompanyResponse), pageInfo);
+        AdminCompaniesOutput expectedResponse = new AdminCompaniesOutput(List.of(adminCompanyDetailResponse), pageInfo);
 
         // when
         when(adminCompanyService.getCompanies(any()))
