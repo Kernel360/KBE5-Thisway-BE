@@ -72,7 +72,7 @@ jobs:
       - name: 빌드 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: app-jar
+          name: app
           path: build/libs/*.jar
 
   deploy:
@@ -84,7 +84,7 @@ jobs:
       - name: 아티팩트 다운로드
         uses: actions/download-artifact@v4
         with:
-          name: app-jar
+          name: app
           path: .
 
       - name: EC2로 JAR 복사
