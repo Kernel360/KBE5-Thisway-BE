@@ -102,7 +102,7 @@ public class CompanyChefMemberService {
         long companyId = securityService.getCurrentMemberDetails().getCompanyId();
 
         long companyChefCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_CHEF);
-        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.ADMIN);
+        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_ADMIN);
         long memberCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.MEMBER);
 
         return CompanyChefMemberSummaryOutput.builder()
