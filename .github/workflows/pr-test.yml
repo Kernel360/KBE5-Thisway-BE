@@ -116,7 +116,7 @@ jobs:
 
             # (2) 새로 애플리케이션 실행 (백그라운드 + 로그 파일 기록)
             nohup java -jar /home/ec2-user/thisway*.jar \
-              --spring.profiles.active=prod \
-              > /home/ec2-user/thisway.log 2>&1 & disown
-            
-            echo "Application started with PID $(pgrep -f 'thisway.*\.jar')"
+              > /home/ec2-user/thisway.log 2>&1 < /dev/null &
+            disown
+
+            echo "Application started with PID $!"
