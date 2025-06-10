@@ -15,36 +15,40 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thisway.common.PageInfo;
-import org.thisway.company.dto.request.CompanyRegisterRequest;
-import org.thisway.company.dto.response.CompaniesResponse;
-import org.thisway.company.dto.response.CompanyResponse;
-import org.thisway.company.service.CompanyService;
+import org.thisway.company.dto.AdminCompaniesOutput;
+import org.thisway.company.dto.AdminCompanyDetailOutput;
+import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.dto.response.AdminCompaniesResponse;
+import org.thisway.company.dto.response.AdminCompanyDetailResponse;
+import org.thisway.company.service.AdminCompanyService;
 
-@WebMvcTest(CompanyController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@SpringBootTest
+@AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-class CompanyControllerTest {
+class AdminCompanyControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
     @MockitoBean
-    private CompanyService companyService;
+    private AdminCompanyService adminCompanyService;
 
     @Test
     @DisplayName("업체 상세정보를 조회할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_상세정보_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
-        CompanyResponse expectedResponse = new CompanyResponse(
+        AdminCompanyDetailOutput expectedResponse = new AdminCompanyDetailOutput(
                 companyId,
                 "name",
                 "crn",
@@ -56,11 +60,11 @@ class CompanyControllerTest {
         );
 
         // when
-        when(companyService.getCompanyDetail(companyId))
+        when(adminCompanyService.getCompanyDetail(companyId))
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
-                        get("/api/companies/" + companyId)
+                        get("/api/admin/companies/" + companyId)
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -69,8 +73,8 @@ class CompanyControllerTest {
                 .getContentAsString();
 
         // then
-        CompanyResponse actualResponse = objectMapper.readValue(
-                responseBody, CompanyResponse.class
+        AdminCompanyDetailResponse actualResponse = objectMapper.readValue(
+                responseBody, AdminCompanyDetailResponse.class
         );
         assertThat(actualResponse)
                 .usingRecursiveComparison()
@@ -79,11 +83,12 @@ class CompanyControllerTest {
 
     @Test
     @DisplayName("업체 리스트를 조회할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_리스트_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
 
-        CompanyResponse companyResponse = new CompanyResponse(
+        AdminCompanyDetailOutput adminCompanyDetailResponse = new AdminCompanyDetailOutput(
                 companyId,
                 "name",
                 "crn",
@@ -95,14 +100,14 @@ class CompanyControllerTest {
         );
 
         PageInfo pageInfo = new PageInfo(0, 10, 1, 1, 1);
-        CompaniesResponse expectedResponse = new CompaniesResponse(List.of(companyResponse), pageInfo);
+        AdminCompaniesOutput expectedResponse = new AdminCompaniesOutput(List.of(adminCompanyDetailResponse), pageInfo);
 
         // when
-        when(companyService.getCompanies(any()))
+        when(adminCompanyService.getCompanies(any()))
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
-                        get("/api/companies")
+                        get("/api/admin/companies")
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -111,8 +116,8 @@ class CompanyControllerTest {
                 .getContentAsString();
 
         // then
-        CompaniesResponse actualResponse = objectMapper.readValue(
-                responseBody, CompaniesResponse.class
+        AdminCompaniesResponse actualResponse = objectMapper.readValue(
+                responseBody, AdminCompaniesResponse.class
         );
 
         assertThat(actualResponse)
@@ -122,9 +127,10 @@ class CompanyControllerTest {
 
     @Test
     @DisplayName("업체를 등록할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_등록_테스트() throws Exception {
         // given
-        CompanyRegisterRequest request = new CompanyRegisterRequest(
+        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
                 "name",
                 "crn",
                 "contact",
@@ -136,7 +142,7 @@ class CompanyControllerTest {
 
         // when & then
         mockMvc.perform(
-                        MockMvcRequestBuilders.post("/api/companies")
+                        MockMvcRequestBuilders.post("/api/admin/companies")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -146,13 +152,14 @@ class CompanyControllerTest {
 
     @Test
     @DisplayName("업체를 삭제할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_삭제_테스트() throws Exception {
         // given
         Long companyId = 1L;
 
         // when & then
         mockMvc.perform(
-                        delete("/api/companies/" + companyId)
+                        delete("/api/admin/companies/" + companyId)
                 )
                 .andExpect(status().isNoContent())
                 .andDo(print());
