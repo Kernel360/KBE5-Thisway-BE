@@ -1,4 +1,4 @@
-package org.thisway.security.provider;
+package org.thisway.security.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -11,12 +11,11 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.thisway.security.utils.JwtTokenUtil;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 
-public class JwtTokenProviderTest {
+public class JwtTokenUtilTest {
 
     private JwtTokenUtil provider;
 
@@ -110,8 +109,6 @@ public class JwtTokenProviderTest {
     @Test
     void 서로_다른_서명키로_발급된_토큰_검증시_JwtException_발생() {
         // given: 두 개의 프로바이더, 서로 다른 시크릿
-        // JwtTokenProvider p1 = new
-        // JwtTokenProvider("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", VALIDITY_MS);
         JwtTokenUtil p1 = new JwtTokenUtil("A".repeat(32), VALIDITY_MS);
 
         JwtTokenUtil p2 = new JwtTokenUtil("B".repeat(32), VALIDITY_MS);

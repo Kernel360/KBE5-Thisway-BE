@@ -73,8 +73,7 @@ public class LogServiceTest {
                     "270",
                     "100",
                     "10000",
-                    "100"
-            ));
+                    "100"));
         }
         return new GpsLogRequest(
                 mdn,
@@ -84,8 +83,7 @@ public class LogServiceTest {
                 "1",
                 "202109010920",
                 String.valueOf(entryCount),
-                entries
-        );
+                entries);
     }
 
     private PowerLogRequest createValidPowerLogRequest() {
@@ -101,8 +99,7 @@ public class LogServiceTest {
                 "217403",
                 "270",
                 "0",
-                "10000"
-        );
+                "10000");
     }
 
     private GeofenceLogRequest createValidGeofenceLogRequest() {
@@ -121,8 +118,7 @@ public class LogServiceTest {
                 "217403",
                 "200",
                 "0",
-                "11000"
-        );
+                "11000");
     }
 
     @Nested
@@ -151,7 +147,7 @@ public class LogServiceTest {
             when(converter.convertDateTime(anyString())).thenReturn(occurredTime);
 
             logService.saveGpsLog(request);
-            ArgumentCaptor<List<GpsLogData>> gpsLogDataListCaptor = ArgumentCaptor.forClass((Class)List.class);
+            ArgumentCaptor<List<GpsLogData>> gpsLogDataListCaptor = ArgumentCaptor.forClass((Class) List.class);
             verify(logRepository).saveGpsLogs(gpsLogDataListCaptor.capture());
             List<GpsLogData> capturedGpsLogDataList = gpsLogDataListCaptor.getValue();
             assertThat(capturedGpsLogDataList.size()).isEqualTo(entryCount);

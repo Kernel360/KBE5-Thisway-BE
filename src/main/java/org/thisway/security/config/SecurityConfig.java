@@ -12,24 +12,21 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-
+import org.thisway.security.config.policy.RequestAuthorizationPolicy;
 import org.thisway.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.security.filter.JsonAuthenticationFilter;
 import org.thisway.security.filter.JwtAuthenticationFilter;
 
-import lombok.RequiredArgsConstructor;
-
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http,
             GlobalExceptionHandlerFilter globalExceptionHandlerFilter,
             JsonAuthenticationFilter jsonAuthenticationFilter,
-            JwtAuthenticationFilter jwtAuthenticationFilter
-
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            RequestAuthorizationPolicy requestAuthorizationPolicy
     ) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
@@ -47,7 +44,6 @@ public class SecurityConfig {
                 .addFilterAfter(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
                 // TODO: 공통 에러 응답 형태로 리팩토링 필요
-                // 이 부분은 현재 적용 안되고 있을 확률이 높습니다. 추가 테스트 후 리팩토링 할 예정
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                         .accessDeniedHandler(
@@ -55,13 +51,14 @@ public class SecurityConfig {
                                         req,
                                         res,
                                         accessEx) -> res.sendError(
-                                        HttpStatus.FORBIDDEN.value(),
-                                        "Forbidden")))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/company-chef/**").hasAuthority("COMPANY_CHEF")
-                        .anyRequest().authenticated())
+                                                HttpStatus.FORBIDDEN.value(),
+                                                "Forbidden")))
+                .authorizeHttpRequests(
+                        registry -> {
+                            requestAuthorizationPolicy.getRules()
+                                    .forEach(rule -> rule.configure(registry));
+                            registry.anyRequest().authenticated();
+                        })
                 .build();
     }
 

@@ -1,18 +1,21 @@
 package org.thisway.security.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.utils.JwtTokenUtil;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -27,7 +30,8 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
     public void onAuthenticationSuccess(
             HttpServletRequest request,
             HttpServletResponse response,
-            Authentication authentication) throws IOException, ServletException {
+            Authentication authentication
+    ) throws IOException, ServletException {
         String subject = authentication.getName();
         Map<String, Object> claims = new HashMap<>();
 

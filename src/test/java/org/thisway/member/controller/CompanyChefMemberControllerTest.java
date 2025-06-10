@@ -49,7 +49,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버 상세 정보를 조회할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_상세_정보_조회_테스트() throws Exception {
         // given
         Long memberId = 1L;
@@ -88,7 +88,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버 리스트를 조회할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_리스트_조회_테스트() throws Exception {
         // given
         CompanyChefMemberDetailOutput adminMemberDetailOutput = new CompanyChefMemberDetailOutput(
@@ -128,7 +128,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 등록할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_등록_테스트() throws Exception {
         // given
         CompanyChefMemberRegisterRequest request = new CompanyChefMemberRegisterRequest(
@@ -152,7 +152,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 수정할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_수정_테스트() throws Exception {
         // given
         CompanyChefMemberUpdateRequest request = new CompanyChefMemberUpdateRequest(
@@ -174,7 +174,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 삭제할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_삭제_테스트() throws Exception {
         // when & then
         mockMvc.perform(delete("/api/company-chef/members/" + 1L))
@@ -184,7 +184,7 @@ class CompanyChefMemberControllerTest {
 
     @Test
     @DisplayName("멤버 요약을 조회할 수 있다.")
-    @WithMockUser(authorities = "COMPANY_CHEF")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_요약_조회_테스트() throws Exception {
         // given
         CompanyChefMemberSummaryOutput output = CompanyChefMemberSummaryOutput.builder()
