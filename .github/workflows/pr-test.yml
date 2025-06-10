@@ -76,7 +76,7 @@ jobs:
           path: build/libs/*.jar
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/108'
     needs: build
     runs-on: ubuntu-latest
 
@@ -90,7 +90,6 @@ jobs:
       - name: JAR 파일 정리
         run: |
           mv build/libs/*.jar app.jar
-          ls -al .
 
       - name: EC2로 JAR 복사
         uses: appleboy/scp-action@v0.1.7
