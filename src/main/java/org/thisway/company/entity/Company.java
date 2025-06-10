@@ -51,4 +51,32 @@ public class Company extends BaseEntity {
         this.memo = memo;
         this.gpsCycle = gpsCycle;
     }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateCrn(String crn) {
+        this.crn = crn;
+    }
+
+    public void updateContact(String contact) {
+        this.contact = contact;
+    }
+
+    public void updateAddrRoad(String addrRoad) {
+        this.addrRoad = addrRoad;
+    }
+
+    public void updateAddrDetail(String addrDetail) {
+        this.addrDetail = addrDetail;
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
+    public void updateGpsCycle(Integer gpsCycle) {
+        this.gpsCycle = gpsCycle;
+    }
 }
