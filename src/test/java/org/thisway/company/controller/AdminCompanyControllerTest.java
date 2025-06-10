@@ -22,29 +22,29 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thisway.common.PageInfo;
-import org.thisway.company.dto.request.CompanyRegisterRequest;
-import org.thisway.company.dto.response.CompaniesResponse;
-import org.thisway.company.dto.response.CompanyResponse;
-import org.thisway.company.service.CompanyService;
+import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.dto.response.AdminCompaniesResponse;
+import org.thisway.company.dto.response.AdminCompanyResponse;
+import org.thisway.company.service.AdminCompanyService;
 
-@WebMvcTest(CompanyController.class)
+@WebMvcTest(AdminCompanyController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-class CompanyControllerTest {
+class AdminCompanyControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
     @MockitoBean
-    private CompanyService companyService;
+    private AdminCompanyService adminCompanyService;
 
     @Test
     @DisplayName("업체 상세정보를 조회할 수 있다.")
     void 업체_상세정보_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
-        CompanyResponse expectedResponse = new CompanyResponse(
+        AdminCompanyResponse expectedResponse = new AdminCompanyResponse(
                 companyId,
                 "name",
                 "crn",
@@ -56,7 +56,7 @@ class CompanyControllerTest {
         );
 
         // when
-        when(companyService.getCompanyDetail(companyId))
+        when(adminCompanyService.getCompanyDetail(companyId))
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
@@ -69,8 +69,8 @@ class CompanyControllerTest {
                 .getContentAsString();
 
         // then
-        CompanyResponse actualResponse = objectMapper.readValue(
-                responseBody, CompanyResponse.class
+        AdminCompanyResponse actualResponse = objectMapper.readValue(
+                responseBody, AdminCompanyResponse.class
         );
         assertThat(actualResponse)
                 .usingRecursiveComparison()
@@ -83,7 +83,7 @@ class CompanyControllerTest {
         // given
         Long companyId = 1L;
 
-        CompanyResponse companyResponse = new CompanyResponse(
+        AdminCompanyResponse adminCompanyResponse = new AdminCompanyResponse(
                 companyId,
                 "name",
                 "crn",
@@ -95,10 +95,10 @@ class CompanyControllerTest {
         );
 
         PageInfo pageInfo = new PageInfo(0, 10, 1, 1, 1);
-        CompaniesResponse expectedResponse = new CompaniesResponse(List.of(companyResponse), pageInfo);
+        AdminCompaniesResponse expectedResponse = new AdminCompaniesResponse(List.of(adminCompanyResponse), pageInfo);
 
         // when
-        when(companyService.getCompanies(any()))
+        when(adminCompanyService.getCompanies(any()))
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
@@ -111,8 +111,8 @@ class CompanyControllerTest {
                 .getContentAsString();
 
         // then
-        CompaniesResponse actualResponse = objectMapper.readValue(
-                responseBody, CompaniesResponse.class
+        AdminCompaniesResponse actualResponse = objectMapper.readValue(
+                responseBody, AdminCompaniesResponse.class
         );
 
         assertThat(actualResponse)
@@ -124,7 +124,7 @@ class CompanyControllerTest {
     @DisplayName("업체를 등록할 수 있다.")
     void 업체_등록_테스트() throws Exception {
         // given
-        CompanyRegisterRequest request = new CompanyRegisterRequest(
+        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
                 "name",
                 "crn",
                 "contact",

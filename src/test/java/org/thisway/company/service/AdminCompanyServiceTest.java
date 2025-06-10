@@ -18,17 +18,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.dto.request.CompanyRegisterRequest;
-import org.thisway.company.dto.response.CompaniesResponse;
-import org.thisway.company.dto.response.CompanyResponse;
+import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.dto.response.AdminCompaniesResponse;
+import org.thisway.company.dto.response.AdminCompanyResponse;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 
-class CompanyServiceTest {
+class AdminCompanyServiceTest {
 
     private final CompanyRepository companyRepository = mock(CompanyRepository.class);
-    private final CompanyService companyService = new CompanyService(companyRepository);
+    private final AdminCompanyService adminCompanyService = new AdminCompanyService(companyRepository);
 
     @Test
     @DisplayName("업체 상세 정보를 조회할 수 있다.")
@@ -39,7 +39,7 @@ class CompanyServiceTest {
                 .thenReturn(Optional.of(company));
 
         // when
-        CompanyResponse response = companyService.getCompanyDetail(1L);
+        AdminCompanyResponse response = adminCompanyService.getCompanyDetail(1L);
 
         // then
         assertThat(response.id()).isEqualTo(company.getId());
@@ -61,7 +61,7 @@ class CompanyServiceTest {
                 .thenReturn(Optional.of(inactiveCompany));
 
         // when
-        Throwable thrown = catchThrowable(() -> companyService.getCompanyDetail(2L));
+        Throwable thrown = catchThrowable(() -> adminCompanyService.getCompanyDetail(2L));
 
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);
@@ -79,17 +79,17 @@ class CompanyServiceTest {
                 .thenReturn(page);
 
         // when
-        CompaniesResponse result = companyService.getCompanies(PageRequest.of(0, 10));
+        AdminCompaniesResponse result = adminCompanyService.getCompanies(PageRequest.of(0, 10));
 
         // then
-        assertThat(result.companyResponses()).hasSize(1);
+        assertThat(result.adminCompanyRespons()).hasSize(1);
     }
 
     @Test
     @DisplayName("신규 업체 등록에 성공한다.")
     void 업체_등록_성공() {
         // given
-        CompanyRegisterRequest request = new CompanyRegisterRequest(
+        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
                 "company",
                 "123456",
                 "010-1234-5678",
@@ -101,7 +101,7 @@ class CompanyServiceTest {
         when(companyRepository.existsByCrn("123456")).thenReturn(false);
 
         // when
-        companyService.registerCompany(request);
+        adminCompanyService.registerCompany(request);
 
         // then
         verify(companyRepository, times(1))
@@ -112,7 +112,7 @@ class CompanyServiceTest {
     @DisplayName("이미 존재하는 사업자등록번호로 등록 시 예외가 발생한다.")
     void 업체_등록_실패() {
         // given
-        CompanyRegisterRequest request = new CompanyRegisterRequest(
+        AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
                 "company",
                 "123456",
                 "010-1234-5678",
@@ -124,7 +124,7 @@ class CompanyServiceTest {
         when(companyRepository.existsByCrn("123456")).thenReturn(true);
 
         // when
-        Throwable thrown = catchThrowable(() -> companyService.registerCompany(request));
+        Throwable thrown = catchThrowable(() -> adminCompanyService.registerCompany(request));
 
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);
@@ -141,7 +141,7 @@ class CompanyServiceTest {
                 .thenReturn(Optional.of(company));
 
         // when
-        companyService.deleteCompany(1L);
+        adminCompanyService.deleteCompany(1L);
 
         // then
         verify(company).delete();
@@ -155,7 +155,7 @@ class CompanyServiceTest {
                 .thenReturn(Optional.empty());
 
         // when & then
-        Throwable thrown = catchThrowable(() -> companyService.deleteCompany(1L));
+        Throwable thrown = catchThrowable(() -> adminCompanyService.deleteCompany(1L));
 
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);

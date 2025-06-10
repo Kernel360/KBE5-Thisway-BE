@@ -3,7 +3,7 @@ package org.thisway.company.dto;
 import lombok.Builder;
 
 @Builder
-public record CompanyUpdateInput(
+public record AdminCompanyUpdateInput(
         Long id,
         String name,
         String crn,

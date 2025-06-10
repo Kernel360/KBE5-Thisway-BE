@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.thisway.company.entity.Company;
 
-public record CompanyRegisterRequest(
+public record AdminCompanyRegisterRequest(
         @NotBlank
         String name,
 

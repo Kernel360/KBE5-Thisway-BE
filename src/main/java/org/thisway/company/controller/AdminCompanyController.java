@@ -14,33 +14,33 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.thisway.company.dto.request.CompanyRegisterRequest;
-import org.thisway.company.dto.request.CompanyUpdateRequest;
-import org.thisway.company.dto.response.CompaniesResponse;
-import org.thisway.company.dto.response.CompanyResponse;
-import org.thisway.company.service.CompanyService;
+import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.dto.request.AdminCompanyUpdateRequest;
+import org.thisway.company.dto.response.AdminCompaniesResponse;
+import org.thisway.company.dto.response.AdminCompanyResponse;
+import org.thisway.company.service.AdminCompanyService;
 
 @RestController
-@RequestMapping("/api/companies")
+@RequestMapping("/api/admin/companies")
 @RequiredArgsConstructor
-public class CompanyController {
+public class AdminCompanyController {
 
-    private final CompanyService companyService;
+    private final AdminCompanyService adminCompanyService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<CompanyResponse> getCompanyDetail(@PathVariable Long id) {
+    public ResponseEntity<AdminCompanyResponse> getCompanyDetail(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(companyService.getCompanyDetail(id));
+                .body(adminCompanyService.getCompanyDetail(id));
     }
 
     @GetMapping
-    public ResponseEntity<CompaniesResponse> getCompanies(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(companyService.getCompanies(pageable));
+    public ResponseEntity<AdminCompaniesResponse> getCompanies(@PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(adminCompanyService.getCompanies(pageable));
     }
 
     @PostMapping
-    public ResponseEntity<Void> registerCompany(@RequestBody @Validated CompanyRegisterRequest request) {
-        companyService.registerCompany(request);
+    public ResponseEntity<Void> registerCompany(@RequestBody @Validated AdminCompanyRegisterRequest request) {
+        adminCompanyService.registerCompany(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
     }
@@ -48,9 +48,9 @@ public class CompanyController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateCompany(
             @PathVariable long id,
-            @RequestBody @Validated CompanyUpdateRequest request
+            @RequestBody @Validated AdminCompanyUpdateRequest request
     ) {
-        companyService.updateCompany(request.toCompanyUpdateInput(id));
+        adminCompanyService.updateCompany(request.toCompanyUpdateInput(id));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
@@ -58,7 +58,7 @@ public class CompanyController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
-        companyService.deleteCompany(id);
+        adminCompanyService.deleteCompany(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();
     }

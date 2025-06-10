@@ -7,17 +7,17 @@ import org.springframework.data.domain.Page;
 import org.thisway.common.PageInfo;
 import org.thisway.company.entity.Company;
 
-public record CompaniesResponse(
+public record AdminCompaniesResponse(
         @JsonProperty(value = "companies")
-        List<CompanyResponse> companyResponses,
+        List<AdminCompanyResponse> adminCompanyRespons,
 
         PageInfo pageInfo
 ) {
 
-    public static CompaniesResponse from(Page<Company> companies) {
-        List<CompanyResponse> companyResponse = companies.map(CompanyResponse::from).toList();
+    public static AdminCompaniesResponse from(Page<Company> companies) {
+        List<AdminCompanyResponse> adminCompanyResponse = companies.map(AdminCompanyResponse::from).toList();
         PageInfo pageInfo = PageInfo.from(companies);
 
-        return new CompaniesResponse(companyResponse, pageInfo);
+        return new AdminCompaniesResponse(adminCompanyResponse, pageInfo);
     }
 }

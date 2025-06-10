@@ -2,9 +2,9 @@ package org.thisway.company.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.company.dto.CompanyUpdateInput;
+import org.thisway.company.dto.AdminCompanyUpdateInput;
 
-public record CompanyUpdateRequest(
+public record AdminCompanyUpdateRequest(
 
         @NotBlank
         String name,
@@ -25,8 +25,8 @@ public record CompanyUpdateRequest(
         String memo
 ) {
 
-    public CompanyUpdateInput toCompanyUpdateInput(long id) {
-        return CompanyUpdateInput.builder()
+    public AdminCompanyUpdateInput toCompanyUpdateInput(long id) {
+        return AdminCompanyUpdateInput.builder()
                 .id(id)
                 .name(name)
                 .crn(crn)

@@ -2,7 +2,7 @@ package org.thisway.company.dto.response;
 
 import org.thisway.company.entity.Company;
 
-public record CompanyResponse(
+public record AdminCompanyResponse(
         Long id,
         String name,
         String crn,
@@ -13,8 +13,8 @@ public record CompanyResponse(
         Integer gpsCycle
 ) {
 
-    public static CompanyResponse from(Company company) {
-        return new CompanyResponse(
+    public static AdminCompanyResponse from(Company company) {
+        return new AdminCompanyResponse(
                 company.getId(),
                 company.getName(),
                 company.getCrn(),
