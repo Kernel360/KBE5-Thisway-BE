@@ -12,6 +12,7 @@ import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.CompanyChefMemberRegisterInput;
+import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
 import org.thisway.member.dto.CompanyChefMemberUpdateInput;
 import org.thisway.member.dto.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
@@ -97,6 +98,20 @@ public class CompanyChefMemberService {
         member.delete();
     }
 
+    public CompanyChefMemberSummaryOutput summary() {
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
+
+        long companyChefCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_CHEF);
+        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.ADMIN);
+        long memberCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.MEMBER);
+
+        return CompanyChefMemberSummaryOutput.builder()
+                .companyChefCount(companyChefCount)
+                .companyAdminCount(companyAdminCount)
+                .memberCount(memberCount)
+                .build();
+    }
+
     private Member getActiveMember(long id) {
         Member member = memberRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -115,5 +130,9 @@ public class CompanyChefMemberService {
         if (memberRepository.existsByEmail(email)) {
             throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
         }
+    }
+
+    private long countActiveAndCompanyIdAndRole(long companyId, MemberRole role) {
+        return memberRepository.countByActiveTrueAndCompanyIdAndRole(companyId, role);
     }
 }

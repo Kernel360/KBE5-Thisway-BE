@@ -25,10 +25,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
 import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.dto.request.CompanyChefMemberUpdateRequest;
 import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
 import org.thisway.member.dto.CompanyChefMembersOutput;
+import org.thisway.member.dto.response.CompanyChefMemberSummaryResponse;
 import org.thisway.member.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.CompanyChefMemberService;
@@ -176,5 +178,36 @@ class CompanyChefMemberControllerTest {
         mockMvc.perform(delete("/api/company-chef/members/" + 1L))
                 .andExpect(status().isNoContent())
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("멤버 요약을 조회할 수 있다.")
+    @WithMockUser(authorities = "COMPANY_CHEF")
+    void 멤버_요약_조회_테스트() throws Exception {
+        // given
+        CompanyChefMemberSummaryOutput output = CompanyChefMemberSummaryOutput.builder()
+                .companyChefCount(1)
+                .companyAdminCount(2)
+                .memberCount(3)
+                .build();
+
+        given(companyChefMemberService.summary())
+                .willReturn(output);
+
+        // when & then
+        String responseBody = mockMvc.perform(get("/api/company-chef/members/summary"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        CompanyChefMemberSummaryResponse response = objectMapper.readValue(
+                responseBody, CompanyChefMemberSummaryResponse.class
+        );
+
+        assertThat(response.companyChefCount()).isEqualTo(1);
+        assertThat(response.companyAdminCount()).isEqualTo(2);
+        assertThat(response.memberCount()).isEqualTo(3);
     }
 }

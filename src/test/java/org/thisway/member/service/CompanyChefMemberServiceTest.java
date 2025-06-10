@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.BDDMockito.given;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,7 @@ import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.dto.CompanyChefMemberDetailOutput;
 import org.thisway.member.dto.CompanyChefMemberRegisterInput;
+import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
 import org.thisway.member.dto.CompanyChefMemberUpdateInput;
 import org.thisway.member.dto.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
@@ -453,5 +455,33 @@ class CompanyChefMemberServiceTest {
         Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+    }
+
+    @Test
+    @DisplayName("멤버 요약을 성공적으로 조회할 수 있다.")
+    void 멤버_요약_조회_테스트_성공() {
+        // given
+        Company company = companyRepository.save(CompanyFixture.createCompany());
+        List<Member> members = List.of(
+                MemberFixture.createMemberWithEmail(company, MemberRole.COMPANY_CHEF, "email1@email.com"),
+                MemberFixture.createMemberWithEmail(company, MemberRole.MEMBER, "email2@email.com"),
+                MemberFixture.createMemberWithEmail(company, MemberRole.MEMBER, "email3@email.com")
+        );
+        memberRepository.saveAll(members);
+
+        MemberDetails memberDetails = MemberDetails.builder()
+                .companyId(company.getId())
+                .role(MemberRole.COMPANY_CHEF)
+                .build();
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(memberDetails);
+
+        // when
+        CompanyChefMemberSummaryOutput summary = companyChefMemberService.summary();
+
+        // then
+        assertThat(summary.companyChefCount()).isEqualTo(1);
+        assertThat(summary.companyAdminCount()).isEqualTo(0);
+        assertThat(summary.memberCount()).isEqualTo(2);
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.dto.request.CompanyChefMemberUpdateRequest;
 import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
+import org.thisway.member.dto.response.CompanyChefMemberSummaryResponse;
 import org.thisway.member.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.service.CompanyChefMemberService;
 
@@ -74,5 +75,15 @@ public class CompanyChefMemberController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<CompanyChefMemberSummaryResponse> summary() {
+        CompanyChefMemberSummaryResponse response = CompanyChefMemberSummaryResponse.from(
+                companyChefMemberService.summary()
+        );
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
     }
 }
