@@ -24,86 +24,100 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.AdminMemberDetailOutput;
-import org.thisway.member.dto.AdminMembersOutput;
-import org.thisway.member.dto.request.AdminMemberRegisterRequest;
-import org.thisway.member.dto.request.AdminMemberUpdateRequest;
-import org.thisway.member.dto.response.AdminMemberDetailResponse;
-import org.thisway.member.dto.response.AdminMembersResponse;
+import org.thisway.member.dto.CompanyChefMemberDetailOutput;
+import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
+import org.thisway.member.dto.request.CompanyChefMemberRegisterRequest;
+import org.thisway.member.dto.request.CompanyChefMemberUpdateRequest;
+import org.thisway.member.dto.response.CompanyChefMemberDetailResponse;
+import org.thisway.member.dto.CompanyChefMembersOutput;
+import org.thisway.member.dto.response.CompanyChefMemberSummaryResponse;
+import org.thisway.member.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.entity.MemberRole;
-import org.thisway.member.service.AdminMemberService;
+import org.thisway.member.service.CompanyChefMemberService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-class AdminMemberControllerTest {
+class CompanyChefMemberControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
     @MockitoBean
-    private AdminMemberService adminMemberService;
+    private CompanyChefMemberService companyChefMemberService;
 
     @Test
     @DisplayName("멤버 상세 정보를 조회할 수 있다.")
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_상세_정보_조회_테스트() throws Exception {
         // given
         Long memberId = 1L;
-        AdminMemberDetailOutput adminMemberDetailOutput = new AdminMemberDetailOutput(memberId, "companyName",
+        CompanyChefMemberDetailOutput memberDetailOutput = new CompanyChefMemberDetailOutput(
+                memberId,
                 MemberRole.MEMBER,
-                "name", "email", "phone", "memo");
+                "name",
+                "email",
+                "phone",
+                "memo"
+        );
 
-        given(adminMemberService.getMemberDetail(memberId))
-                .willReturn(adminMemberDetailOutput);
+        given(companyChefMemberService.getMemberDetail(memberId))
+                .willReturn(memberDetailOutput);
 
         // when
-        String responseBody = mockMvc.perform(get("/api/admin/members/" + memberId))
+        String responseBody = mockMvc.perform(get("/api/company-chef/members/" + memberId))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        AdminMemberDetailResponse response = objectMapper.readValue(
-                responseBody, AdminMemberDetailResponse.class
+        CompanyChefMemberDetailResponse response = objectMapper.readValue(
+                responseBody, CompanyChefMemberDetailResponse.class
         );
 
         // then
         assertThat(response.id()).isEqualTo(memberId);
-        assertThat(response.companyName()).isEqualTo(adminMemberDetailOutput.companyName());
-        assertThat(response.role()).isEqualTo(adminMemberDetailOutput.role());
-        assertThat(response.name()).isEqualTo(adminMemberDetailOutput.name());
-        assertThat(response.email()).isEqualTo(adminMemberDetailOutput.email());
-        assertThat(response.phone()).isEqualTo(adminMemberDetailOutput.phone());
-        assertThat(response.memo()).isEqualTo(adminMemberDetailOutput.memo());
+        assertThat(response.role()).isEqualTo(memberDetailOutput.role());
+        assertThat(response.name()).isEqualTo(memberDetailOutput.name());
+        assertThat(response.email()).isEqualTo(memberDetailOutput.email());
+        assertThat(response.phone()).isEqualTo(memberDetailOutput.phone());
+        assertThat(response.memo()).isEqualTo(memberDetailOutput.memo());
     }
 
     @Test
     @DisplayName("멤버 리스트를 조회할 수 있다.")
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_리스트_조회_테스트() throws Exception {
         // given
-        AdminMemberDetailOutput adminMemberDetailOutput = new AdminMemberDetailOutput(1L, "companyName",
-                MemberRole.MEMBER, "name",
-                "email", "phone", "memo");
+        CompanyChefMemberDetailOutput adminMemberDetailOutput = new CompanyChefMemberDetailOutput(
+                1L,
+                MemberRole.MEMBER,
+                "name",
+                "email",
+                "phone",
+                "memo"
+        );
         PageInfo pageInfo = new PageInfo(1, 1, 1, 0, 10);
-        AdminMembersOutput adminMembersOutput = new AdminMembersOutput(List.of(adminMemberDetailOutput), pageInfo);
+        CompanyChefMembersOutput adminMembersOutput = new CompanyChefMembersOutput(
+                List.of(adminMemberDetailOutput),
+                pageInfo
+        );
 
-        given(adminMemberService.getMembers(any()))
+        given(companyChefMemberService.getMembers(any()))
                 .willReturn(adminMembersOutput);
 
         // when
-        String responseBody = mockMvc.perform(get("/api/admin/members"))
+        String responseBody = mockMvc.perform(get("/api/company-chef/members"))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        AdminMembersResponse response = objectMapper.readValue(
-                responseBody, AdminMembersResponse.class
+        CompanyChefMembersResponse response = objectMapper.readValue(
+                responseBody, CompanyChefMembersResponse.class
         );
 
         // then
@@ -114,11 +128,10 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 등록할 수 있다.")
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_등록_테스트() throws Exception {
         // given
-        AdminMemberRegisterRequest request = new AdminMemberRegisterRequest(
-                1L,
+        CompanyChefMemberRegisterRequest request = new CompanyChefMemberRegisterRequest(
                 MemberRole.COMPANY_CHEF,
                 "name",
                 "email",
@@ -129,7 +142,7 @@ class AdminMemberControllerTest {
         String requestBody = objectMapper.writeValueAsString(request);
 
         // when & then
-        mockMvc.perform(post("/api/admin/members")
+        mockMvc.perform(post("/api/company-chef/members")
                         .contentType(APPLICATION_JSON)
                         .content(requestBody)
                 )
@@ -139,10 +152,10 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 수정할 수 있다.")
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_수정_테스트() throws Exception {
         // given
-        AdminMemberUpdateRequest request = new AdminMemberUpdateRequest(
+        CompanyChefMemberUpdateRequest request = new CompanyChefMemberUpdateRequest(
                 "name",
                 "email",
                 "phone",
@@ -151,7 +164,7 @@ class AdminMemberControllerTest {
         String requestBody = objectMapper.writeValueAsString(request);
 
         // when & then
-        mockMvc.perform(put("/api/admin/members/" + 1L)
+        mockMvc.perform(put("/api/company-chef/members/" + 1L)
                         .contentType(APPLICATION_JSON)
                         .content(requestBody)
                 )
@@ -161,11 +174,42 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 삭제할 수 있다.")
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 멤버_삭제_테스트() throws Exception {
         // when & then
-        mockMvc.perform(delete("/api/admin/members/" + 1L))
+        mockMvc.perform(delete("/api/company-chef/members/" + 1L))
                 .andExpect(status().isNoContent())
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("멤버 요약을 조회할 수 있다.")
+    @WithMockUser(roles = "COMPANY_CHEF")
+    void 멤버_요약_조회_테스트() throws Exception {
+        // given
+        CompanyChefMemberSummaryOutput output = CompanyChefMemberSummaryOutput.builder()
+                .companyChefCount(1)
+                .companyAdminCount(2)
+                .memberCount(3)
+                .build();
+
+        given(companyChefMemberService.summary())
+                .willReturn(output);
+
+        // when & then
+        String responseBody = mockMvc.perform(get("/api/company-chef/members/summary"))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        CompanyChefMemberSummaryResponse response = objectMapper.readValue(
+                responseBody, CompanyChefMemberSummaryResponse.class
+        );
+
+        assertThat(response.companyChefCount()).isEqualTo(1);
+        assertThat(response.companyAdminCount()).isEqualTo(2);
+        assertThat(response.memberCount()).isEqualTo(3);
     }
 }

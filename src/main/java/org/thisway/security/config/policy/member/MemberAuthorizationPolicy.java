@@ -1,11 +1,11 @@
 package org.thisway.security.config.policy.member;
 
+import static org.thisway.security.config.policy.EndpointRule.permitAll;
+import static org.thisway.security.config.policy.EndpointRule.withRoles;
+
 import java.util.List;
 import org.springframework.http.HttpMethod;
 import org.thisway.security.config.policy.AuthorizationRule;
-
-import static org.thisway.security.config.policy.EndpointRule.permitAll;
-import static org.thisway.security.config.policy.EndpointRule.withRoles;
 
 public class MemberAuthorizationPolicy {
 
@@ -37,7 +37,73 @@ public class MemberAuthorizationPolicy {
                         "ADMIN", "MEMBER", "COMPANY_ADMIN", "COMPANY_CHEF"),
 
                 // TODO:해당 엔드포인트에 대한 권한 지정이 필요
-                permitAll(List.of("/api/members/summary")));
+                permitAll(List.of("/api/members/summary")),
 
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/admin/members"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.POST,
+                        List.of("/api/admin/members"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.PUT,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/company-chef/members/{id}"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.POST,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.PUT,
+                        List.of("/api/company-chef/members/{id}"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/company-chef/members/summary"),
+                        "COMPANY_CHEF"
+                )
+        );
     }
 }

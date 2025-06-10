@@ -18,32 +18,32 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-class AdminApiSecurityTest {
+public class CompanyChefApiSecurityTest {
 
     private final MockMvc mockMvc;
 
     @Test
-    @DisplayName("ADMIN 권한으로 /api/admin/** 접근이 가능하다.")
-    @WithMockUser(authorities = "ADMIN")
+    @DisplayName("COMPANY_CHEF 권한으로 /api/company-chef/** 접근이 가능하다.")
+    @WithMockUser(roles = "COMPANY_CHEF")
     void 관리자_API_접근_테스트() throws Exception {
-        mockMvc.perform(get("/api/admin/test"))
+        mockMvc.perform(get("/api/company-chef/test"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("ADMIN 권한이 포함된 권한으로 /api/admin/** 접근이 가능하다.")
-    @WithMockUser(authorities = {"ADMIN", "MEMBER"})
+    @DisplayName("COMPANY_CHEF 권한이 포함된 권한으로 /api/company-chef/** 접근이 가능하다.")
+    @WithMockUser(roles = {"COMPANY_CHEF", "MEMBER"})
     void 관리자_API_접근_테스트_관리자_포함_권한() throws Exception {
-        mockMvc.perform(get("/api/admin/test"))
+        mockMvc.perform(get("/api/company-chef/test"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("관리자 이외의 권한으로 /api/admin 접근이 차단되어야 한다")
-    @WithMockUser(authorities = {"COMPANY_CHEF", "COMPANY_ADMIN", "MEMBER"})
+    @DisplayName("관리자 이외의 권한으로 /api/company-chef/** 접근이 차단되어야 한다")
+    @WithMockUser(roles = {"COMPANY_ADMIN", "MEMBER"})
     @Disabled
     void 관리자_API_접근_테스트_관리자_이외의_권한() throws Exception {
-        mockMvc.perform(get("/api/admin/test"))
+        mockMvc.perform(get("/api/company-chef/test"))
                 .andExpect(status().isForbidden());
     }
 }
