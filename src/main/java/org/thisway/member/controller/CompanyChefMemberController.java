@@ -31,7 +31,8 @@ public class CompanyChefMemberController {
     @GetMapping("/{id}")
     public ResponseEntity<CompanyChefMemberDetailResponse> getMemberDetail(@PathVariable Long id) {
         CompanyChefMemberDetailResponse response = CompanyChefMemberDetailResponse.from(
-                companyChefMemberService.getMemberDetail(id));
+                companyChefMemberService.getMemberDetail(id)
+        );
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
@@ -42,7 +43,8 @@ public class CompanyChefMemberController {
             @PageableDefault Pageable pageable
     ) {
         CompanyChefMembersResponse response = CompanyChefMembersResponse.from(
-                companyChefMemberService.getMembers(pageable));
+                companyChefMemberService.getMembers(pageable)
+        );
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);

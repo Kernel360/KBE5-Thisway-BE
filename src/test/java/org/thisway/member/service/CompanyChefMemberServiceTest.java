@@ -65,7 +65,8 @@ class CompanyChefMemberServiceTest {
         MemberDetails authenticatedMember = MemberDetails.builder()
                 .companyId(company.getId())
                 .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
 
         // when
         CompanyChefMemberDetailOutput result = companyChefMemberService.getMemberDetail(member.getId());
@@ -84,7 +85,6 @@ class CompanyChefMemberServiceTest {
     void 멤버_조회_테스트_없는_사용자() {
         // given
         long invalidMemberId = 1L;
-        Company company = companyRepository.save(CompanyFixture.createCompany());
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.getMemberDetail(invalidMemberId));
@@ -105,7 +105,8 @@ class CompanyChefMemberServiceTest {
         MemberDetails authenticatedMember = MemberDetails.builder()
                 .companyId(company.getId())
                 .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.getMemberDetail(member.getId()));
@@ -126,7 +127,8 @@ class CompanyChefMemberServiceTest {
         MemberDetails authenticatedMember = MemberDetails.builder()
                 .companyId(company.getId() + 1)
                 .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.getMemberDetail(member.getId()));
@@ -147,7 +149,8 @@ class CompanyChefMemberServiceTest {
         MemberDetails authenticatedMember = MemberDetails.builder()
                 .companyId(company.getId())
                 .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+        given(securityService.getCurrentMemberDetails())
+                .willReturn(authenticatedMember);
 
         // when
         Pageable pageable = PageRequest.of(0, 10);
@@ -214,6 +217,7 @@ class CompanyChefMemberServiceTest {
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.registerMember(request));
+
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;

@@ -100,8 +100,10 @@ class CompanyChefMemberControllerTest {
                 "memo"
         );
         PageInfo pageInfo = new PageInfo(1, 1, 1, 0, 10);
-        CompanyChefMembersOutput adminMembersOutput = new CompanyChefMembersOutput(List.of(adminMemberDetailOutput),
-                pageInfo);
+        CompanyChefMembersOutput adminMembersOutput = new CompanyChefMembersOutput(
+                List.of(adminMemberDetailOutput),
+                pageInfo
+        );
 
         given(companyChefMemberService.getMembers(any()))
                 .willReturn(adminMembersOutput);
