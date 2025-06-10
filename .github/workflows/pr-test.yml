@@ -69,6 +69,9 @@ jobs:
       - name: 애플리케이션 빌드
         run: ./gradlew clean bootJar
 
+      - name: 파일 확인
+        run: ls -al
+
       - name: 빌드 아티팩트 업로드
         uses: actions/upload-artifact@v4
         with:
@@ -86,6 +89,9 @@ jobs:
         with:
           name: app
           path: .
+
+      - name: 파일 확인
+        run: ls -al
 
       - name: EC2로 JAR 복사
         uses: appleboy/scp-action@v0.1.7
