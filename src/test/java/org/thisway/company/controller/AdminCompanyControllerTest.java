@@ -15,7 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,8 +30,8 @@ import org.thisway.company.dto.response.AdminCompaniesResponse;
 import org.thisway.company.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
-@WebMvcTest(AdminCompanyController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@SpringBootTest
+@AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
 class AdminCompanyControllerTest {
@@ -43,6 +44,7 @@ class AdminCompanyControllerTest {
 
     @Test
     @DisplayName("업체 상세정보를 조회할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_상세정보_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
@@ -62,7 +64,7 @@ class AdminCompanyControllerTest {
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
-                        get("/api/companies/" + companyId)
+                        get("/api/admin/companies/" + companyId)
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -81,6 +83,7 @@ class AdminCompanyControllerTest {
 
     @Test
     @DisplayName("업체 리스트를 조회할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_리스트_조회_테스트() throws Exception {
         // given
         Long companyId = 1L;
@@ -104,7 +107,7 @@ class AdminCompanyControllerTest {
                 .thenReturn(expectedResponse);
 
         String responseBody = mockMvc.perform(
-                        get("/api/companies")
+                        get("/api/admin/companies")
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -124,6 +127,7 @@ class AdminCompanyControllerTest {
 
     @Test
     @DisplayName("업체를 등록할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_등록_테스트() throws Exception {
         // given
         AdminCompanyRegisterRequest request = new AdminCompanyRegisterRequest(
@@ -138,7 +142,7 @@ class AdminCompanyControllerTest {
 
         // when & then
         mockMvc.perform(
-                        MockMvcRequestBuilders.post("/api/companies")
+                        MockMvcRequestBuilders.post("/api/admin/companies")
                                 .contentType(APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
@@ -148,13 +152,14 @@ class AdminCompanyControllerTest {
 
     @Test
     @DisplayName("업체를 삭제할 수 있다.")
+    @WithMockUser(roles = {"ADMIN"})
     void 업체_삭제_테스트() throws Exception {
         // given
         Long companyId = 1L;
 
         // when & then
         mockMvc.perform(
-                        delete("/api/companies/" + companyId)
+                        delete("/api/admin/companies/" + companyId)
                 )
                 .andExpect(status().isNoContent())
                 .andDo(print());
