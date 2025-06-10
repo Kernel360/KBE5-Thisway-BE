@@ -87,10 +87,6 @@ jobs:
           name: app-jar
           path: .
 
-      - name: JAR 파일 정리
-        run: |
-          mv build/libs/*.jar app.jar
-
       - name: EC2로 JAR 복사
         uses: appleboy/scp-action@v0.1.7
         with:
