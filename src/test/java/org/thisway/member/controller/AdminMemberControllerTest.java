@@ -47,7 +47,7 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버 상세 정보를 조회할 수 있다.")
-    @WithMockUser(authorities = "ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void 멤버_상세_정보_조회_테스트() throws Exception {
         // given
         Long memberId = 1L;
@@ -82,7 +82,7 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버 리스트를 조회할 수 있다.")
-    @WithMockUser(authorities = "ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void 멤버_리스트_조회_테스트() throws Exception {
         // given
         AdminMemberDetailOutput adminMemberDetailOutput = new AdminMemberDetailOutput(1L, "companyName",
@@ -114,7 +114,7 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 등록할 수 있다.")
-    @WithMockUser(authorities = "ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void 멤버_등록_테스트() throws Exception {
         // given
         AdminMemberRegisterRequest request = new AdminMemberRegisterRequest(
@@ -139,7 +139,7 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 수정할 수 있다.")
-    @WithMockUser(authorities = "ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void 멤버_수정_테스트() throws Exception {
         // given
         AdminMemberUpdateRequest request = new AdminMemberUpdateRequest(
@@ -161,7 +161,7 @@ class AdminMemberControllerTest {
 
     @Test
     @DisplayName("멤버를 삭제할 수 있다.")
-    @WithMockUser(authorities = "ADMIN")
+    @WithMockUser(roles = "ADMIN")
     void 멤버_삭제_테스트() throws Exception {
         // when & then
         mockMvc.perform(delete("/api/admin/members/" + 1L))
