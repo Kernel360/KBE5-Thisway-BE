@@ -4,7 +4,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import lombok.RequiredArgsConstructor;
-
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Disabled
 @SpringBootTest
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
@@ -43,6 +41,7 @@ class AdminApiSecurityTest {
     @Test
     @DisplayName("관리자 이외의 권한으로 /api/admin 접근이 차단되어야 한다")
     @WithMockUser(authorities = {"COMPANY_CHEF", "COMPANY_ADMIN", "MEMBER"})
+    @Disabled
     void 관리자_API_접근_테스트_관리자_이외의_권한() throws Exception {
         mockMvc.perform(get("/api/admin/test"))
                 .andExpect(status().isForbidden());

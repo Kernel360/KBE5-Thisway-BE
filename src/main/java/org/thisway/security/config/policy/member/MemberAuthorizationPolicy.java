@@ -41,6 +41,36 @@ public class MemberAuthorizationPolicy {
 
                 withRoles(
                         HttpMethod.GET,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
+                        List.of("/api/admin/members"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.POST,
+                        List.of("/api/admin/members"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.PUT,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/admin/members/{id}"),
+                        "ADMIN"
+                ),
+
+                withRoles(
+                        HttpMethod.GET,
                         List.of("/api/company-chef/members/{id}"),
                         "COMPANY_CHEF"
                 ),
