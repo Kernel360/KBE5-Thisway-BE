@@ -21,6 +21,8 @@ public class GlobalExceptionHandler {
         HttpStatus status = e.getErrorCode().getStatus();
         if (status.is5xxServerError()) {
             log.error(e.getMessage(), e);
+        } else if (status.is4xxClientError()) {
+            log.warn(e.getMessage(), e);
         } else {
             log.info(e.getMessage(), e);
         }
