@@ -7,10 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.dto.AdminCompaniesOutput;
-import org.thisway.company.dto.AdminCompanyDetailOutput;
-import org.thisway.company.dto.AdminCompanyRegisterInput;
-import org.thisway.company.dto.AdminCompanyUpdateInput;
+import org.thisway.company.service.dto.output.AdminCompaniesOutput;
+import org.thisway.company.service.dto.output.AdminCompanyDetailOutput;
+import org.thisway.company.service.dto.input.AdminCompanyRegisterInput;
+import org.thisway.company.service.dto.input.AdminCompanyUpdateInput;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 

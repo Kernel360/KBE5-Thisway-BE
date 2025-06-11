@@ -1,4 +1,4 @@
-package org.thisway.company.dto;
+package org.thisway.company.service.dto.output;
 
 import org.thisway.company.entity.Company;
 

@@ -1,11 +1,11 @@
-package org.thisway.company.dto.request;
+package org.thisway.company.controller.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.company.dto.AdminCompanyUpdateInput;
+import jakarta.validation.constraints.Positive;
+import org.thisway.company.service.dto.input.AdminCompanyRegisterInput;
 
-public record AdminCompanyUpdateRequest(
-
+public record AdminCompanyRegisterRequest(
         @NotBlank
         String name,
 
@@ -22,18 +22,21 @@ public record AdminCompanyUpdateRequest(
         String addrDetail,
 
         @NotNull
-        String memo
+        String memo,
+
+        @Positive
+        Integer gpsCycle
 ) {
 
-    public AdminCompanyUpdateInput toCompanyUpdateInput(long id) {
-        return AdminCompanyUpdateInput.builder()
-                .id(id)
+    public AdminCompanyRegisterInput toCompanyRegisterInput() {
+        return AdminCompanyRegisterInput.builder()
                 .name(name)
                 .crn(crn)
                 .contact(contact)
                 .addrRoad(addrRoad)
                 .addrDetail(addrDetail)
                 .memo(memo)
+                .gpsCycle(gpsCycle)
                 .build();
     }
 }

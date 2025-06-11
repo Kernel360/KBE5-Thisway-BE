@@ -23,11 +23,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thisway.common.PageInfo;
-import org.thisway.company.dto.AdminCompaniesOutput;
-import org.thisway.company.dto.AdminCompanyDetailOutput;
-import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
-import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyDetailResponse;
+import org.thisway.company.service.dto.output.AdminCompaniesOutput;
+import org.thisway.company.service.dto.output.AdminCompanyDetailOutput;
+import org.thisway.company.controller.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.controller.dto.response.AdminCompaniesResponse;
+import org.thisway.company.controller.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
 @SpringBootTest

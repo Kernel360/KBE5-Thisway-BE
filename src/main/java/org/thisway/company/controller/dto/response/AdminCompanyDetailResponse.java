@@ -1,6 +1,6 @@
-package org.thisway.company.dto.response;
+package org.thisway.company.controller.dto.response;
 
-import org.thisway.company.dto.AdminCompanyDetailOutput;
+import org.thisway.company.service.dto.output.AdminCompanyDetailOutput;
 
 public record AdminCompanyDetailResponse(
         Long id,

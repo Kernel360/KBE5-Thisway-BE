@@ -1,9 +1,9 @@
-package org.thisway.company.dto.response;
+package org.thisway.company.controller.dto.response;
 
 
 import java.util.List;
 import org.thisway.common.PageInfo;
-import org.thisway.company.dto.AdminCompaniesOutput;
+import org.thisway.company.service.dto.output.AdminCompaniesOutput;
 
 public record AdminCompaniesResponse(
         List<AdminCompanyDetailResponse> companies,
