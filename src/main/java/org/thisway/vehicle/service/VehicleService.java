@@ -37,7 +37,7 @@ public class VehicleService {
 
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
-            "id", "carNumber", "color", "mileage"
+            "id", "carNumber", "color", "mileage", "powerOn"
     );
 
     public void registerVehicle(VehicleCreateRequest request) {
