@@ -172,8 +172,6 @@ class VehicleServiceTest {
         // given
         Long vehicleId = 1L;
         Company company = mock(Company.class);
-        when(company.getId()).thenReturn(1L);
-        when(company.getName()).thenReturn("테스트 회사");
 
         MemberRole mockRole = mock(MemberRole.class);
         Set<MemberRole> roles = new HashSet<>();
@@ -313,13 +311,10 @@ class VehicleServiceTest {
         given(vehicleModel.getModelYear()).willReturn(2023);
 
         Company company = mock(Company.class);
-        given(company.getId()).willReturn(1L);
-        given(company.getName()).willReturn("샘플 회사");
 
         Vehicle vehicle = mock(Vehicle.class);
         given(vehicle.getId()).willReturn(1L);
         given(vehicle.getVehicleModel()).willReturn(vehicleModel);
-        given(vehicle.getCompany()).willReturn(company);
         given(vehicle.getCarNumber()).willReturn(carNumber);
         given(vehicle.getColor()).willReturn("검정");
         given(vehicle.getMileage()).willReturn(5000);
