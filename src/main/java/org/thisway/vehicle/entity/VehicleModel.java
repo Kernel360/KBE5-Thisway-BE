@@ -44,3 +44,4 @@ public class VehicleModel extends BaseEntity {
         }
     }
 }
+
