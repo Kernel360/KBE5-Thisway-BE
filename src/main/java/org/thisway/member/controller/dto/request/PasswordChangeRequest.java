@@ -1,4 +1,4 @@
-package org.thisway.member.dto.request;
+package org.thisway.member.controller.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

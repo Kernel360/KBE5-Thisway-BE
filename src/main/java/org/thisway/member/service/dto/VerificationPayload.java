@@ -1,4 +1,4 @@
-package org.thisway.member.dto;
+package org.thisway.member.service.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;

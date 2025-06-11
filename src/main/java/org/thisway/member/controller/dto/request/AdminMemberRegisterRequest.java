@@ -1,8 +1,8 @@
-package org.thisway.member.dto.request;
+package org.thisway.member.controller.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.member.dto.AdminMemberRegisterInput;
+import org.thisway.member.service.dto.input.AdminMemberRegisterInput;
 import org.thisway.member.entity.MemberRole;
 
 public record AdminMemberRegisterRequest(

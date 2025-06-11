@@ -1,4 +1,4 @@
-package org.thisway.member.dto;
+package org.thisway.member.service.dto.output;
 
 import java.util.List;
 import org.springframework.data.domain.Page;

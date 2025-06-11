@@ -1,8 +1,8 @@
-package org.thisway.member.dto.response;
+package org.thisway.member.controller.dto.response;
 
 import java.util.List;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.CompanyChefMembersOutput;
+import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 
 public record CompanyChefMembersResponse(
         List<CompanyChefMemberDetailResponse> members,

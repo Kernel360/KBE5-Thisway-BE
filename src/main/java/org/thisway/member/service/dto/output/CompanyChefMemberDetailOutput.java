@@ -1,4 +1,4 @@
-package org.thisway.member.dto;
+package org.thisway.member.service.dto.output;
 
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;

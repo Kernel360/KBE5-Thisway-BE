@@ -9,7 +9,7 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.component.EmailComponent;
 import org.thisway.component.RedisComponent;
-import org.thisway.member.dto.VerificationPayload;
+import org.thisway.member.service.dto.VerificationPayload;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.validation.EmailValidation;
@@ -46,7 +46,8 @@ public class PasswordService {
 
         String code = generateVerificationCode();
 
-        VerificationPayload verificationPayload = new VerificationPayload(code, System.currentTimeMillis() + authCodeExpirationMills);
+        VerificationPayload verificationPayload = new VerificationPayload(code,
+                System.currentTimeMillis() + authCodeExpirationMills);
         redisComponent.storeToRedis(prefix, email, authCodeExpirationMills, verificationPayload);
 
         Map<String, Object> variables = Map.of("code", code);

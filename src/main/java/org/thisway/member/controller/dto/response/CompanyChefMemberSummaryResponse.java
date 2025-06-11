@@ -1,6 +1,6 @@
-package org.thisway.member.dto.response;
+package org.thisway.member.controller.dto.response;
 
-import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
+import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
 
 public record CompanyChefMemberSummaryResponse(
         long companyChefCount,

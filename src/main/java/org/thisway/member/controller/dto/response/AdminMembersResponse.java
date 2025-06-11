@@ -1,8 +1,8 @@
-package org.thisway.member.dto.response;
+package org.thisway.member.controller.dto.response;
 
 import java.util.List;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.AdminMembersOutput;
+import org.thisway.member.service.dto.output.AdminMembersOutput;
 
 public record AdminMembersResponse(
         List<AdminMemberDetailResponse> members,

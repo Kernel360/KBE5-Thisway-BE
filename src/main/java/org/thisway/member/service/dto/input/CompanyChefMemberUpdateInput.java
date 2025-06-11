@@ -1,9 +1,9 @@
-package org.thisway.member.dto;
+package org.thisway.member.service.dto.input;
 
 import lombok.Builder;
 
 @Builder
-public record AdminMemberUpdateInput(
+public record CompanyChefMemberUpdateInput(
         long id,
         String name,
         String email,
