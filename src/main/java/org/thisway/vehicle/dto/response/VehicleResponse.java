@@ -9,11 +9,10 @@ public record VehicleResponse(
         String manufacturer,
         Integer modelYear,
         String model,
-        Long companyId,
-        String companyName,
         String carNumber,
         String color,
-        Integer mileage
+        Integer mileage,
+        boolean powerOn
 ) {
 
     public static VehicleResponse fromVehicle(Vehicle vehicle) {
@@ -23,11 +22,10 @@ public record VehicleResponse(
                 detail.getManufacturer(),
                 detail.getModelYear(),
                 detail.getModel(),
-                vehicle.getCompany().getId(),
-                vehicle.getCompany().getName(),
                 vehicle.getCarNumber(),
                 vehicle.getColor(),
-                vehicle.getMileage()
+                vehicle.getMileage(),
+                vehicle.isPowerOn()
         );
     }
-} 
+}

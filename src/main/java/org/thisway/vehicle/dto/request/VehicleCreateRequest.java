@@ -37,8 +37,10 @@ public record VehicleCreateRequest(
                 return Vehicle.builder()
                         .vehicleDetail(vehicleDetail)
                         .company(company)
+                        .mileage(0)
                         .carNumber(this.carNumber)
                         .color(this.color)
                         .build();
         }
 }
+
