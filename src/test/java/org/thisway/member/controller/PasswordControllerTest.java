@@ -24,8 +24,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.common.ApiErrorResponse;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.member.dto.request.PasswordChangeRequest;
-import org.thisway.member.dto.request.SendVerificationCodeRequest;
+import org.thisway.member.controller.dto.request.PasswordChangeRequest;
+import org.thisway.member.controller.dto.request.SendVerificationCodeRequest;
 import org.thisway.member.service.PasswordService;
 
 @WebMvcTest(PasswordController.class)
@@ -48,9 +48,9 @@ public class PasswordControllerTest {
         SendVerificationCodeRequest request = new SendVerificationCodeRequest(email);
 
         MvcResult mvcResult = mockMvc.perform(
-                post("/api/auth/verify-code")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -64,13 +64,14 @@ public class PasswordControllerTest {
     @Test
     @DisplayName("인증코드 요청 시 유효하지 않은 이메일을 입력하면, member_not_found 응답을 한다.")
     void 유효하지_않은_이메일로_인증코드_요청시_MEMBER_NOT_FOUND_응답() throws Exception {
-        doThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND)).when(passwordService).sendVerificationCode(anyString());
+        doThrow(new CustomException(ErrorCode.MEMBER_NOT_FOUND)).when(passwordService)
+                .sendVerificationCode(anyString());
 
         SendVerificationCodeRequest request = new SendVerificationCodeRequest("abc@example.com");
         MvcResult mvcResult = mockMvc.perform(
-                post("/api/auth/verify-code")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        post("/api/auth/verify-code")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest())
                 .andDo(print())
@@ -90,9 +91,9 @@ public class PasswordControllerTest {
         PasswordChangeRequest request = new PasswordChangeRequest("abc@example.com", "123456", "theNewPassword");
 
         MvcResult mvcResult = mockMvc.perform(
-                put("/api/auth/password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        put("/api/auth/password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isOk())
                 .andDo(print())
@@ -112,9 +113,9 @@ public class PasswordControllerTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("abc@example.com", "123456", "theNewPassword");
         MvcResult mvcResult = mockMvc.perform(
-                put("/api/auth/password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        put("/api/auth/password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
                 )
                 .andExpect(status().isBadRequest())
                 .andDo(print())

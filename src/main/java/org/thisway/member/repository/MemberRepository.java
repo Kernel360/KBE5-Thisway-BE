@@ -5,7 +5,6 @@ import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.thisway.company.entity.Company;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
@@ -17,11 +16,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     boolean existsByEmail(String email);
 
-    Page<Member> findAllByActiveTrue(Pageable pageable);
-
     Page<Member> findAllByActiveTrueAndRoleIn(Set<MemberRole> role, Pageable pageable);
-
-    Page<Member> findAllByActiveTrueAndRoleInAndCompany(Set<MemberRole> roles, Company company, Pageable pageable);
 
     Page<Member> findAllByActiveTrueAndRoleInAndCompanyId(Set<MemberRole> roles, long companyId, Pageable pageable);
 

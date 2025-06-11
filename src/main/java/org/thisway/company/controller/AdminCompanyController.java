@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.thisway.company.dto.request.AdminCompanyRegisterRequest;
-import org.thisway.company.dto.request.AdminCompanyUpdateRequest;
-import org.thisway.company.dto.response.AdminCompaniesResponse;
-import org.thisway.company.dto.response.AdminCompanyDetailResponse;
+import org.thisway.company.controller.dto.request.AdminCompanyRegisterRequest;
+import org.thisway.company.controller.dto.request.AdminCompanyUpdateRequest;
+import org.thisway.company.controller.dto.response.AdminCompaniesResponse;
+import org.thisway.company.controller.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
 @RestController

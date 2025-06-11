@@ -24,12 +24,12 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
-import org.thisway.member.dto.AdminMemberDetailOutput;
-import org.thisway.member.dto.AdminMembersOutput;
-import org.thisway.member.dto.request.AdminMemberRegisterRequest;
-import org.thisway.member.dto.request.AdminMemberUpdateRequest;
-import org.thisway.member.dto.response.AdminMemberDetailResponse;
-import org.thisway.member.dto.response.AdminMembersResponse;
+import org.thisway.member.service.dto.output.AdminMemberDetailOutput;
+import org.thisway.member.service.dto.output.AdminMembersOutput;
+import org.thisway.member.controller.dto.request.AdminMemberRegisterRequest;
+import org.thisway.member.controller.dto.request.AdminMemberUpdateRequest;
+import org.thisway.member.controller.dto.response.AdminMemberDetailResponse;
+import org.thisway.member.controller.dto.response.AdminMembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.AdminMemberService;
 

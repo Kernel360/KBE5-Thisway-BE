@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.thisway.member.dto.request.PasswordChangeRequest;
-import org.thisway.member.dto.request.SendVerificationCodeRequest;
+import org.thisway.member.controller.dto.request.PasswordChangeRequest;
+import org.thisway.member.controller.dto.request.SendVerificationCodeRequest;
 import org.thisway.member.service.PasswordService;
 
 @RestController

@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.thisway.member.dto.request.AdminMemberRegisterRequest;
-import org.thisway.member.dto.request.AdminMemberUpdateRequest;
-import org.thisway.member.dto.response.AdminMemberDetailResponse;
-import org.thisway.member.dto.response.AdminMembersResponse;
+import org.thisway.member.controller.dto.request.AdminMemberRegisterRequest;
+import org.thisway.member.controller.dto.request.AdminMemberUpdateRequest;
+import org.thisway.member.controller.dto.response.AdminMemberDetailResponse;
+import org.thisway.member.controller.dto.response.AdminMembersResponse;
 import org.thisway.member.service.AdminMemberService;
 
 @RestController
