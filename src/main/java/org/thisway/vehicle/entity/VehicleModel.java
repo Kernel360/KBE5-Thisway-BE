@@ -10,7 +10,7 @@ import org.thisway.common.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-public class VehicleDetail extends BaseEntity {
+public class VehicleModel extends BaseEntity {
 
     @Column(nullable = false)
     private String manufacturer;
@@ -22,7 +22,7 @@ public class VehicleDetail extends BaseEntity {
     private String model;
 
     @Builder
-    public VehicleDetail(
+    public VehicleModel(
             String manufacturer,
             Integer modelYear,
             String model
