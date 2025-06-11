@@ -31,6 +31,7 @@ public class Vehicle extends BaseEntity {
     @Column(nullable = false)
     private String color;
 
+    @Column(nullable = false)
     private Integer mileage;
 
     @Column(nullable = false)

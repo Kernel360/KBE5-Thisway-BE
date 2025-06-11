@@ -1,7 +1,22 @@
 // java
 package org.thisway.vehicle.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -24,19 +39,6 @@ import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -103,11 +105,11 @@ class VehicleControllerTest {
                 "기아",
                 2024,
                 "K5",
-                1L,
-                "샘플 회사",
                 "34나5678",
                 "검정",
-                10000);
+                10000,
+                true
+        );
         given(vehicleService.getVehicleDetail(vehicleId)).willReturn(vehicleResponse);
 
         // when & then
@@ -125,9 +127,9 @@ class VehicleControllerTest {
         assertThat(response.manufacturer()).isEqualTo("기아");
         assertThat(response.modelYear()).isEqualTo(2024);
         assertThat(response.model()).isEqualTo("K5");
-        assertThat(response.companyName()).isEqualTo("샘플 회사");
         assertThat(response.carNumber()).isEqualTo("34나5678");
         assertThat(response.mileage()).isEqualTo(10000);
+        assertThat(response.powerOn()).isEqualTo(true);
     }
 
     @Test
@@ -211,8 +213,8 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_기본_페이지네이션() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000),
-                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000));
+                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false),
+                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true));
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
         given(vehicleService.getVehicles(any()))
@@ -242,7 +244,7 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_두번째_페이지() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(3L, "쌍용", 2023, "티볼리", 1L, "샘플 회사", "56다7890", "파랑", 1000));
+                new VehicleResponse(3L, "쌍용", 2023, "티볼리", "56다7890", "파랑", 1000, false));
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 2, 3, 1, 2);
 
@@ -274,8 +276,8 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_정렬_적용() throws Exception {
         // given
         List<VehicleResponse> descendingOrder = List.of(
-                new VehicleResponse(2L, "기아", 2023, "K5", 1L, "샘플 회사", "34나5678", "흰색", 3000),
-                new VehicleResponse(1L, "현대", 2023, "아반떼", 1L, "샘플 회사", "12가3456", "검정", 5000));
+                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true),
+                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false));
 
         VehiclesResponse descResponse = new VehiclesResponse(descendingOrder, 1, 2, 0, 10);
 

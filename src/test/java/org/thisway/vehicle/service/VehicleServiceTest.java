@@ -1,5 +1,21 @@
 package org.thisway.vehicle.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,19 +44,6 @@ import org.thisway.vehicle.entity.VehicleDetail;
 import org.thisway.vehicle.repository.VehicleDetailRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -170,7 +173,6 @@ class VehicleServiceTest {
         Long vehicleId = 1L;
         Company company = mock(Company.class);
         when(company.getId()).thenReturn(1L);
-        when(company.getName()).thenReturn("테스트 회사");
 
         MemberRole mockRole = mock(MemberRole.class);
         Set<MemberRole> roles = new HashSet<>();
@@ -208,7 +210,6 @@ class VehicleServiceTest {
         assertThat(response.manufacturer()).isEqualTo("현대");
         assertThat(response.modelYear()).isEqualTo(2023);
         assertThat(response.model()).isEqualTo("쏘나타");
-        assertThat(response.companyName()).isEqualTo("테스트 회사");
         assertThat(response.carNumber()).isEqualTo("12가3456");
         assertThat(response.mileage()).isEqualTo(50000);
     }
@@ -310,17 +311,13 @@ class VehicleServiceTest {
         given(vehicleDetail.getModel()).willReturn(model);
         given(vehicleDetail.getModelYear()).willReturn(2023);
 
-        Company company = mock(Company.class);
-        given(company.getId()).willReturn(1L);
-        given(company.getName()).willReturn("샘플 회사");
-
         Vehicle vehicle = mock(Vehicle.class);
         given(vehicle.getId()).willReturn(1L);
         given(vehicle.getVehicleDetail()).willReturn(vehicleDetail);
-        given(vehicle.getCompany()).willReturn(company);
         given(vehicle.getCarNumber()).willReturn(carNumber);
         given(vehicle.getColor()).willReturn("검정");
         given(vehicle.getMileage()).willReturn(5000);
+        given(vehicle.isPowerOn()).willReturn(false);
 
         return vehicle;
     }
