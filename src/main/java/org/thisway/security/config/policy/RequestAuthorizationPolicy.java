@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.thisway.security.config.policy.auth.AuthAuthorizationPolicy;
 import org.thisway.security.config.policy.company.CompanyAuthorizationPolicy;
 import org.thisway.security.config.policy.member.MemberAuthorizationPolicy;
+import org.thisway.security.config.policy.triplog.TripLogAuthorizationPolicy;
 import org.thisway.security.config.policy.vehicle.VehicleAuthorizationPolicy;
 
 @Configuration
@@ -21,6 +22,7 @@ public class RequestAuthorizationPolicy {
         rules.addAll(CompanyAuthorizationPolicy.getRules());
         rules.addAll(VehicleAuthorizationPolicy.getRules());
         rules.addAll(ActuatorAuthorizationPolicy.getRules());
+        rules.addAll(TripLogAuthorizationPolicy.getRules());
 
         return rules;
     }
