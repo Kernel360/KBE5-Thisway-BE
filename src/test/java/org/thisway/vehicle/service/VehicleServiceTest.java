@@ -70,7 +70,7 @@ class VehicleServiceTest {
     private VehicleService vehicleService;
 
     @Captor
-    private ArgumentCaptor<VehicleModel> vehicleDetailCaptor;
+    private ArgumentCaptor<VehicleModel> vehicleModelCaptor;
 
     @Captor
     private ArgumentCaptor<Vehicle> vehicleCaptor;
@@ -112,11 +112,11 @@ class VehicleServiceTest {
         vehicleService.registerVehicle(request);
 
         // then
-        verify(vehicleModelRepository).save(vehicleDetailCaptor.capture());
+        verify(vehicleModelRepository).save(vehicleModelCaptor.capture());
         verify(companyRepository).findById(1L);
         verify(vehicleRepository).save(vehicleCaptor.capture());
 
-        VehicleModel capturedDetail = vehicleDetailCaptor.getValue();
+        VehicleModel capturedDetail = vehicleModelCaptor.getValue();
         Vehicle capturedVehicle = vehicleCaptor.getValue();
 
         assertEquals("현대", capturedDetail.getManufacturer());
