@@ -79,7 +79,7 @@ class VehicleModelServiceTest {
             java.lang.reflect.Field idField = BaseEntity.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(savedVehicleModel, 1L);
-        } catch (Exception e) {
+        } catch (Exception ignore){
         }
 
         when(vehicleModelRepository.save(any(VehicleModel.class))).thenReturn(savedVehicleModel);
