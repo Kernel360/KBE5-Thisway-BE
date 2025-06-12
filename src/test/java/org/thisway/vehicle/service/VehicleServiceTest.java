@@ -33,7 +33,6 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
-import org.thisway.member.repository.MemberRepository;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
@@ -100,7 +99,7 @@ class VehicleServiceTest {
         VehicleModel existingVehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2023)
-                .model("아반떼")
+                .name("아반떼")
                 .build();
 
         mockSecurityContext(mockMember);
