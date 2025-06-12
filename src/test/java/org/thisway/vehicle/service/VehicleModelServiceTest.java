@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,7 +77,7 @@ class VehicleModelServiceTest {
                 .model("아반떼")
                 .build();
         try {
-            java.lang.reflect.Field idField = BaseEntity.class.getDeclaredField("id");
+            Field idField = BaseEntity.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(savedVehicleModel, 1L);
         } catch (Exception ignore){
