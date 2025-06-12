@@ -22,8 +22,8 @@ public class Vehicle extends BaseEntity {
     private Company company;
 
     @ManyToOne
-    @JoinColumn(name = "vehicle_detail_id", nullable = false)
-    private VehicleDetail vehicleDetail;
+    @JoinColumn(name = "vehicle_model_id", nullable = false)
+    private VehicleModel vehicleModel;
 
     @Column(nullable = false)
     private String carNumber;
@@ -44,7 +44,7 @@ public class Vehicle extends BaseEntity {
     @Builder
     public Vehicle(
             Company company,
-            VehicleDetail vehicleDetail,
+            VehicleModel vehicleModel,
             String carNumber,
             String color,
             Integer mileage,
@@ -53,7 +53,7 @@ public class Vehicle extends BaseEntity {
             Double longitude
     ) {
         this.company = company;
-        this.vehicleDetail = vehicleDetail;
+        this.vehicleModel = vehicleModel;
         this.carNumber = carNumber;
         this.color = color;
         this.mileage = mileage;
@@ -66,7 +66,7 @@ public class Vehicle extends BaseEntity {
         partialUpdate(request.carNumber(), request.color());
 
         if (request.manufacturer() != null || request.modelYear() != null || request.model() != null) {
-            this.vehicleDetail.partialUpdate(request.manufacturer(), request.modelYear(), request.model());
+            this.vehicleModel.partialUpdate(request.manufacturer(), request.modelYear(), request.model());
         }
     }
 

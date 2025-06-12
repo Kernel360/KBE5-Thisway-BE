@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import org.thisway.vehicle.validation.ValidCarNumber;
 import org.thisway.company.entity.Company;
 import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.entity.VehicleDetail;
+import org.thisway.vehicle.entity.VehicleModel;
 
 public record VehicleCreateRequest(
 
@@ -16,7 +16,7 @@ public record VehicleCreateRequest(
         Integer modelYear,
 
         @NotBlank
-        String model,
+        String name,
 
         @NotBlank
         @ValidCarNumber
@@ -25,17 +25,17 @@ public record VehicleCreateRequest(
         @NotBlank
         String color
 ) {
-        public VehicleDetail toVehicleDetailEntity() {
-                return VehicleDetail.builder()
+        public VehicleModel toVehicleModelEntity() {
+                return VehicleModel.builder()
                         .manufacturer(this.manufacturer)
                         .modelYear(this.modelYear)
-                        .model(this.model)
+                        .name(this.name)
                         .build();
         }
 
-        public Vehicle toVehicleEntity(Company company, VehicleDetail vehicleDetail) {
+        public Vehicle toVehicleEntity(Company company, VehicleModel vehicleModel) {
                 return Vehicle.builder()
-                        .vehicleDetail(vehicleDetail)
+                        .vehicleModel(vehicleModel)
                         .company(company)
                         .mileage(0)
                         .carNumber(this.carNumber)

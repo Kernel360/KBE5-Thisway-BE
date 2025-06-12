@@ -1,7 +1,7 @@
 package org.thisway.vehicle.dto.response;
 
 import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.entity.VehicleDetail;
+import org.thisway.vehicle.entity.VehicleModel;
 
 public record VehicleResponse(
 
@@ -16,12 +16,12 @@ public record VehicleResponse(
 ) {
 
     public static VehicleResponse fromVehicle(Vehicle vehicle) {
-        VehicleDetail detail = vehicle.getVehicleDetail();
+        VehicleModel detail = vehicle.getVehicleModel();
         return new VehicleResponse(
                 vehicle.getId(),
                 detail.getManufacturer(),
                 detail.getModelYear(),
-                detail.getModel(),
+                detail.getName(),
                 vehicle.getCarNumber(),
                 vehicle.getColor(),
                 vehicle.getMileage(),

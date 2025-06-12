@@ -10,7 +10,7 @@ import org.thisway.common.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-public class VehicleDetail extends BaseEntity {
+public class VehicleModel extends BaseEntity {
 
     @Column(nullable = false)
     private String manufacturer;
@@ -19,28 +19,29 @@ public class VehicleDetail extends BaseEntity {
     private Integer modelYear;
 
     @Column(nullable = false)
-    private String model;
+    private String name;
 
     @Builder
-    public VehicleDetail(
+    public VehicleModel(
             String manufacturer,
             Integer modelYear,
-            String model
+            String name
     ) {
         this.manufacturer = manufacturer;
         this.modelYear = modelYear;
-        this.model = model;
+        this.name = name;
     }
 
-    public void partialUpdate(String manufacturer, Integer modelYear, String model) {
+    public void partialUpdate(String manufacturer, Integer modelYear, String name) {
         if (manufacturer != null) {
             this.manufacturer = manufacturer;
         }
         if (modelYear != null) {
             this.modelYear = modelYear;
         }
-        if (model != null) {
-            this.model = model;
+        if (name != null) {
+            this.name = name;
         }
     }
 }
+
