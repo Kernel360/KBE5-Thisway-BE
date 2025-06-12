@@ -51,7 +51,7 @@ class VehicleModelServiceTest {
                 .memo("테스트")
                 .build();
         when(securityService.getCurrentMember()).thenReturn(member);
-        when(vehicleModelRepository.existsByManufacturerAndModelAndModelYear(any(), any(), any())).thenReturn(true);
+        when(vehicleModelRepository.existsByManufacturerAndNameAndModelYear(any(), any(), any())).thenReturn(true);
 
         CustomException ex = assertThrows(CustomException.class, () -> vehicleModelService.registerVehicleModel(request));
         assertEquals(ErrorCode.VEHICLE_MODEL_ALREADY_EXISTS, ex.getErrorCode());
@@ -70,11 +70,11 @@ class VehicleModelServiceTest {
                 .memo("테스트")
                 .build();
         when(securityService.getCurrentMember()).thenReturn(member);
-        when(vehicleModelRepository.existsByManufacturerAndModelAndModelYear(any(), any(), any())).thenReturn(false);
+        when(vehicleModelRepository.existsByManufacturerAndNameAndModelYear(any(), any(), any())).thenReturn(false);
         VehicleModel savedVehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2024)
-                .model("아반떼")
+                .name("아반떼")
                 .build();
         try {
             Field idField = BaseEntity.class.getDeclaredField("id");

@@ -12,14 +12,14 @@ public record VehicleModelCreateRequest(
         Integer modelYear,
         
         @NotBlank
-        String model
+        String name
 ) {
 
     public VehicleModel toEntity() {
         return VehicleModel.builder()
                 .manufacturer(this.manufacturer())
                 .modelYear(this.modelYear())
-                .model(this.model())
+                .name(this.name())
                 .build();
     }
 }

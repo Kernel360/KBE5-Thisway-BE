@@ -4,6 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.thisway.vehicle.entity.VehicleModel;
 
 public interface VehicleModelRepository extends JpaRepository<VehicleModel, Long> {
-  boolean existsByManufacturerAndModelAndModelYear(String manufacturer, String model, Integer year);
+  boolean existsByManufacturerAndNameAndModelYear(String manufacturer, String name, Integer year);
 
 }

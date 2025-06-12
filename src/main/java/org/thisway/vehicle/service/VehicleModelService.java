@@ -34,8 +34,8 @@ public class VehicleModelService {
    * 차량 모델 중복 검증
    */
   private void validateDuplicateModel(VehicleModelCreateRequest request) {
-    boolean exists = vehicleModelRepository.existsByManufacturerAndModelAndModelYear(
-        request.manufacturer(), request.model(), request.modelYear());
+    boolean exists = vehicleModelRepository.existsByManufacturerAndNameAndModelYear(
+        request.manufacturer(), request.name(), request.modelYear());
 
     if (exists) {
       throw new CustomException(ErrorCode.VEHICLE_MODEL_ALREADY_EXISTS);

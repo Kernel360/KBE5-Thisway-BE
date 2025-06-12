@@ -13,7 +13,7 @@ public record VehicleModelResponse(
                 vehicleModel.getId(),
                 vehicleModel.getManufacturer(),
                 vehicleModel.getModelYear(),
-                vehicleModel.getModel()
+                vehicleModel.getName()
         );
     }
 }

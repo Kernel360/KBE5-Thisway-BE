@@ -16,7 +16,7 @@ public record VehicleCreateRequest(
         Integer modelYear,
 
         @NotBlank
-        String model,
+        String name,
 
         @NotBlank
         @ValidCarNumber
@@ -29,7 +29,7 @@ public record VehicleCreateRequest(
                 return VehicleModel.builder()
                         .manufacturer(this.manufacturer)
                         .modelYear(this.modelYear)
-                        .model(this.model)
+                        .name(this.name)
                         .build();
         }
 

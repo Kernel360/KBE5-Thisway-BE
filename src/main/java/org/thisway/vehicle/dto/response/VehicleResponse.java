@@ -21,7 +21,7 @@ public record VehicleResponse(
                 vehicle.getId(),
                 detail.getManufacturer(),
                 detail.getModelYear(),
-                detail.getModel(),
+                detail.getName(),
                 vehicle.getCarNumber(),
                 vehicle.getColor(),
                 vehicle.getMileage(),

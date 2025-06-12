@@ -120,7 +120,7 @@ class VehicleServiceTest {
         Vehicle capturedVehicle = vehicleCaptor.getValue();
 
         assertEquals("현대", capturedDetail.getManufacturer());
-        assertEquals("아반떼", capturedDetail.getModel());
+        assertEquals("아반떼", capturedDetail.getName());
         assertEquals(2023, capturedDetail.getModelYear());
 
         assertEquals("12가3456", capturedVehicle.getCarNumber());
@@ -187,7 +187,7 @@ class VehicleServiceTest {
         VehicleModel vehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2023)
-                .model("쏘나타")
+                .name("쏘나타")
                 .build();
         Vehicle vehicle = Vehicle.builder()
                 .company(company)
@@ -276,7 +276,7 @@ class VehicleServiceTest {
         VehicleModel vehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2023)
-                .model("아반떼")
+                .name("아반떼")
                 .build();
 
         Vehicle vehicle = Vehicle.builder()
@@ -301,13 +301,13 @@ class VehicleServiceTest {
         assertEquals("흰색", vehicle.getColor());
         assertEquals("현대", vehicle.getVehicleModel().getManufacturer());
         assertEquals(2024, vehicle.getVehicleModel().getModelYear());
-        assertEquals("K5", vehicle.getVehicleModel().getModel());
+        assertEquals("K5", vehicle.getVehicleModel().getName());
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {
         VehicleModel vehicleModel = mock(VehicleModel.class);
         given(vehicleModel.getManufacturer()).willReturn(manufacturer);
-        given(vehicleModel.getModel()).willReturn(model);
+        given(vehicleModel.getName()).willReturn(model);
         given(vehicleModel.getModelYear()).willReturn(2023);
 
         Company company = mock(Company.class);
