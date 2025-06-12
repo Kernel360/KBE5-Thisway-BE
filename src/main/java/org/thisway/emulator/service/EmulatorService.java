@@ -83,21 +83,15 @@ public class EmulatorService {
                     .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
         }
 
-        Emulator updatedEmulator = Emulator.builder()
-                .id(emulator.getId())
-                .mdn(input.mdn() != null ? input.mdn() : emulator.getMdn())
-                .vehicle(vehicle)
-                .terminalId(input.terminalId() != null ? input.terminalId() : emulator.getTerminalId())
-                .manufactureId(input.manufactureId() != null ? input.manufactureId() : emulator.getManufactureId())
-                .packetVersion(input.packetVersion() != null ? input.packetVersion() : emulator.getPacketVersion())
-                .deviceId(input.deviceId() != null ? input.deviceId() : emulator.getDeviceId())
-                .deviceFirmwareVersion(input.deviceFirmwareVersion() != null ? input.deviceFirmwareVersion()
-                        : emulator.getDeviceFirmwareVersion())
-                .build();
-
-        Emulator savedEmulator = emulatorRepository.save(updatedEmulator);
-
-        EmulatorOutput.from(savedEmulator);
+        emulator.update(
+                input.mdn(),
+                vehicle,
+                input.terminalId(),
+                input.manufactureId(),
+                input.packetVersion(),
+                input.deviceId(),
+                input.deviceFirmwareVersion()
+        );
     }
 
     public void deleteEmulator(Long id) {
