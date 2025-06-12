@@ -26,7 +26,7 @@ public class TripLogService {
         List<PowerLogData> powerLogs = logRepository.findPowerLogByVehicleId(vehicleId);
 
         CurrentDrivingInfo currentDrivingInfo = null;
-        if (powerLogs.getLast().powerStatus()) {
+        if (!powerLogs.isEmpty() && powerLogs.getLast().powerStatus()) {
             currentDrivingInfo = getCurrentDrivingInfo(
                     powerLogs.getLast(),
                     logRepository.findCurrentGpsByVehicleId(vehicleId)
