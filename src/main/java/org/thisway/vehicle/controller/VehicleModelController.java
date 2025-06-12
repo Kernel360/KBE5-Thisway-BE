@@ -1,14 +1,18 @@
 package org.thisway.vehicle.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.vehicle.dto.request.VehicleModelCreateRequest;
+import org.thisway.vehicle.dto.response.VehicleModelsResponse;
 import org.thisway.vehicle.service.VehicleModelService;
 
 @RestController
@@ -23,5 +27,13 @@ public class VehicleModelController {
         vehicleModelService.registerVehicleModel(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
+    }
+
+    @GetMapping
+    public ResponseEntity<VehicleModelsResponse> getVehicleModels(
+            @PageableDefault Pageable pageable) {
+        VehicleModelsResponse response = vehicleModelService.getVehicleModels(pageable);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
     }
 }
