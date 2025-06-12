@@ -44,6 +44,7 @@ public class VehicleService {
         Member member = getCurrentMember();
         Company company = validateMemberCompanyAndPermission(member);
         VehicleModel vehicleModel = findActiveVehicleModel(request.vehicleModelId());
+        isCarNumberDuplicate(request.carNumber());
         Vehicle vehicle = request.toVehicleEntity(company, vehicleModel);
         vehicleRepository.save(vehicle);
     }
@@ -155,6 +156,12 @@ public class VehicleService {
         Company vehicleCompany = vehicle.getCompany();
         if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompany.getId())) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
+        }
+    }
+
+    private void isCarNumberDuplicate(String carNumber) {
+        if (vehicleRepository.existsByCarNumberAndActiveTrue(carNumber)) {
+            throw new CustomException(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER);
         }
     }
 }
