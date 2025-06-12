@@ -17,8 +17,8 @@ import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.entity.VehicleDetail;
-import org.thisway.vehicle.repository.VehicleDetailRepository;
+import org.thisway.vehicle.entity.VehicleModel;
+import org.thisway.vehicle.repository.VehicleModelRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
 
@@ -31,21 +31,21 @@ public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
-    private final VehicleDetailRepository vehicleDetailRepository;
+    private final VehicleModelRepository vehicleModelRepository;
     private final VehicleUpdateValidator vehicleUpdateValidator;
     private final SecurityService securityService;
 
     private static final int MAX_PAGE_SIZE = 20;
     private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
-            "id", "carNumber", "color", "mileage"
+            "id", "carNumber", "color", "mileage", "powerOn"
     );
 
     public void registerVehicle(VehicleCreateRequest request) {
         Member member = getCurrentMember();
         Company company = validateMemberCompanyAndPermission(member);
-        VehicleDetail vehicleDetail = request.toVehicleDetailEntity();
-        VehicleDetail savedVehicleDetail = vehicleDetailRepository.save(vehicleDetail);
-        Vehicle vehicle = request.toVehicleEntity(company, savedVehicleDetail);
+        VehicleModel vehicleModel = request.toVehicleModelEntity();
+        VehicleModel savedVehicleModel = vehicleModelRepository.save(vehicleModel);
+        Vehicle vehicle = request.toVehicleEntity(company, savedVehicleModel);
         vehicleRepository.save(vehicle);
     }
 

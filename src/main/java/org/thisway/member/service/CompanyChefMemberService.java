@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
-import org.thisway.member.dto.CompanyChefMemberDetailOutput;
-import org.thisway.member.dto.CompanyChefMemberRegisterInput;
-import org.thisway.member.dto.CompanyChefMemberSummaryOutput;
-import org.thisway.member.dto.CompanyChefMemberUpdateInput;
-import org.thisway.member.dto.CompanyChefMembersOutput;
+import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
+import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
+import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
+import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
+import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
@@ -102,7 +102,7 @@ public class CompanyChefMemberService {
         long companyId = securityService.getCurrentMemberDetails().getCompanyId();
 
         long companyChefCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_CHEF);
-        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.ADMIN);
+        long companyAdminCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.COMPANY_ADMIN);
         long memberCount = countActiveAndCompanyIdAndRole(companyId, MemberRole.MEMBER);
 
         return CompanyChefMemberSummaryOutput.builder()

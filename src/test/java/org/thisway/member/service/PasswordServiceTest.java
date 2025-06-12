@@ -23,7 +23,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.component.EmailComponent;
 import org.thisway.component.RedisComponent;
-import org.thisway.member.dto.VerificationPayload;
+import org.thisway.member.service.dto.VerificationPayload;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
@@ -69,7 +69,8 @@ public class PasswordServiceTest {
     void 존재하지_않는_이메일_인증코드_발송_실패() {
         doNothing().when(emailComponent).sendMail(anyString(), anyString(), anyString(), anyMap());
 
-        CustomException e = assertThrows(CustomException.class, () -> passwordService.sendVerificationCode("invalidEmail@example.com"));
+        CustomException e = assertThrows(CustomException.class,
+                () -> passwordService.sendVerificationCode("invalidEmail@example.com"));
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
     }
 
@@ -81,7 +82,8 @@ public class PasswordServiceTest {
 
         doNothing().when(emailComponent).sendMail(anyString(), anyString(), anyString(), anyMap());
 
-        CustomException e = assertThrows(CustomException.class, () -> passwordService.sendVerificationCode(member.getEmail()));
+        CustomException e = assertThrows(CustomException.class,
+                () -> passwordService.sendVerificationCode(member.getEmail()));
         assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
     }
 

@@ -1,5 +1,21 @@
 package org.thisway.vehicle.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,23 +40,10 @@ import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.entity.VehicleDetail;
-import org.thisway.vehicle.repository.VehicleDetailRepository;
+import org.thisway.vehicle.entity.VehicleModel;
+import org.thisway.vehicle.repository.VehicleModelRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -52,7 +55,7 @@ class VehicleServiceTest {
     private CompanyRepository companyRepository;
 
     @Mock
-    private VehicleDetailRepository vehicleDetailRepository;
+    private VehicleModelRepository vehicleModelRepository;
 
     @Mock
     private VehicleUpdateValidator vehicleUpdateValidator;
@@ -67,7 +70,7 @@ class VehicleServiceTest {
     private VehicleService vehicleService;
 
     @Captor
-    private ArgumentCaptor<VehicleDetail> vehicleDetailCaptor;
+    private ArgumentCaptor<VehicleModel> vehicleModelCaptor;
 
     @Captor
     private ArgumentCaptor<Vehicle> vehicleCaptor;
@@ -103,21 +106,21 @@ class VehicleServiceTest {
         mockSecurityContext(mockMember);
 
         when(companyRepository.findById(1L)).thenReturn(Optional.of(mockCompany));
-        when(vehicleDetailRepository.save(any(VehicleDetail.class))).thenReturn(mock(VehicleDetail.class));
+        when(vehicleModelRepository.save(any(VehicleModel.class))).thenReturn(mock(VehicleModel.class));
 
         // when
         vehicleService.registerVehicle(request);
 
         // then
-        verify(vehicleDetailRepository).save(vehicleDetailCaptor.capture());
+        verify(vehicleModelRepository).save(vehicleModelCaptor.capture());
         verify(companyRepository).findById(1L);
         verify(vehicleRepository).save(vehicleCaptor.capture());
 
-        VehicleDetail capturedDetail = vehicleDetailCaptor.getValue();
+        VehicleModel capturedDetail = vehicleModelCaptor.getValue();
         Vehicle capturedVehicle = vehicleCaptor.getValue();
 
         assertEquals("현대", capturedDetail.getManufacturer());
-        assertEquals("아반떼", capturedDetail.getModel());
+        assertEquals("아반떼", capturedDetail.getName());
         assertEquals(2023, capturedDetail.getModelYear());
 
         assertEquals("12가3456", capturedVehicle.getCarNumber());
@@ -157,7 +160,7 @@ class VehicleServiceTest {
                 () -> vehicleService.registerVehicle(request));
 
         verify(companyRepository).findById(1L);
-        verify(vehicleDetailRepository, never()).save(any(VehicleDetail.class));
+        verify(vehicleModelRepository, never()).save(any(VehicleModel.class));
         verify(vehicleRepository, never()).save(any(Vehicle.class));
 
         assertEquals(ErrorCode.COMPANY_NOT_FOUND, exception.getErrorCode());
@@ -169,8 +172,6 @@ class VehicleServiceTest {
         // given
         Long vehicleId = 1L;
         Company company = mock(Company.class);
-        when(company.getId()).thenReturn(1L);
-        when(company.getName()).thenReturn("테스트 회사");
 
         MemberRole mockRole = mock(MemberRole.class);
         Set<MemberRole> roles = new HashSet<>();
@@ -183,14 +184,14 @@ class VehicleServiceTest {
 
         mockSecurityContext(mockMember);
 
-        VehicleDetail vehicleDetail = VehicleDetail.builder()
+        VehicleModel vehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2023)
-                .model("쏘나타")
+                .name("쏘나타")
                 .build();
         Vehicle vehicle = Vehicle.builder()
                 .company(company)
-                .vehicleDetail(vehicleDetail)
+                .vehicleModel(vehicleModel)
                 .carNumber("12가3456")
                 .mileage(50000)
                 .build();
@@ -208,7 +209,6 @@ class VehicleServiceTest {
         assertThat(response.manufacturer()).isEqualTo("현대");
         assertThat(response.modelYear()).isEqualTo(2023);
         assertThat(response.model()).isEqualTo("쏘나타");
-        assertThat(response.companyName()).isEqualTo("테스트 회사");
         assertThat(response.carNumber()).isEqualTo("12가3456");
         assertThat(response.mileage()).isEqualTo(50000);
     }
@@ -273,14 +273,14 @@ class VehicleServiceTest {
 
         mockSecurityContext(mockMember);
 
-        VehicleDetail vehicleDetail = VehicleDetail.builder()
+        VehicleModel vehicleModel = VehicleModel.builder()
                 .manufacturer("현대")
                 .modelYear(2023)
-                .model("아반떼")
+                .name("아반떼")
                 .build();
 
         Vehicle vehicle = Vehicle.builder()
-                .vehicleDetail(vehicleDetail)
+                .vehicleModel(vehicleModel)
                 .carNumber("12가3456")
                 .color("검정")
                 .mileage(5000)
@@ -299,28 +299,26 @@ class VehicleServiceTest {
 
         assertEquals("34가5678", vehicle.getCarNumber());
         assertEquals("흰색", vehicle.getColor());
-        assertEquals("현대", vehicle.getVehicleDetail().getManufacturer());
-        assertEquals(2024, vehicle.getVehicleDetail().getModelYear());
-        assertEquals("K5", vehicle.getVehicleDetail().getModel());
+        assertEquals("현대", vehicle.getVehicleModel().getManufacturer());
+        assertEquals(2024, vehicle.getVehicleModel().getModelYear());
+        assertEquals("K5", vehicle.getVehicleModel().getName());
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {
-        VehicleDetail vehicleDetail = mock(VehicleDetail.class);
-        given(vehicleDetail.getManufacturer()).willReturn(manufacturer);
-        given(vehicleDetail.getModel()).willReturn(model);
-        given(vehicleDetail.getModelYear()).willReturn(2023);
+        VehicleModel vehicleModel = mock(VehicleModel.class);
+        given(vehicleModel.getManufacturer()).willReturn(manufacturer);
+        given(vehicleModel.getName()).willReturn(model);
+        given(vehicleModel.getModelYear()).willReturn(2023);
 
         Company company = mock(Company.class);
-        given(company.getId()).willReturn(1L);
-        given(company.getName()).willReturn("샘플 회사");
 
         Vehicle vehicle = mock(Vehicle.class);
         given(vehicle.getId()).willReturn(1L);
-        given(vehicle.getVehicleDetail()).willReturn(vehicleDetail);
-        given(vehicle.getCompany()).willReturn(company);
+        given(vehicle.getVehicleModel()).willReturn(vehicleModel);
         given(vehicle.getCarNumber()).willReturn(carNumber);
         given(vehicle.getColor()).willReturn("검정");
         given(vehicle.getMileage()).willReturn(5000);
+        given(vehicle.isPowerOn()).willReturn(false);
 
         return vehicle;
     }

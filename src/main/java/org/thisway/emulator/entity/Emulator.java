@@ -45,7 +45,7 @@ public class Emulator {
     private String deviceFirmwareVersion;
 
     @Builder
-    public Emulator (
+    public Emulator(
             Long id,
             String mdn,
             Vehicle vehicle,
@@ -54,7 +54,7 @@ public class Emulator {
             Integer packetVersion,
             Integer deviceId,
             String deviceFirmwareVersion
-    ){
+    ) {
         this.id = id;
         this.mdn = mdn;
         this.vehicle = vehicle;
@@ -63,5 +63,37 @@ public class Emulator {
         this.packetVersion = packetVersion;
         this.deviceId = deviceId;
         this.deviceFirmwareVersion = deviceFirmwareVersion;
+    }
+
+    public void update(
+            String mdn,
+            Vehicle vehicle,
+            String terminalId,
+            Integer manufactureId,
+            Integer packetVersion,
+            Integer deviceId,
+            String deviceFirmwareVersion
+    ) {
+        if (mdn != null) {
+            this.mdn = mdn;
+        }
+        if (vehicle != null) {
+            this.vehicle = vehicle;
+        }
+        if (terminalId != null) {
+            this.terminalId = terminalId;
+        }
+        if (manufactureId != null) {
+            this.manufactureId = manufactureId;
+        }
+        if (packetVersion != null) {
+            this.packetVersion = packetVersion;
+        }
+        if (deviceId != null) {
+            this.deviceId = deviceId;
+        }
+        if (deviceFirmwareVersion != null) {
+            this.deviceFirmwareVersion = deviceFirmwareVersion;
+        }
     }
 }
