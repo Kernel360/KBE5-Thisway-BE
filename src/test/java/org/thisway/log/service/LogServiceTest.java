@@ -31,30 +31,28 @@ import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
 import org.thisway.vehicle.entity.Vehicle;
+import org.thisway.vehicle.repository.VehicleRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class LogServiceTest {
 
-    @Mock
-    private LogRepository logRepository;
-
-    @Mock
-    private LogDataConverter converter;
-
-    @Mock
-    private Emulator emulator;
-
-    @Mock
-    private Vehicle vehicle;
-
-    @Mock
-    private EmulatorRepository emulatorRepository;
-
-    @InjectMocks
-    private LogService logService;
-
     private static final String VALID_MDN = "01234567890";
     private static final Long VEHICLE_ID = 1L;
+
+    @Mock
+    private LogRepository logRepository;
+    @Mock
+    private LogDataConverter converter;
+    @Mock
+    private Emulator emulator;
+    @Mock
+    private Vehicle vehicle;
+    @Mock
+    private EmulatorRepository emulatorRepository;
+    @Mock
+    private VehicleRepository vehicleRepository;
+    @InjectMocks
+    private LogService logService;
 
     private void setupMocks() {
         when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));
@@ -94,6 +92,22 @@ public class LogServiceTest {
                 "1",
                 "20210901092000",
                 "",
+                "A",
+                "4140338",
+                "217403",
+                "270",
+                "0",
+                "10000");
+    }
+
+    private PowerLogRequest createValidPowerLogRequestWithOffTime() {
+        return new PowerLogRequest(
+                VALID_MDN,
+                "A001",
+                "5",
+                "1",
+                "20210901092000",
+                "20210901102000",
                 "A",
                 "4140338",
                 "217403",
@@ -168,6 +182,40 @@ public class LogServiceTest {
 
             logService.savePowerLog(request);
             verify(logRepository).savePowerLog(any(PowerLogData.class));
+        }
+
+        @Test
+        @DisplayName("시동 ON로그 저장시 Vehicle 시동 상태 true 변경테스트")
+        void 시동_ON시_Vehicle_powerState가_true로_변경되어야한다() {
+            PowerLogRequest request = createValidPowerLogRequest();
+            setupMocks();
+            LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
+            when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
+            when(vehicleRepository.findById(VEHICLE_ID)).thenReturn(Optional.of(vehicle));
+            when(vehicle.isPowerOn()).thenReturn(true);
+
+            logService.savePowerLog(request);
+
+            verify(vehicle).updatePowerOn(true);
+            verify(vehicleRepository).save(vehicle);
+            assertThat(vehicle.isPowerOn()).isTrue();
+        }
+
+        @Test
+        @DisplayName("시동 OFF로그 저장시 Vehicle 시동 상태 false 변경테스트")
+        void 시동_OFF시_Vehicle_powerState가_false로_변경되어야한다() {
+            PowerLogRequest request = createValidPowerLogRequestWithOffTime();
+            setupMocks();
+            LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 10, 20, 0);
+            when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
+            when(vehicleRepository.findById(VEHICLE_ID)).thenReturn(Optional.of(vehicle));
+            when(vehicle.isPowerOn()).thenReturn(false);
+
+            logService.savePowerLog(request);
+
+            verify(vehicle).updatePowerOn(false);
+            verify(vehicleRepository).save(vehicle);
+            assertThat(vehicle.isPowerOn()).isFalse();
         }
     }
 

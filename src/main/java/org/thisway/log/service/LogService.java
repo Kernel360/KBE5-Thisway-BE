@@ -20,6 +20,7 @@ import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
+import org.thisway.vehicle.repository.VehicleRepository;
 
 @Slf4j
 @Service
@@ -27,6 +28,7 @@ import org.thisway.log.repository.LogRepository;
 @RequiredArgsConstructor
 public class LogService {
 
+    private final VehicleRepository vehicleRepository;
     private final EmulatorRepository emulatorRepository;
     private final LogRepository logRepository;
     private final LogDataConverter converter;
@@ -37,12 +39,16 @@ public class LogService {
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
-        
+
         if ((request.onTime() != null && !request.onTime().isEmpty()) &&
                 (request.offTime() == null || request.offTime().isEmpty())) {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
+            vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
+                vehicle.updatePowerOn(true);
+                vehicleRepository.save(vehicle);
+            });
             log.info("시동 ON 정보 로그 저장: MDN={}, onTime={}", request.mdn(), request.onTime());
         }
 
@@ -50,6 +56,10 @@ public class LogService {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, false, request.offTime(), converter);
             logRepository.savePowerLog(powerLogData);
+            vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
+                vehicle.updatePowerOn(false);
+                vehicleRepository.save(vehicle);
+            });
             log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}", request.mdn(), request.offTime());
         }
 
