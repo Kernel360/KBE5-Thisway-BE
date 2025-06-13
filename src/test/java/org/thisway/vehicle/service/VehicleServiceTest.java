@@ -33,7 +33,6 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
-import org.thisway.member.repository.MemberRepository;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
@@ -61,9 +60,6 @@ class VehicleServiceTest {
     private VehicleUpdateValidator vehicleUpdateValidator;
 
     @Mock
-    private MemberRepository memberRepository;
-
-    @Mock
     private SecurityService securityService;
 
     @InjectMocks
@@ -82,10 +78,9 @@ class VehicleServiceTest {
     @DisplayName("차량 등록이 성공하는 경우")
     void 차량_등록_성공() {
         // given
+        Long vehicleModelId = 1L;
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대",
-                2023,
-                "아반떼",
+                vehicleModelId,
                 "12가3456",
                 "검정"
         );
@@ -95,46 +90,45 @@ class VehicleServiceTest {
         when(mockCompany.isActive()).thenReturn(true);
 
         MemberRole mockRole = mock(MemberRole.class);
-        Set<MemberRole> roles = new HashSet<>();
-        roles.add(MemberRole.COMPANY_ADMIN);
-        when(mockRole.getLowerOrEqualRoles()).thenReturn(roles);
+        when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
 
         Member mockMember = mock(Member.class);
         when(mockMember.getCompany()).thenReturn(mockCompany);
         when(mockMember.getRole()).thenReturn(mockRole);
 
+        VehicleModel existingVehicleModel = VehicleModel.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .name("아반떼")
+                .build();
+
         mockSecurityContext(mockMember);
 
         when(companyRepository.findById(1L)).thenReturn(Optional.of(mockCompany));
-        when(vehicleModelRepository.save(any(VehicleModel.class))).thenReturn(mock(VehicleModel.class));
+        when(vehicleModelRepository.findByIdAndActiveTrue(vehicleModelId)).thenReturn(Optional.of(existingVehicleModel));
 
         // when
         vehicleService.registerVehicle(request);
 
         // then
-        verify(vehicleModelRepository).save(vehicleModelCaptor.capture());
+        verify(vehicleModelRepository).findByIdAndActiveTrue(vehicleModelId);
         verify(companyRepository).findById(1L);
         verify(vehicleRepository).save(vehicleCaptor.capture());
 
-        VehicleModel capturedDetail = vehicleModelCaptor.getValue();
         Vehicle capturedVehicle = vehicleCaptor.getValue();
-
-        assertEquals("현대", capturedDetail.getManufacturer());
-        assertEquals("아반떼", capturedDetail.getName());
-        assertEquals(2023, capturedDetail.getModelYear());
 
         assertEquals("12가3456", capturedVehicle.getCarNumber());
         assertEquals("검정", capturedVehicle.getColor());
+        assertEquals(existingVehicleModel, capturedVehicle.getVehicleModel());
     }
 
     @Test
     @DisplayName("차량 등록시 회사를 찾을 수 없는 경우 차량 등록 불가")
     void 차량_등록_실패_회사를_찾을수없음() {
         // given
+        Long vehicleModelId = 1L;
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대",
-                2023,
-                "아반떼",
+                vehicleModelId,
                 "12가3456",
                 "검정"
         );
@@ -143,9 +137,7 @@ class VehicleServiceTest {
         when(mockCompany.getId()).thenReturn(1L);
 
         MemberRole mockRole = mock(MemberRole.class);
-        Set<MemberRole> roles = new HashSet<>();
-        roles.add(MemberRole.COMPANY_ADMIN);
-        when(mockRole.getLowerOrEqualRoles()).thenReturn(roles);
+        when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
 
         Member mockMember = mock(Member.class);
         when(mockMember.getCompany()).thenReturn(mockCompany);
@@ -160,10 +152,48 @@ class VehicleServiceTest {
                 () -> vehicleService.registerVehicle(request));
 
         verify(companyRepository).findById(1L);
-        verify(vehicleModelRepository, never()).save(any(VehicleModel.class));
+        verify(vehicleModelRepository, never()).findByIdAndActiveTrue(any());
         verify(vehicleRepository, never()).save(any(Vehicle.class));
 
         assertEquals(ErrorCode.COMPANY_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("차량 등록시 차량 모델을 찾을 수 없는 경우 차량 등록 불가")
+    void 차량_등록_실패_차량모델을_찾을수없음() {
+        // given
+        Long vehicleModelId = 1L;
+        VehicleCreateRequest request = new VehicleCreateRequest(
+                vehicleModelId,
+                "12가3456",
+                "검정"
+        );
+
+        Company mockCompany = mock(Company.class);
+        when(mockCompany.getId()).thenReturn(1L);
+        when(mockCompany.isActive()).thenReturn(true);
+
+        MemberRole mockRole = mock(MemberRole.class);
+        when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
+
+        Member mockMember = mock(Member.class);
+        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getRole()).thenReturn(mockRole);
+
+        mockSecurityContext(mockMember);
+
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(mockCompany));
+        when(vehicleModelRepository.findByIdAndActiveTrue(vehicleModelId)).thenReturn(Optional.empty());
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.registerVehicle(request));
+
+        verify(companyRepository).findById(1L);
+        verify(vehicleModelRepository).findByIdAndActiveTrue(vehicleModelId);
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
+
+        assertEquals(ErrorCode.VEHICLE_MODEL_NOT_FOUND, exception.getErrorCode());
     }
 
     @Test

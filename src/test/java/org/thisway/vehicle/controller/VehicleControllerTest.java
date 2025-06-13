@@ -65,7 +65,7 @@ class VehicleControllerTest {
     @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_성공() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색");
+                1L, "12가3456", "흰색");
         doNothing().when(vehicleService).registerVehicle(request);
 
         mockMvc.perform(
@@ -81,7 +81,7 @@ class VehicleControllerTest {
     @WithMockUser(roles = { "COMPANY_ADMIN" })
     void 차량_등록_요청_실패() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색");
+                1L, "12가3456", "흰색");
         doThrow(new CustomException(ErrorCode.COMPANY_NOT_FOUND))
                 .when(vehicleService).registerVehicle(request);
 
