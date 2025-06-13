@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
@@ -60,14 +59,6 @@ public class VehicleController {
                                               @RequestBody @Validated VehicleUpdateRequest request) {
         vehicleService.updateVehicle(id, request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .build();
-    }
-
-    @PatchMapping("/{id}/power")
-    public ResponseEntity<Void> updatePowerOn(@PathVariable Long id,
-                                              @RequestParam boolean powerOn) {
-        vehicleService.updateVehiclePowerState(id, powerOn);
-        return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
 }
