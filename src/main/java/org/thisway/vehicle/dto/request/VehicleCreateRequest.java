@@ -9,14 +9,8 @@ import org.thisway.vehicle.entity.VehicleModel;
 
 public record VehicleCreateRequest(
 
-        @NotBlank
-        String manufacturer,
-
         @NotNull
-        Integer modelYear,
-
-        @NotBlank
-        String name,
+        Long vehicleModelId,
 
         @NotBlank
         @ValidCarNumber
@@ -25,14 +19,6 @@ public record VehicleCreateRequest(
         @NotBlank
         String color
 ) {
-        public VehicleModel toVehicleModelEntity() {
-                return VehicleModel.builder()
-                        .manufacturer(this.manufacturer)
-                        .modelYear(this.modelYear)
-                        .name(this.name)
-                        .build();
-        }
-
         public Vehicle toVehicleEntity(Company company, VehicleModel vehicleModel) {
                 return Vehicle.builder()
                         .vehicleModel(vehicleModel)

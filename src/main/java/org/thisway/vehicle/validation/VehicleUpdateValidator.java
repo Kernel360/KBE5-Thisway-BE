@@ -41,3 +41,4 @@ public class VehicleUpdateValidator {
                 request.model() == null;
     }
 }
+
