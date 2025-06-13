@@ -82,4 +82,10 @@ public class Vehicle extends BaseEntity {
     public void updatePowerOn(boolean powerOn) {
         this.powerOn = powerOn;
     }
+
+    public void updateMileage(Integer additionalMileage) {
+        if (additionalMileage != null && additionalMileage > 0) {
+            this.mileage += additionalMileage;
+        }
+    }
 }
