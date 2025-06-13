@@ -1,5 +1,6 @@
 package org.thisway.vehicle.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,23 +23,20 @@ import org.thisway.vehicle.repository.VehicleModelRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class VehicleService {
 
+    private static final int MAX_PAGE_SIZE = 20;
+    private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
+            "id", "carNumber", "color", "mileage", "powerOn"
+    );
     private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
     private final VehicleModelRepository vehicleModelRepository;
     private final VehicleUpdateValidator vehicleUpdateValidator;
     private final SecurityService securityService;
-
-    private static final int MAX_PAGE_SIZE = 20;
-    private static final List<String> ALLOWED_SORT_PROPERTIES = List.of(
-            "id", "carNumber", "color", "mileage", "powerOn"
-    );
 
     public void registerVehicle(VehicleCreateRequest request) {
         Member member = getCurrentMember();
@@ -77,14 +75,6 @@ public class VehicleService {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
         vehicle.update(request);
-    }
-
-    public void updateVehiclePowerState(Long id, boolean powerOn) {
-        Vehicle vehicle = findActiveVehicle(id);
-
-        if (vehicle.isPowerOn() != powerOn) {
-            vehicle.updatePowerOn(powerOn);
-        }
     }
 
     private Vehicle findActiveVehicle(Long id) {
