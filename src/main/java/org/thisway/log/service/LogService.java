@@ -57,10 +57,15 @@ public class LogService {
                     request, vehicleId, false, request.offTime(), converter);
             logRepository.savePowerLog(powerLogData);
             vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
+                Integer totalTripMeter = converter.convertToInteger(request.sum());
                 vehicle.updatePowerOn(false);
+
+                vehicle.updateMileage(totalTripMeter);
+
                 vehicleRepository.save(vehicle);
             });
-            log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}", request.mdn(), request.offTime());
+            log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}, totalTripMeter={}",
+                    request.mdn(), request.offTime(), request.sum());
         }
 
         log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
