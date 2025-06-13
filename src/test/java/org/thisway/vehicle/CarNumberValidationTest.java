@@ -1,18 +1,19 @@
 package org.thisway.vehicle;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
-import java.util.Set;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CarNumberValidationTest {
 
@@ -29,7 +30,7 @@ public class CarNumberValidationTest {
     void 차량번호검증_통과(){
         //given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", "12가3456", "흰색");
+                1L, "12가3456", "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -49,7 +50,7 @@ public class CarNumberValidationTest {
     void 다양한_유효한_차량번호_검증(String carNumber) {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", carNumber, "흰색");
+                1L, carNumber, "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);
@@ -73,7 +74,7 @@ public class CarNumberValidationTest {
     void 잘못된_차량번호_검증(String carNumber) {
         // given
         VehicleCreateRequest request = new VehicleCreateRequest(
-                "현대", 2022, "아반떼", carNumber, "흰색");
+                1L, carNumber, "흰색");
 
         // when
         Set<ConstraintViolation<VehicleCreateRequest>> violations = validator.validate(request);

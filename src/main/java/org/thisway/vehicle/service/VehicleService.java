@@ -41,9 +41,9 @@ public class VehicleService {
     public void registerVehicle(VehicleCreateRequest request) {
         Member member = getCurrentMember();
         Company company = validateMemberCompanyAndPermission(member);
-        VehicleModel vehicleModel = request.toVehicleModelEntity();
-        VehicleModel savedVehicleModel = vehicleModelRepository.save(vehicleModel);
-        Vehicle vehicle = request.toVehicleEntity(company, savedVehicleModel);
+        VehicleModel vehicleModel = findActiveVehicleModel(request.vehicleModelId());
+        isCarNumberDuplicate(request.carNumber());
+        Vehicle vehicle = request.toVehicleEntity(company, vehicleModel);
         vehicleRepository.save(vehicle);
     }
 
@@ -82,6 +82,11 @@ public class VehicleService {
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
     }
 
+    private VehicleModel findActiveVehicleModel(Long id){
+        return vehicleModelRepository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
+    }
+
     private void validatePageable(Pageable pageable) {
         if (pageable.getPageSize() > MAX_PAGE_SIZE) {
             throw new CustomException(ErrorCode.PAGE_INVALID_PAGE_SIZE);
@@ -108,7 +113,7 @@ public class VehicleService {
 
     private Company validateMemberCompanyAndPermission(Member member) {
         Company memberCompany = getMemberCompany(member);
-        validateCompanyAdminPermission(member);
+        validatePermission(member);
 
         return companyRepository.findById(memberCompany.getId())
                 .filter(BaseEntity::isActive)
@@ -117,6 +122,12 @@ public class VehicleService {
 
     private void validateCompanyAdminPermission(Member member) {
         if (!member.getRole().getLowerOrEqualRoles().contains(MemberRole.COMPANY_ADMIN)) {
+            throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
+        }
+    }
+
+    private void validatePermission(Member member) {
+        if (member.getRole().getLevel() < MemberRole.COMPANY_ADMIN.getLevel()) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
         }
     }
@@ -135,6 +146,12 @@ public class VehicleService {
         Company vehicleCompany = vehicle.getCompany();
         if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompany.getId())) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
+        }
+    }
+
+    private void isCarNumberDuplicate(String carNumber) {
+        if (vehicleRepository.existsByCarNumberAndActiveTrue(carNumber)) {
+            throw new CustomException(ErrorCode.VEHICLE_DUPLICATE_CAR_NUMBER);
         }
     }
 }
