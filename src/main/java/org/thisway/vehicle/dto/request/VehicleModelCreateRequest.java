@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import org.thisway.vehicle.entity.VehicleModel;
 
 public record VehicleModelCreateRequest(
-        @NotBlank
+        @NotBlank(message = "14007")
         String manufacturer,
         
-        @NotNull
+        @NotNull(message = "14008")
         Integer modelYear,
         
-        @NotBlank
+        @NotBlank(message = "14009")
         String name
 ) {
 
