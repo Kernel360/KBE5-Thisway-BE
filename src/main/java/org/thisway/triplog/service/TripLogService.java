@@ -53,7 +53,11 @@ public class TripLogService {
                 .map(CurrentGpsLog::from)
                 .toList();
 
-        return CurrentTripLogResponse.from(gpsLogs.getLast(),currentGpsLogs);
+        if (!gpsLogs.isEmpty()) {
+            return CurrentTripLogResponse.from(gpsLogs.getLast(),currentGpsLogs);
+        } else {
+            throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
+        }
     }
 
     public List<TripLogBriefInfo> getTripLogs() {
