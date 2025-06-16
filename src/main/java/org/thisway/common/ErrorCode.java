@@ -1,5 +1,9 @@
 package org.thisway.common;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -51,9 +55,9 @@ public enum ErrorCode {
     VEHICLE_MODEL_ALREADY_EXISTS("14004", "이미 등록된 차량 모델입니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_MODEL_NOT_FOUND("14005", "차량 모델을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_NUMBER_NOT_VALID("14006", "차량 번호가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-    VEHICLE_INVALID_MANUFACTURER("14007", "제조사 입력은 필수입니다..", HttpStatus.BAD_REQUEST),
+    VEHICLE_INVALID_MANUFACTURER("14007", "제조사 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_INVALID_MODEL_YEAR("14008", "연식 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
-    VEHICLE_INVALID_MODEL("14009", "차량모델 입력은 필수입니다..", HttpStatus.BAD_REQUEST),
+    VEHICLE_INVALID_MODEL("14009", "차량모델 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
 
     // 에뮬레이터 x5xxx
     EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.BAD_REQUEST),
@@ -68,6 +72,13 @@ public enum ErrorCode {
     private final String code;
     private final String message;
     private final HttpStatus status;
+
+    private static final Map<String, ErrorCode> CODE_MAP = Arrays.stream(values())
+        .collect(Collectors.toMap(ErrorCode::getCode, Function.identity()));
+
+    public static ErrorCode fromCode(String code){
+        return CODE_MAP.getOrDefault(code, SERVER_ERROR);
+    }
 
     public int getStatusValue() {
         return status.value();

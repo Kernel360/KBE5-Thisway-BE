@@ -16,14 +16,9 @@ public class GlobalExceptionHandler {
         var fieldError = e.getBindingResult().getFieldErrors().stream().findFirst();
         ErrorCode errorCode = ErrorCode.SERVER_ERROR;
 
-        if (fieldError.isPresent()) {
+        if(fieldError.isPresent()){
             String code = fieldError.get().getDefaultMessage();
-            for (ErrorCode ec : ErrorCode.values()) {
-                if (ec.getCode().equals(code)) {
-                    errorCode = ec;
-                    break;
-                }
-            }
+            errorCode = ErrorCode.fromCode(code);
         }
 
         return ResponseEntity.status(errorCode.getStatus())
