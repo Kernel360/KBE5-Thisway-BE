@@ -13,8 +13,8 @@ import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class TripLogService {
         return new VehicleDetailResponse(
                 vehicleService.getVehicleDetail(vehicleId),
                 currentDrivingInfo,
-                convertToTripLogs(powerLogs)
+                convertToTripLogsFromPowerLogs(powerLogs)
         );
     }
 
@@ -50,6 +50,12 @@ public class TripLogService {
                 .toList();
     }
 
+    public List<TripLogBriefInfo> getTripLogs() {
+        List<PowerLogData> powerLogs = logRepository.findAllPowerLogs();
+
+        return extractAllTripLogs(powerLogs);
+    }
+
     private CurrentDrivingInfo getCurrentDrivingInfo(PowerLogData powerLogData, GpsLogData gpsLogData) {
         return CurrentDrivingInfo.from(
                 powerLogData,
@@ -57,7 +63,27 @@ public class TripLogService {
         );
     }
 
-    private List<TripLogBriefInfo> convertToTripLogs(List<PowerLogData> logs) {
+    private List<TripLogBriefInfo> extractAllTripLogs(List<PowerLogData> logs) {
+        Map<Long, List<PowerLogData>> powerLogsByVehicle = logs.stream()
+                .sorted(Comparator.comparing(PowerLogData::vehicleId)
+                        .thenComparing(PowerLogData::powerTime))
+                .collect(Collectors.groupingBy(
+                        PowerLogData::vehicleId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        List<TripLogBriefInfo> allTripLogs = new ArrayList<>();
+        for (List<PowerLogData> vehicleLogs : powerLogsByVehicle.values()) {
+            allTripLogs.addAll(convertToTripLogsFromPowerLogs(vehicleLogs));
+        }
+
+        allTripLogs.sort(Comparator.comparing(TripLogBriefInfo::startTime));
+
+        return allTripLogs;
+    }
+
+    private List<TripLogBriefInfo> convertToTripLogsFromPowerLogs(List<PowerLogData> logs) {
         List<TripLogBriefInfo> tripLogBriefInfos = new ArrayList<>();
         PowerLogData onLog = null;
 
@@ -68,6 +94,8 @@ public class TripLogService {
                 if (onLog != null) {
                     int tripMeter = log.totalTripMeter() - onLog.totalTripMeter();
                     TripLogBriefInfo tripLogBriefInfo = new TripLogBriefInfo(
+                            onLog.vehicleId(),
+                            vehicleService.findVehicleById(onLog.vehicleId()).getCarNumber(),
                             onLog.powerTime(),
                             log.powerTime(),
                             tripMeter,
@@ -82,4 +110,6 @@ public class TripLogService {
 
         return tripLogBriefInfos;
     }
+
+
 }
