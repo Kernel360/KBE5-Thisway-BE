@@ -12,7 +12,10 @@ public record VehicleResponse(
         String carNumber,
         String color,
         Integer mileage,
-        boolean powerOn
+        boolean powerOn,
+        Double lat,
+        Double lng
+
 ) {
 
     public static VehicleResponse fromVehicle(Vehicle vehicle) {
@@ -25,7 +28,9 @@ public record VehicleResponse(
                 vehicle.getCarNumber(),
                 vehicle.getColor(),
                 vehicle.getMileage(),
-                vehicle.isPowerOn()
+                vehicle.isPowerOn(),
+                vehicle.getLatitude(),
+                vehicle.getLongitude()
         );
     }
 }
