@@ -1,5 +1,6 @@
 package org.thisway.log.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -104,7 +105,7 @@ public class LogRepository {
         jdbcTemplate.update(geofenceLogSql, geofenceLogParams);
     }
 
-    public List<PowerLogData> findPowerLogByVehicleId(Long vehicleId) {
+    public List<PowerLogData> findPowerLogsByVehicleId(Long vehicleId) {
         String sql = "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
                 + "FROM power_log "
                 + "WHERE vehicle_id = ? "
@@ -143,6 +144,34 @@ public class LogRepository {
                         rs.getInt("battery_voltage"),
                         rs.getTimestamp("occurred_time").toLocalDateTime()
                 ), vehicleId
+        );
+    }
+
+    public List<GpsLogData> findGpsLogsByVehicleId(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
+        String sql = "SELECT vehicle_id, mdn, gps_status, latitude, longitude, angle, speed, total_trip_meter, battery_voltage, occurred_time "
+                + "FROM gps_log "
+                + "WHERE vehicle_id = ? AND occurred_time > ? AND occurred_time <= ? "
+                + "ORDER BY occurred_time";
+
+        Object[] params = new Object[]{
+                vehicleId,
+                startTime,
+                endTime
+        };
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> new GpsLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("angle"),
+                        rs.getInt("speed"),
+                        rs.getInt("total_trip_meter"),
+                        rs.getInt("battery_voltage"),
+                        rs.getTimestamp("occurred_time").toLocalDateTime()
+                ), params
         );
     }
 

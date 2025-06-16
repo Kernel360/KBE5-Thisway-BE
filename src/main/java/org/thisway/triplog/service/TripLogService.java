@@ -7,10 +7,12 @@ import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.repository.LogRepository;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
+import org.thisway.triplog.dto.CurrentGpsLog;
 import org.thisway.triplog.dto.TripLogBriefInfo;
 import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.vehicle.service.VehicleService;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class TripLogService {
     private final LogRepository logRepository;
 
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
-        List<PowerLogData> powerLogs = logRepository.findPowerLogByVehicleId(vehicleId);
+        List<PowerLogData> powerLogs = logRepository.findPowerLogsByVehicleId(vehicleId);
 
         CurrentDrivingInfo currentDrivingInfo = null;
         if (!powerLogs.isEmpty() && powerLogs.getLast().powerStatus()) {
@@ -38,6 +40,14 @@ public class TripLogService {
                 currentDrivingInfo,
                 convertToTripLogs(powerLogs)
         );
+    }
+
+    public List<CurrentGpsLog> getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
+        List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, time, LocalDateTime.now());
+
+        return gpsLogs.stream()
+                .map(CurrentGpsLog::from)
+                .toList();
     }
 
     private CurrentDrivingInfo getCurrentDrivingInfo(PowerLogData powerLogData, GpsLogData gpsLogData) {
