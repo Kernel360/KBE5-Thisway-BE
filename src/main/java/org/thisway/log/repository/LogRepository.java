@@ -144,11 +144,35 @@ public class LogRepository {
         );
     }
 
+    public List<PowerLogData> findPowerLogsByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime start) {
+        String sql = "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                + "FROM power_log "
+                + "WHERE vehicle_id = ? AND power_time >= ? "
+                + "ORDER BY power_time "
+                + "LIMIT 2";
+
+        Object[] params = new Object[]{ vehicleId, start };
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                ), params
+        );
+    }
+
     public GpsLogData findCurrentGpsByVehicleId(Long vehicleId) {
         String sql = "SELECT vehicle_id, mdn, gps_status, latitude, longitude, angle, speed, total_trip_meter, battery_voltage, occurred_time "
                 + "FROM gps_log "
                 + "WHERE vehicle_id = ? "
-                + "ORDER BY occurred_time DESC limit 1";
+                + "ORDER BY occurred_time DESC"
+                + "LIMIT 1";
 
         return jdbcTemplate.queryForObject(sql,
                 (rs, rowNum) -> new GpsLogData(

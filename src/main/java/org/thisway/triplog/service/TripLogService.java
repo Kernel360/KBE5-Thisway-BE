@@ -3,12 +3,16 @@ package org.thisway.triplog.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thisway.common.CustomException;
+import org.thisway.common.ErrorCode;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.repository.LogRepository;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
 import org.thisway.triplog.dto.CurrentGpsLog;
 import org.thisway.triplog.dto.TripLogBriefInfo;
+import org.thisway.triplog.dto.response.CurrentTripLogResponse;
+import org.thisway.triplog.dto.response.TripLogDetailResponse;
 import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.vehicle.service.VehicleService;
 
@@ -42,18 +46,37 @@ public class TripLogService {
         );
     }
 
-    public List<CurrentGpsLog> getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
+    public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
+        // Todo: 현재 운행중인 차량인지 확인하는 로직 추가
         List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, time, LocalDateTime.now());
-
-        return gpsLogs.stream()
+        List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
                 .map(CurrentGpsLog::from)
                 .toList();
+
+        return CurrentTripLogResponse.from(gpsLogs.getLast(),currentGpsLogs);
     }
 
     public List<TripLogBriefInfo> getTripLogs() {
         List<PowerLogData> powerLogs = logRepository.findAllPowerLogs();
 
         return extractAllTripLogs(powerLogs);
+    }
+
+    public TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end) {
+        List<PowerLogData> powerLogs = logRepository.findPowerLogsByVehicleIdAndPowerTime(vehicleId, start);
+        List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, start, end);
+
+        if (powerLogs.size() == 2 && powerLogs.getFirst().powerTime().equals(start) && powerLogs.getLast().powerTime().equals(end)) {
+            return TripLogDetailResponse.from(
+                    vehicleService.findVehicleById(vehicleId),
+                    powerLogs.getFirst(),
+                    powerLogs.getLast(),
+                    gpsLogs.stream().map(CurrentGpsLog::from).toList(),
+                    gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
+            );
+        } else {
+            throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
+        }
     }
 
     private CurrentDrivingInfo getCurrentDrivingInfo(PowerLogData powerLogData, GpsLogData gpsLogData) {

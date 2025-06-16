@@ -59,6 +59,9 @@ public enum ErrorCode {
     // 페이지네이션 x6xxx
     PAGE_INVALID_PAGE_SIZE("16000", "페이지 크기는 최대 100개까지 가능합니다.", HttpStatus.BAD_REQUEST),
     PAGE_INVALID_SORT_PROPERTY("16001", "유효하지 않은 정렬 기준입니다.", HttpStatus.BAD_REQUEST),
+
+    // 운행 로그 x7xxx
+    TRIP_LOG_NOT_FOUND("17000", "해당하는 로그가 존재하지 않습니다.", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;
