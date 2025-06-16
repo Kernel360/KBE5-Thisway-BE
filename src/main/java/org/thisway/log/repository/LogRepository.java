@@ -171,7 +171,7 @@ public class LogRepository {
         String sql = "SELECT vehicle_id, mdn, gps_status, latitude, longitude, angle, speed, total_trip_meter, battery_voltage, occurred_time "
                 + "FROM gps_log "
                 + "WHERE vehicle_id = ? "
-                + "ORDER BY occurred_time DESC"
+                + "ORDER BY occurred_time DESC "
                 + "LIMIT 1";
 
         return jdbcTemplate.queryForObject(sql,
