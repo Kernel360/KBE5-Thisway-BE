@@ -84,13 +84,13 @@ public class LogService {
 
         List<GpsLogData> gpsLogDataList = new ArrayList<>();
 
-        LocalDateTime occurredTime;
+        LocalDateTime baseTime;
         try {
             if (request.oTime().length() == 14) {
-                occurredTime = converter.convertDateTimeWithSec(request.oTime());
+                baseTime = converter.convertDateTimeWithSec(request.oTime());
                 log.info("초 단위 시간 형식 감지: {}", request.oTime());
             } else {
-                occurredTime = converter.convertDateTime(request.oTime());
+                baseTime = converter.convertDateTime(request.oTime());
                 log.info("분 단위 시간 형식 감지: {}", request.oTime());
             }
         } catch (Exception e) {
@@ -99,6 +99,14 @@ public class LogService {
         }
 
         for (GpsLogEntry entry : request.cList()) {
+            LocalDateTime occurredTime;
+            if (entry.sec() != null && !entry.sec().isEmpty()) {
+                int seconds = converter.convertToInteger(entry.sec());
+                occurredTime = baseTime.withSecond(seconds);
+            } else {
+                occurredTime = baseTime;
+            }
+
             GpsLogData gpsLogData = GpsLogData.from(entry, mdn, vehicleId, occurredTime, converter);
             gpsLogDataList.add(gpsLogData);
         }
