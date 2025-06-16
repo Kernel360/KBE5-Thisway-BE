@@ -105,7 +105,7 @@ public class TripLogService {
             allTripLogs.addAll(convertToTripLogsFromPowerLogs(vehicleLogs));
         }
 
-        allTripLogs.sort(Comparator.comparing(TripLogBriefInfo::startTime));
+        allTripLogs.sort(Comparator.comparing(TripLogBriefInfo::startTime).reversed());
 
         return allTripLogs;
     }
