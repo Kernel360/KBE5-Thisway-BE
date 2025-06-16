@@ -47,6 +47,7 @@ public class LogService {
             logRepository.savePowerLog(powerLogData);
             vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
                 vehicle.updatePowerOn(true);
+                
                 vehicleRepository.save(vehicle);
             });
             log.info("시동 ON 정보 로그 저장: MDN={}, onTime={}", request.mdn(), request.onTime());
@@ -61,6 +62,10 @@ public class LogService {
                 vehicle.updatePowerOn(false);
 
                 vehicle.updateMileage(totalTripMeter);
+                vehicle.updateLocation(
+                        converter.convertCoordinate(request.lat()),
+                        converter.convertCoordinate(request.lon())
+                );
 
                 vehicleRepository.save(vehicle);
             });

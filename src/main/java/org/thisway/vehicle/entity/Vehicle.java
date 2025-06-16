@@ -88,4 +88,9 @@ public class Vehicle extends BaseEntity {
             this.mileage += additionalMileage;
         }
     }
+
+    public void updateLocation(Double latitude, Double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }
