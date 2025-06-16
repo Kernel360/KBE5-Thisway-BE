@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidCarNumber {
-    String message() default "유효하지 않은 차량 번호입니다";
+    String message() default "14006";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
