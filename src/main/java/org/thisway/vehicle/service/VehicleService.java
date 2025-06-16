@@ -74,7 +74,13 @@ public class VehicleService {
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
-        vehicle.update(request);
+        
+        VehicleModel vehicleModel = null;
+        if (request.vehicleModelId() != null) {
+            vehicleModel = findActiveVehicleModel(request.vehicleModelId());
+        }
+        
+        vehicle.update(request, vehicleModel);
     }
 
     private Vehicle findActiveVehicle(Long id) {
