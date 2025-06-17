@@ -281,12 +281,76 @@ class VehicleServiceTest {
     void 차량_정보_수정_성공() {
         // given
         Long vehicleId = 1L;
+        Long newVehicleModelId = 2L;
         VehicleUpdateRequest request = new VehicleUpdateRequest(
+                newVehicleModelId,
                 "34가5678",
-                "흰색",
-                null,
-                2024,
-                "K5"
+                "흰색"
+        );
+
+        Company mockCompany = mock(Company.class);
+        when(mockCompany.getId()).thenReturn(1L);
+
+        MemberRole mockRole = mock(MemberRole.class);
+        Set<MemberRole> roles = new HashSet<>();
+        roles.add(MemberRole.COMPANY_ADMIN);
+        when(mockRole.getLowerOrEqualRoles()).thenReturn(roles);
+
+        Member mockMember = mock(Member.class);
+        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getRole()).thenReturn(mockRole);
+
+        mockSecurityContext(mockMember);
+
+        VehicleModel oldVehicleModel = VehicleModel.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .name("아반떼")
+                .build();
+
+        VehicleModel newVehicleModel = VehicleModel.builder()
+                .manufacturer("기아")
+                .modelYear(2024)
+                .name("K5")
+                .build();
+
+        Vehicle vehicle = Vehicle.builder()
+                .vehicleModel(oldVehicleModel)
+                .carNumber("12가3456")
+                .color("검정")
+                .mileage(5000)
+                .company(mockCompany)
+                .build();
+
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
+        when(vehicleModelRepository.findByIdAndActiveTrue(newVehicleModelId)).thenReturn(Optional.of(newVehicleModel));
+        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        // when
+        vehicleService.updateVehicle(vehicleId, request);
+
+        // then
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleModelRepository).findByIdAndActiveTrue(newVehicleModelId);
+        verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        assertEquals("34가5678", vehicle.getCarNumber());
+        assertEquals("흰색", vehicle.getColor());
+        assertEquals("기아", vehicle.getVehicleModel().getManufacturer());
+        assertEquals(2024, vehicle.getVehicleModel().getModelYear());
+        assertEquals("K5", vehicle.getVehicleModel().getName());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 실패 - VehicleModel을 찾을 수 없음")
+    void 차량_정보_수정_실패_VehicleModel_미존재() {
+        // given
+        Long vehicleId = 1L;
+        Long nonExistentVehicleModelId = 999L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                nonExistentVehicleModelId,
+                "34가5678",
+                "흰색"
         );
 
         Company mockCompany = mock(Company.class);
@@ -318,6 +382,60 @@ class VehicleServiceTest {
                 .build();
 
         when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
+        when(vehicleModelRepository.findByIdAndActiveTrue(nonExistentVehicleModelId)).thenReturn(Optional.empty());
+        doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        // when & then
+        CustomException exception = assertThrows(CustomException.class,
+                () -> vehicleService.updateVehicle(vehicleId, request));
+
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleModelRepository).findByIdAndActiveTrue(nonExistentVehicleModelId);
+        verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
+
+        assertEquals(ErrorCode.VEHICLE_MODEL_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("차량 정보 수정 성공 - VehicleModel 변경 없음")
+    void 차량_정보_수정_성공_VehicleModel_변경없음() {
+        // given
+        Long vehicleId = 1L;
+        VehicleUpdateRequest request = new VehicleUpdateRequest(
+                null,  // vehicleModelId가 null인 경우
+                "34가5678",
+                "흰색"
+        );
+
+        Company mockCompany = mock(Company.class);
+        when(mockCompany.getId()).thenReturn(1L);
+
+        MemberRole mockRole = mock(MemberRole.class);
+        Set<MemberRole> roles = new HashSet<>();
+        roles.add(MemberRole.COMPANY_ADMIN);
+        when(mockRole.getLowerOrEqualRoles()).thenReturn(roles);
+
+        Member mockMember = mock(Member.class);
+        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getRole()).thenReturn(mockRole);
+
+        mockSecurityContext(mockMember);
+
+        VehicleModel originalVehicleModel = VehicleModel.builder()
+                .manufacturer("현대")
+                .modelYear(2023)
+                .name("아반떼")
+                .build();
+
+        Vehicle vehicle = Vehicle.builder()
+                .vehicleModel(originalVehicleModel)
+                .carNumber("12가3456")
+                .color("검정")
+                .mileage(5000)
+                .company(mockCompany)
+                .build();
+
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
         doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
         // when
@@ -325,13 +443,14 @@ class VehicleServiceTest {
 
         // then
         verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
+        verify(vehicleModelRepository, never()).findByIdAndActiveTrue(any());
         verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
         assertEquals("34가5678", vehicle.getCarNumber());
         assertEquals("흰색", vehicle.getColor());
         assertEquals("현대", vehicle.getVehicleModel().getManufacturer());
-        assertEquals(2024, vehicle.getVehicleModel().getModelYear());
-        assertEquals("K5", vehicle.getVehicleModel().getName());
+        assertEquals(2023, vehicle.getVehicleModel().getModelYear());
+        assertEquals("아반떼", vehicle.getVehicleModel().getName());
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {

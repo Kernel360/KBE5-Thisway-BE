@@ -311,11 +311,9 @@ class VehicleControllerTest {
         // given
         Long vehicleId = 1L;
         VehicleUpdateRequest request = new VehicleUpdateRequest(
+                2L,  // vehicleModelId
                 "34가5678",
-                "흰색",
-                "기아",
-                2024,
-                "K5");
+                "흰색");
         doNothing().when(vehicleService).updateVehicle(vehicleId, request);
 
         // when & then
@@ -334,11 +332,9 @@ class VehicleControllerTest {
         // given
         Long vehicleId = 999L;
         VehicleUpdateRequest request = new VehicleUpdateRequest(
+                2L,  // vehicleModelId
                 "34가5678",
-                "흰색",
-                "기아",
-                2024,
-                "K5");
+                "흰색");
         doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
                 .when(vehicleService).updateVehicle(vehicleId, request);
 

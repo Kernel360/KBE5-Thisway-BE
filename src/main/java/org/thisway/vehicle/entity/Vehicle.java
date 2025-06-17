@@ -62,20 +62,15 @@ public class Vehicle extends BaseEntity {
         this.longitude = longitude;
     }
 
-    public void update(VehicleUpdateRequest request) {
-        partialUpdate(request.carNumber(), request.color());
-
-        if (request.manufacturer() != null || request.modelYear() != null || request.model() != null) {
-            this.vehicleModel.partialUpdate(request.manufacturer(), request.modelYear(), request.model());
+    public void update(VehicleUpdateRequest request, VehicleModel vehicleModel) {
+        if (request.carNumber() != null) {
+            this.carNumber = request.carNumber();
         }
-    }
-
-    public void partialUpdate(String carNumber, String color) {
-        if (carNumber != null) {
-            this.carNumber = carNumber;
+        if (request.color() != null) {
+            this.color = request.color();
         }
-        if (color != null) {
-            this.color = color;
+        if (vehicleModel != null) {
+            this.vehicleModel = vehicleModel;
         }
     }
 
