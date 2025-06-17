@@ -83,6 +83,12 @@ public class VehicleService {
         vehicle.update(request, vehicleModel);
     }
 
+    public Vehicle findVehicleById(Long id) {
+        return vehicleRepository.findById(id).orElseThrow(
+                () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
+        );
+    }
+
     private Vehicle findActiveVehicle(Long id) {
         return vehicleRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));

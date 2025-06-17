@@ -108,7 +108,9 @@ class VehicleControllerTest {
                 "34나5678",
                 "검정",
                 10000,
-                true
+                true,
+                null,
+                null
         );
         given(vehicleService.getVehicleDetail(vehicleId)).willReturn(vehicleResponse);
 
@@ -213,8 +215,8 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_기본_페이지네이션() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false),
-                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true));
+                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false, null, null),
+                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true, null, null));
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
         given(vehicleService.getVehicles(any()))
@@ -244,7 +246,7 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_두번째_페이지() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
-                new VehicleResponse(3L, "쌍용", 2023, "티볼리", "56다7890", "파랑", 1000, false));
+                new VehicleResponse(3L, "쌍용", 2023, "티볼리", "56다7890", "파랑", 1000, false, null, null));
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 2, 3, 1, 2);
 
@@ -276,8 +278,8 @@ class VehicleControllerTest {
     void 차량_목록_조회_성공_정렬_적용() throws Exception {
         // given
         List<VehicleResponse> descendingOrder = List.of(
-                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true),
-                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false));
+                new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true, null, null),
+                new VehicleResponse(1L, "현대", 2023, "아반떼", "12가3456", "검정", 5000, false, null, null));
 
         VehiclesResponse descResponse = new VehiclesResponse(descendingOrder, 1, 2, 0, 10);
 
