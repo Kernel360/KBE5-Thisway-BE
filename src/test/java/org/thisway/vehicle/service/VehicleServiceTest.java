@@ -33,9 +33,11 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
@@ -105,7 +107,8 @@ class VehicleServiceTest {
         mockSecurityContext(mockMember);
 
         when(companyRepository.findById(1L)).thenReturn(Optional.of(mockCompany));
-        when(vehicleModelRepository.findByIdAndActiveTrue(vehicleModelId)).thenReturn(Optional.of(existingVehicleModel));
+        when(vehicleModelRepository.findByIdAndActiveTrue(vehicleModelId)).thenReturn(
+                Optional.of(existingVehicleModel));
 
         // when
         vehicleService.registerVehicle(request);
@@ -332,6 +335,29 @@ class VehicleServiceTest {
         assertEquals("현대", vehicle.getVehicleModel().getManufacturer());
         assertEquals(2024, vehicle.getVehicleModel().getModelYear());
         assertEquals("K5", vehicle.getVehicleModel().getName());
+    }
+
+    @Test
+    @DisplayName("차량 대시보드 조회 성공")
+    void 차량_대시보드_조회_성공() {
+        // given
+        long memberCompanyId = 1L;
+        MemberDetails memberDetails = MemberDetails.builder()
+                .companyId(memberCompanyId)
+                .build();
+
+        given(securityService.getCurrentMemberDetails()).willReturn(memberDetails);
+        given(vehicleRepository.countByCompanyIdAndActiveTrue(memberCompanyId)).willReturn(3L);
+        given(vehicleRepository.countByCompanyIdAndPowerOnIsAndActiveTrue(memberCompanyId, true)).willReturn(2L);
+        given(vehicleRepository.countByCompanyIdAndPowerOnIsAndActiveTrue(memberCompanyId, false)).willReturn(1L);
+
+        // when
+        VehicleDashboardResponse response = vehicleService.getVehicleDashboard();
+
+        // then
+        assertThat(response.totalVehicles()).isEqualTo(3L);
+        assertThat(response.powerOnVehicles()).isEqualTo(2L);
+        assertThat(response.powerOffVehicles()).isEqualTo(1L);
     }
 
     private Vehicle createMockVehicle(String manufacturer, String model, String carNumber) {
