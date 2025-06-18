@@ -75,7 +75,19 @@ public class VehicleService {
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
-        vehicle.update(request);
+        
+        VehicleModel vehicleModel = null;
+        if (request.vehicleModelId() != null) {
+            vehicleModel = findActiveVehicleModel(request.vehicleModelId());
+        }
+        
+        vehicle.update(request, vehicleModel);
+    }
+
+    public Vehicle findVehicleById(Long id) {
+        return vehicleRepository.findById(id).orElseThrow(
+                () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
+        );
     }
 
     @Transactional(readOnly = true)
