@@ -28,12 +28,13 @@ public class VehicleAuthorizationPolicy {
                         List.of("/api/vehicles/{id}"),
                         "COMPANY_ADMIN", "COMPANY_CHEF"),
 
-                // 조회 (전체/상세): MEMBER, COMPANY_ADMIN, COMPANY_CHEF
+                // 조회 (전체/상세/대시보드): MEMBER, COMPANY_ADMIN, COMPANY_CHEF
                 withRoles(
                         HttpMethod.GET,
                         List.of(
                                 "/api/vehicles",
-                                "/api/vehicles/{id}"),
+                                "/api/vehicles/{id}",
+                                "/api/vehicles/dashboard"),
                         "MEMBER", "COMPANY_ADMIN", "COMPANY_CHEF"));
     }
 }
