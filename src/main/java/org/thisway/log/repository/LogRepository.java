@@ -16,7 +16,6 @@ import org.thisway.log.domain.PowerLogData;
 public class LogRepository {
 
     private final JdbcTemplate jdbcTemplate;
-    private final ReactiveStringRedisTemplate reactiveStringRedisTemplate;
 
     public void savePowerLog(PowerLogData powerLogData) {
         Object[] powerLogParams = new Object[]{
