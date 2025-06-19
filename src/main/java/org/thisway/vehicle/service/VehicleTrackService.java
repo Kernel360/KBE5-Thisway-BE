@@ -1,7 +1,7 @@
 package org.thisway.vehicle.service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -25,16 +25,22 @@ public class VehicleTrackService implements VehicleTrackClient {
     public VehicleTracksResponse trackVehicles(long companyId, Pageable pageable) {
         Page<Vehicle> vehiclePage = vehicleRepository.findAllByCompanyIdAndActiveTrue(companyId, pageable);
 
+        List<Long> vehicleIds = vehiclePage.getContent().stream()
+                .map(Vehicle::getId)
+                .toList();
+
+        Map<Long, GpsLogData> gpsMap = logRepository.findCurrentGpsByVehicleIds(vehicleIds);
+
         List<VehicleTrackResponse> trackResponses = vehiclePage.getContent().stream()
                 .map(vehicle -> {
-                    Optional<GpsLogData> gps = logRepository.findCurrentGpsByVehicleId(vehicle.getId());
+                    GpsLogData gps = gpsMap.get(vehicle.getId());
                     return new VehicleTrackResponse(
                             vehicle.getId(),
                             vehicle.getCarNumber(),
                             vehicle.isPowerOn(),
-                            gps.map(GpsLogData::latitude).orElse(null),
-                            gps.map(GpsLogData::longitude).orElse(null),
-                            gps.map(GpsLogData::angle).orElse(null)
+                            gps != null ? gps.latitude() : null,
+                            gps != null ? gps.longitude() : null,
+                            gps != null ? gps.angle() : null
                     );
                 })
                 .toList();
