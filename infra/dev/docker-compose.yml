@@ -1,0 +1,66 @@
+name: thisway
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: thisway-rabbitmq
+    hostname: rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: unless-stopped
+    networks:
+      - dev-net
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  redis:
+    image: redis:6.2
+    container_name: thisway-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - dev-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: thisway-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: thisway
+    ports:
+      - "3306:3306"
+    networks:
+      - dev-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../modules/db:/docker-entrypoint-initdb.d
+
+  prometheus:
+    build:
+      context: ../modules/monitoring
+      dockerfile: Dockerfile
+    container_name: thisway-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    networks:
+      - dev-net
+    volumes:
+      - prometheus_data:/prometheus
+
+networks:
+  dev-net:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+    driver: local
+  mysql-data:
+    driver: local
+  prometheus_data:
+    driver: local
