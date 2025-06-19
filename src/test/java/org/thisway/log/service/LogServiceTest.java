@@ -23,6 +23,7 @@ import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
+import org.thisway.triplog.service.TripLogService;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.repository.VehicleRepository;
 
@@ -46,6 +47,8 @@ public class LogServiceTest {
     private VehicleRepository vehicleRepository;
     @InjectMocks
     private LogService logService;
+    @Mock
+    private TripLogService tripLogService;
 
     private void setupMocks() {
         when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));

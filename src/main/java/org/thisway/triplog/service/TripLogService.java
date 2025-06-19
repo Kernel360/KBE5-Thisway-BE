@@ -8,12 +8,17 @@ import org.thisway.common.ErrorCode;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.repository.LogRepository;
+import org.thisway.triplog.converter.ReverseGeocodingConverter;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
 import org.thisway.triplog.dto.CurrentGpsLog;
+import org.thisway.triplog.dto.ReverseGeocodeResult;
 import org.thisway.triplog.dto.TripLogBriefInfo;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
 import org.thisway.triplog.dto.response.TripLogDetailResponse;
 import org.thisway.triplog.dto.response.VehicleDetailResponse;
+import org.thisway.triplog.entity.TripLog;
+import org.thisway.triplog.repository.TripLogRepository;
+import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
@@ -26,7 +31,11 @@ import java.util.stream.Collectors;
 public class TripLogService {
 
     private final VehicleService vehicleService;
+
+    private final TripLogRepository tripLogRepository;
     private final LogRepository logRepository;
+
+    private final ReverseGeocodingConverter reverseGeocodingConverter;
 
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
         List<PowerLogData> powerLogs = logRepository.findPowerLogsByVehicleId(vehicleId);
@@ -83,6 +92,29 @@ public class TripLogService {
         }
     }
 
+    public void saveTripLog(PowerLogData powerOnLog, PowerLogData powerOffLog) {
+        Vehicle vehicle = vehicleService.findVehicleById(powerOnLog.vehicleId());
+        ReverseGeocodeResult onResult = reverseGeocodingConverter.convertToAddress(powerOnLog.latitude(), powerOnLog.longitude());
+        ReverseGeocodeResult offResult = reverseGeocodingConverter.convertToAddress(powerOffLog.latitude(), powerOffLog.longitude());
+
+        TripLog tripLog = new TripLog(
+                vehicle,
+                powerOnLog.powerTime(),
+                powerOffLog.powerTime(),
+                powerOffLog.totalTripMeter(),
+                powerOnLog.latitude(),
+                powerOnLog.longitude(),
+                onResult.addr(),
+                onResult.addrDetail(),
+                powerOffLog.latitude(),
+                powerOffLog.longitude(),
+                offResult.addr(),
+                offResult.addrDetail()
+        );
+
+        tripLogRepository.save(tripLog);
+    }
+
     private CurrentDrivingInfo getCurrentDrivingInfo(PowerLogData powerLogData, GpsLogData gpsLogData) {
         return CurrentDrivingInfo.from(
                 powerLogData,
@@ -137,6 +169,5 @@ public class TripLogService {
 
         return tripLogBriefInfos;
     }
-
 
 }
