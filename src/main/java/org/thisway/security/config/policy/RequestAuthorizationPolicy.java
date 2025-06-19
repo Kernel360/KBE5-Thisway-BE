@@ -8,6 +8,7 @@ import org.thisway.security.config.policy.auth.AuthAuthorizationPolicy;
 import org.thisway.security.config.policy.company.CompanyAuthorizationPolicy;
 import org.thisway.security.config.policy.emulator.EmulatorAuthorizationPolicy;
 import org.thisway.security.config.policy.member.MemberAuthorizationPolicy;
+import org.thisway.security.config.policy.statistics.StatisticsAuthorizationPolicy;
 import org.thisway.security.config.policy.triplog.TripLogAuthorizationPolicy;
 import org.thisway.security.config.policy.vehicle.VehicleAuthorizationPolicy;
 
@@ -25,6 +26,7 @@ public class RequestAuthorizationPolicy {
         rules.addAll(EmulatorAuthorizationPolicy.getRules());
         rules.addAll(ActuatorAuthorizationPolicy.getRules());
         rules.addAll(TripLogAuthorizationPolicy.getRules());
+        rules.addAll(StatisticsAuthorizationPolicy.getRules());
 
         return rules;
     }

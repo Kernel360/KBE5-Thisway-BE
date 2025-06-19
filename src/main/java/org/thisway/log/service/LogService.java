@@ -14,6 +14,7 @@ import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
+import org.thisway.triplog.service.TripLogService;
 import org.thisway.vehicle.repository.VehicleRepository;
 
 @Slf4j
@@ -26,6 +27,8 @@ public class LogService {
     private final EmulatorRepository emulatorRepository;
     private final LogRepository logRepository;
     private final LogDataConverter converter;
+
+    private final TripLogService tripLogService;
 
     public void savePowerLog(PowerLogRequest request) {
         log.info("시동 정보 로그 수신: MDN={}, onTime={}, offTime={}",
@@ -65,6 +68,13 @@ public class LogService {
             });
             log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}, totalTripMeter={}",
                     request.mdn(), request.offTime(), request.sum());
+
+            tripLogService.saveTripLog(
+                    logRepository.findOnLogByVehicleIdAndPowerTime(vehicleId, converter.convertDateTimeWithSec(request.onTime())),
+                    powerLogData
+            );
+            log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
+                    request.mdn(), request.onTime(), request.offTime());
         }
 
         log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());

@@ -42,4 +42,7 @@ security:
     secret-key: szU3FELDRTw9sJzzP1cWuo/xUzIjSvMGGSWKlMCgku/vZwsSmi8BHsH/rnsAyTzTAQ2IGS0mgr/oxi4WsHMhcQ==
     access-token-validity-ms: 360000
 
+kakao:
+  rest-api-key: testkakaorestapikey
+
 gps-log-collect-mode: direct
