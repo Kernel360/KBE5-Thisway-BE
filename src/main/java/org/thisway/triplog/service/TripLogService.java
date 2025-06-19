@@ -35,7 +35,7 @@ public class TripLogService {
         if (!powerLogs.isEmpty() && powerLogs.getLast().powerStatus()) {
             currentDrivingInfo = getCurrentDrivingInfo(
                     powerLogs.getLast(),
-                    logRepository.findCurrentGpsByVehicleId(vehicleId)
+                    logRepository.getCurrentGpsByVehicleId(vehicleId)
             );
         }
 
@@ -54,7 +54,7 @@ public class TripLogService {
                 .toList();
 
         if (!gpsLogs.isEmpty()) {
-            return CurrentTripLogResponse.from(gpsLogs.getLast(),currentGpsLogs);
+            return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
         } else {
             throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
         }
@@ -70,7 +70,8 @@ public class TripLogService {
         List<PowerLogData> powerLogs = logRepository.findPowerLogsByVehicleIdAndPowerTime(vehicleId, start);
         List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, start, end);
 
-        if (powerLogs.size() == 2 && powerLogs.getFirst().powerTime().equals(start) && powerLogs.getLast().powerTime().equals(end)) {
+        if (powerLogs.size() == 2 && powerLogs.getFirst().powerTime().equals(start) && powerLogs.getLast().powerTime()
+                .equals(end)) {
             return TripLogDetailResponse.from(
                     vehicleService.findVehicleById(vehicleId),
                     powerLogs.getFirst(),
