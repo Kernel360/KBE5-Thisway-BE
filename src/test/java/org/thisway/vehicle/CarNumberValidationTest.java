@@ -84,6 +84,6 @@ public class CarNumberValidationTest {
 
         ConstraintViolation<VehicleCreateRequest> violation = violations.iterator().next();
         assertEquals("carNumber", violation.getPropertyPath().toString());
-        assertEquals("유효하지 않은 차량 번호입니다", violation.getMessage());
+        assertEquals("14006", violation.getMessage());
     }
 }

@@ -15,6 +15,7 @@ import org.thisway.member.entity.MemberRole;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
@@ -74,7 +75,33 @@ public class VehicleService {
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
-        vehicle.update(request);
+        
+        VehicleModel vehicleModel = null;
+        if (request.vehicleModelId() != null) {
+            vehicleModel = findActiveVehicleModel(request.vehicleModelId());
+        }
+        
+        vehicle.update(request, vehicleModel);
+    }
+
+    public Vehicle findVehicleById(Long id) {
+        return vehicleRepository.findById(id).orElseThrow(
+                () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public VehicleDashboardResponse getVehicleDashboard() {
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
+        long totalVehicles = vehicleRepository.countByCompanyIdAndActiveTrue(companyId);
+        long powerOnVehicles = vehicleRepository.countByCompanyIdAndPowerOnIsAndActiveTrue(companyId, true);
+        long powerOffVehicles = vehicleRepository.countByCompanyIdAndPowerOnIsAndActiveTrue(companyId, false);
+
+        return new VehicleDashboardResponse(
+                totalVehicles,
+                powerOnVehicles,
+                powerOffVehicles
+        );
     }
 
     private Vehicle findActiveVehicle(Long id) {
@@ -82,7 +109,7 @@ public class VehicleService {
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
     }
 
-    private VehicleModel findActiveVehicleModel(Long id){
+    private VehicleModel findActiveVehicleModel(Long id) {
         return vehicleModelRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
     }

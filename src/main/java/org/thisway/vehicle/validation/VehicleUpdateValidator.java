@@ -34,11 +34,9 @@ public class VehicleUpdateValidator {
     }
 
     private boolean hasNoUpdates(VehicleUpdateRequest request) {
-        return request.carNumber() == null &&
-                request.color() == null &&
-                request.manufacturer() == null &&
-                request.modelYear() == null &&
-                request.model() == null;
+        return request.vehicleModelId() == null &&
+                request.carNumber() == null &&
+                request.color() == null;
     }
 }
 

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
@@ -60,5 +61,11 @@ public class VehicleController {
         vehicleService.updateVehicle(id, request);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<VehicleDashboardResponse> getVehicleDashboard() {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(vehicleService.getVehicleDashboard());
     }
 }
