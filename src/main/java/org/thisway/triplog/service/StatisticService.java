@@ -3,7 +3,6 @@ package org.thisway.triplog.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.security.service.SecurityService;
 import org.thisway.triplog.dto.response.TripLocationStats;
 import org.thisway.triplog.repository.TripLogRepository;
 
