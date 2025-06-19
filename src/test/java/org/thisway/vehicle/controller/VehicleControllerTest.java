@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -36,6 +37,7 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
+import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
@@ -62,23 +64,23 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 등록 요청 성공")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_등록_요청_성공() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 1L, "12가3456", "흰색");
         doNothing().when(vehicleService).registerVehicle(request);
 
         mockMvc.perform(
-                post("/api/vehicles")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+                        post("/api/vehicles")
+                                .contentType("application/json")
+                                .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isCreated());
     }
 
     @Test
     @DisplayName("차량 등록 요청 실패 - 업체 미존재")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_등록_요청_실패() throws Exception {
         VehicleCreateRequest request = new VehicleCreateRequest(
                 1L, "12가3456", "흰색");
@@ -86,9 +88,9 @@ class VehicleControllerTest {
                 .when(vehicleService).registerVehicle(request);
 
         mockMvc.perform(
-                post("/api/vehicles")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
+                        post("/api/vehicles")
+                                .contentType("application/json")
+                                .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(ErrorCode.COMPANY_NOT_FOUND.getCode()));
@@ -96,7 +98,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 상세 조회 API 성공")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_상세_조회_성공() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -116,8 +118,8 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        get("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -136,7 +138,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 상세 조회 API 실패 - 차량 없음")
-    @WithMockUser(roles = { "MEMBER" })
+    @WithMockUser(roles = {"MEMBER"})
     void 차량_상세_조회_실패() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -145,8 +147,8 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        get("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
@@ -159,25 +161,25 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 삭제 요청 성공")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_삭제_요청_성공() throws Exception {
         doNothing().when(vehicleService).deleteVehicle(1L);
 
         mockMvc.perform(
-                delete("/api/vehicles/1"))
+                        delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("차량 삭제 요청 실패 - 차량 미존재")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_삭제_요청_실패() throws Exception {
         doThrow(new CustomException(ErrorCode.VEHICLE_NOT_FOUND))
                 .when(vehicleService).deleteVehicle(1L);
 
         MvcResult mvcResult = mockMvc.perform(
-                delete("/api/vehicles/1"))
+                        delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
@@ -190,7 +192,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 삭제 요청 실패 - 이미 삭제된 차량")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 이미_삭제된_차량_삭제_요청_실패() throws Exception {
         // given
         doThrow(new CustomException(ErrorCode.VEHICLE_ALREADY_DELETED))
@@ -198,7 +200,7 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                delete("/api/vehicles/1"))
+                        delete("/api/vehicles/1"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
@@ -211,7 +213,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 기본 페이지네이션")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_목록_조회_성공_기본_페이지네이션() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
@@ -224,7 +226,7 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/vehicles"))
+                        get("/api/vehicles"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -242,7 +244,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 두 번째 페이지")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_목록_조회_성공_두번째_페이지() throws Exception {
         // given
         List<VehicleResponse> vehicles = List.of(
@@ -254,9 +256,9 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/vehicles")
-                        .param("page", "3")
-                        .param("size", "2"))
+                        get("/api/vehicles")
+                                .param("page", "3")
+                                .param("size", "2"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -274,7 +276,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 목록 조회 성공 - 정렬 적용")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_목록_조회_성공_정렬_적용() throws Exception {
         // given
         List<VehicleResponse> descendingOrder = List.of(
@@ -289,8 +291,8 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                get("/api/vehicles")
-                        .param("sort", "carNumber,desc"))
+                        get("/api/vehicles")
+                                .param("sort", "carNumber,desc"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -306,7 +308,7 @@ class VehicleControllerTest {
 
     @Test
     @DisplayName("차량 정보 수정 요청 성공")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_정보_수정_요청_성공() throws Exception {
         // given
         Long vehicleId = 1L;
@@ -318,16 +320,16 @@ class VehicleControllerTest {
 
         // when & then
         mockMvc.perform(
-                patch("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        patch("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("차량 정보 수정 요청 실패 - 차량을 찾을 수 없음")
-    @WithMockUser(roles = { "COMPANY_ADMIN" })
+    @WithMockUser(roles = {"COMPANY_ADMIN"})
     void 차량_정보_수정_요청_실패_차량_미존재() throws Exception {
         // given
         Long vehicleId = 999L;
@@ -340,9 +342,9 @@ class VehicleControllerTest {
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
-                patch("/api/vehicles/{id}", vehicleId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        patch("/api/vehicles/{id}", vehicleId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andReturn();
@@ -351,5 +353,35 @@ class VehicleControllerTest {
         ApiErrorResponse response = objectMapper.readValue(
                 responseBody, ApiErrorResponse.class);
         assertThat(response.message()).isEqualTo(ErrorCode.VEHICLE_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("차량 대시보드 요청 성공")
+    @WithMockUser(roles = {"COMPANY_CHEF"})
+    void 차량_대시보드_요청_성공() throws Exception {
+        // given
+        VehicleDashboardResponse vehicleDashboard = new VehicleDashboardResponse(3, 2, 1);
+        when(vehicleService.getVehicleDashboard())
+                .thenReturn(vehicleDashboard);
+
+        // when
+        String responseBody = mockMvc.perform(
+                        get("/api/vehicles/dashboard")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // then
+        VehicleDashboardResponse response = objectMapper.readValue(
+                responseBody,
+                VehicleDashboardResponse.class
+        );
+
+        assertThat(response.totalVehicles()).isEqualTo(vehicleDashboard.totalVehicles());
+        assertThat(response.powerOnVehicles()).isEqualTo(vehicleDashboard.powerOnVehicles());
+        assertThat(response.powerOffVehicles()).isEqualTo(vehicleDashboard.powerOffVehicles());
     }
 }
