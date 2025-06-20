@@ -11,6 +11,6 @@ public class ActuatorAuthorizationPolicy {
     public static List<AuthorizationRule> getRules() {
         return List.of(
                 permitAll(HttpMethod.GET,
-                        List.of("/actuator/health")));
+                        List.of("/actuator/**")));
     }
 }
