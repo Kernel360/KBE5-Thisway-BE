@@ -17,6 +17,7 @@ import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
+import org.thisway.vehicle.dto.response.VehicleTracksResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleModel;
@@ -38,6 +39,7 @@ public class VehicleService {
     private final VehicleModelRepository vehicleModelRepository;
     private final VehicleUpdateValidator vehicleUpdateValidator;
     private final SecurityService securityService;
+    private final VehicleTrackClient vehicleTrackClient;
 
     public void registerVehicle(VehicleCreateRequest request) {
         Member member = getCurrentMember();
@@ -75,12 +77,12 @@ public class VehicleService {
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
-        
+
         VehicleModel vehicleModel = null;
         if (request.vehicleModelId() != null) {
             vehicleModel = findActiveVehicleModel(request.vehicleModelId());
         }
-        
+
         vehicle.update(request, vehicleModel);
     }
 
@@ -102,6 +104,10 @@ public class VehicleService {
                 powerOnVehicles,
                 powerOffVehicles
         );
+    }
+
+    public VehicleTracksResponse getVehicleTracks(long companyId, Pageable pageable) {
+        return vehicleTrackClient.trackVehicles(companyId, pageable);
     }
 
     private Vehicle findActiveVehicle(Long id) {
