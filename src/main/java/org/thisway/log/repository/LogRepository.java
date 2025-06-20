@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thisway.log.domain.GeofenceLogData;
@@ -146,6 +147,27 @@ public class LogRepository {
                         rs.getDouble("longitude"),
                         rs.getInt("total_trip_meter")
                 )
+        );
+    }
+
+    public PowerLogData findOnLogByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime powerTime) {
+        String sql = "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                + "FROM power_log "
+                + "WHERE vehicle_id = ? AND power_time = ?";
+
+        Object[] params = new Object[]{ vehicleId, powerTime };
+
+        return jdbcTemplate.queryForObject(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                ), params
         );
     }
 
