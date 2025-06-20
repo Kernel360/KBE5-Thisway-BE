@@ -38,11 +38,11 @@ services:
       - dev-net
     volumes:
       - mysql-data:/var/lib/mysql
-      - ../modules/db:/docker-entrypoint-initdb.d
+      - ./db:/docker-entrypoint-initdb.d
 
   prometheus:
     build:
-      context: ../modules/monitoring
+      context: ./monitoring
       dockerfile: Dockerfile
     container_name: thisway-prometheus
     restart: unless-stopped
@@ -52,6 +52,17 @@ services:
       - dev-net
     volumes:
       - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:12.0.2
+    container_name: thisway-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - dev-net
+    volumes:
+      - grafana-data:/var/lib/grafana
 
 networks:
   dev-net:
@@ -63,4 +74,6 @@ volumes:
   mysql-data:
     driver: local
   prometheus_data:
+    driver: local
+  grafana-data:
     driver: local
