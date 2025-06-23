@@ -1,9 +1,11 @@
 package org.thisway.statistics.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,11 +14,14 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
+import org.thisway.log.repository.LogRepository;
 import org.thisway.statistics.dto.response.StatisticResponse;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.repository.StatisticsRepository;
 import org.thisway.triplog.dto.response.TripLocationStats;
+import org.thisway.triplog.entity.TripLog;
 import org.thisway.triplog.repository.TripLogRepository;
+import org.thisway.vehicle.repository.VehicleRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +29,9 @@ import org.thisway.triplog.repository.TripLogRepository;
 public class StatisticService {
     private final TripLogRepository tripLogRepository;
     private final StatisticsRepository statisticsRepository;
+    private final VehicleRepository vehicleRepository;
     private final CompanyRepository companyRepository;
+    private final LogRepository logRepository;
 
     @Transactional(readOnly = true)
     public List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
@@ -56,20 +63,23 @@ public class StatisticService {
         Integer peakHour = calculatePeakHour(companyId, startDateTime, endDateTime);
         Integer lowHour = calculateLowHour(companyId, startDateTime, endDateTime);
         
-        // 6. 평균 가동률 계산 (TODO: GPS 로그 기반)
-        Double averageOperationRate = calculateAverageOperationRate(companyId, startDateTime, endDateTime);
+        // 6. 시간대별 가동률 계산
+        Integer[] hourlyOperationRates = calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
         
-        // 7. 시간대별 가동률 계산 (TODO: hour00 ~ hour23)
-        // Integer[] hourlyOperationRates = calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
+        // 7. 평균 가동률 계산
+        Double averageOperationRate = calculateAverageOperationRate(hourlyOperationRates);
         
         // 8. 기존 통계 데이터 확인 (중복 방지)
-        Optional<Statistics> existingStatistics = statisticsRepository.getStatisticByCompanyIdAndDate(companyId, targetDate);
+        LocalDateTime startOfDay = targetDate.atStartOfDay();
+        LocalDateTime startOfNextDay = targetDate.plusDays(1).atStartOfDay();
+        Optional<Statistics> existingStatistics = statisticsRepository.getStatisticByCompanyIdAndDate(companyId, startOfDay, startOfNextDay);
         
         if (existingStatistics.isPresent()) {
             // 기존 데이터가 있으면 업데이트
             Statistics existing = existingStatistics.get();
             updateExistingStatistics(existing, powerOnCount.intValue(), powerOnCount.doubleValue(), 
                 totalDrivingTime, peakHour, lowHour, averageOperationRate);
+            existing.updateHourlyRates(hourlyOperationRates);
             statisticsRepository.save(existing);
             System.out.println("기존 통계 업데이트 완료: " + companyId + ", " + targetDate);
         } else {
@@ -78,21 +88,67 @@ public class StatisticService {
                 .company(company)
                 .date(startDateTime)
                 .powerOnCount(powerOnCount.intValue())
-                .averageDailyPowerCount(powerOnCount.doubleValue()) // 하루 단위이므로 동일
+                .averageDailyPowerCount(powerOnCount.doubleValue())
                 .totalDrivingTime(totalDrivingTime)
                 .peakHour(peakHour)
                 .lowHour(lowHour)
                 .averageOperationRate(averageOperationRate)
-                // 시간대별 가동률 (TODO: 실제 계산 값으로 대체)
-                .hour00(0).hour01(0).hour02(0).hour03(0).hour04(0).hour05(0)
-                .hour06(0).hour07(0).hour08(0).hour09(0).hour10(0).hour11(0)
-                .hour12(0).hour13(0).hour14(0).hour15(0).hour16(0).hour17(0)
-                .hour18(0).hour19(0).hour20(0).hour21(0).hour22(0).hour23(0)
+                .hour00(hourlyOperationRates[0]).hour01(hourlyOperationRates[1]).hour02(hourlyOperationRates[2]).hour03(hourlyOperationRates[3])
+                .hour04(hourlyOperationRates[4]).hour05(hourlyOperationRates[5]).hour06(hourlyOperationRates[6]).hour07(hourlyOperationRates[7])
+                .hour08(hourlyOperationRates[8]).hour09(hourlyOperationRates[9]).hour10(hourlyOperationRates[10]).hour11(hourlyOperationRates[11])
+                .hour12(hourlyOperationRates[12]).hour13(hourlyOperationRates[13]).hour14(hourlyOperationRates[14]).hour15(hourlyOperationRates[15])
+                .hour16(hourlyOperationRates[16]).hour17(hourlyOperationRates[17]).hour18(hourlyOperationRates[18]).hour19(hourlyOperationRates[19])
+                .hour20(hourlyOperationRates[20]).hour21(hourlyOperationRates[21]).hour22(hourlyOperationRates[22]).hour23(hourlyOperationRates[23])
                 .build();
             
             statisticsRepository.save(statistics);
             System.out.println("신규 통계 저장 완료: " + companyId + ", " + targetDate);
         }
+    }
+
+    /**
+     * 시간대별 가동률 계산
+     * 공식: (시간 내 GPS 로그 개수) / (3600 * 업체 내 차량 대수)
+     */
+    private Integer[] calculateHourlyOperationRates(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        // 1. 업체 내 차량 대수 조회
+        long vehicleCount = vehicleRepository.countByCompanyIdAndActiveTrue(companyId);
+        
+        if (vehicleCount == 0) {
+            // 차량이 없으면 모든 시간대 가동률 0
+            return new Integer[24]; // 기본값 0으로 초기화됨
+        }
+        
+        // 2. 시간대별 GPS 로그 개수 조회
+        Map<Integer, Long> hourlyGpsLogCounts = logRepository.countGpsLogsByCompanyAndHour(companyId, startDateTime, endDateTime);
+        
+        // 3. 시간대별 가동률 계산
+        Integer[] hourlyRates = new Integer[24];
+        for (int hour = 0; hour < 24; hour++) {
+            Long gpsLogCount = hourlyGpsLogCounts.getOrDefault(hour, 0L);
+            // 가동률 = (GPS 로그 개수) / (3600 * 차량 대수) * 100 (퍼센트)
+            Double operationRate = (gpsLogCount.doubleValue() / (3600.0 * vehicleCount)) * 100;
+            hourlyRates[hour] = operationRate.intValue(); // 소수점 버림
+        }
+        
+        return hourlyRates;
+    }
+
+    /**
+     * 평균 가동률 계산 (시간대별 가동률의 평균)
+     */
+    private Double calculateAverageOperationRate(Integer[] hourlyOperationRates) {
+        double sum = 0.0;
+        int count = 0;
+        
+        for (Integer rate : hourlyOperationRates) {
+            if (rate != null) {
+                sum += rate;
+                count++;
+            }
+        }
+        
+        return count > 0 ? sum / count : 0.0;
     }
 
     // 기존 통계 데이터 업데이트 헬퍼 메서드
@@ -193,8 +249,17 @@ public class StatisticService {
 
     // TODO: 실제 구현 필요한 메서드들
     private Integer calculateTotalDrivingTime(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // TripLog의 startTime과 endTime 차이를 분 단위로 합산
-        return 0;
+        // TripLog 목록을 가져와서 각각의 운행시간을 계산하여 합산
+        List<TripLog> tripLogs = tripLogRepository.findTripLogsByCompanyAndDateRange(companyId, startDateTime, endDateTime);
+        
+        long totalMinutes = tripLogs.stream()
+                .mapToLong(tripLog -> {
+                    Duration duration = Duration.between(tripLog.getStartTime(), tripLog.getEndTime());
+                    return duration.toMinutes();
+                })
+                .sum();
+                
+        return (int) totalMinutes;
     }
     
     private Integer calculatePeakHour(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
@@ -205,11 +270,6 @@ public class StatisticService {
     private Integer calculateLowHour(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         // 시간대별 TripLog 빈도 분석해서 가장 적은 시간대 반환
         return 0;
-    }
-    
-    private Double calculateAverageOperationRate(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // GPS 로그 기반 평균 가동률 계산
-        return 0.0;
     }
     
     private int calculatePeakHourFromStatistics(List<Statistics> statisticsList) {
