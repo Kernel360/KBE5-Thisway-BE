@@ -1,8 +1,9 @@
-package org.thisway.logging.filter.utils;
+package org.thisway.logging.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;

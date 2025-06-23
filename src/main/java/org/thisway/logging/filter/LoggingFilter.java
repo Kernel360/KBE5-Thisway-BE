@@ -1,19 +1,20 @@
-package org.thisway.logging.filter.filter;
+package org.thisway.logging.filter;
 
 import io.micrometer.common.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
-import org.thisway.logging.filter.utils.LogSanitizer;
+import org.thisway.logging.utils.LogSanitizer;
+
+import java.io.IOException;
+import java.util.UUID;
 
 @Component
 @Slf4j
