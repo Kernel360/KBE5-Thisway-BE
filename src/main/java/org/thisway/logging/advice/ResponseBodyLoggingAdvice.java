@@ -12,6 +12,7 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import org.thisway.logging.constant.MdcKeys;
 
 @ControllerAdvice
 @Slf4j
@@ -39,7 +40,7 @@ public class ResponseBodyLoggingAdvice implements ResponseBodyAdvice<Object> {
     ) {
         try {
             String responseStr = objectMapper.writeValueAsString(body);
-            MDC.put("responseBody", responseStr);
+            MDC.put(MdcKeys.RESPONSE_BODY, responseStr);
         } catch (JsonProcessingException e) {
             log.warn("로깅 Response Body 직렬화를 실패했습니다.", e);
         }

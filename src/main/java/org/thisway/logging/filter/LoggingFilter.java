@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.thisway.logging.constant.MdcKeys;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -23,13 +24,13 @@ public class LoggingFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        MDC.put("traceId", UUID.randomUUID().toString());
+        MDC.put(MdcKeys.TRACE_ID, UUID.randomUUID().toString());
 
         try {
             filterChain.doFilter(request, response);
 
-            log.info("Request Body: {}", MDC.get("requestBody"));
-            log.info("Response Body: {}", MDC.get("responseBody"));
+            log.info("Request Body: {}", MDC.get(MdcKeys.REQUEST_BODY));
+            log.info("Response Body: {}", MDC.get(MdcKeys.RESPONSE_BODY));
         } finally {
             MDC.clear();
         }
