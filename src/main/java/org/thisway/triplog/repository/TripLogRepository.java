@@ -22,4 +22,14 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
             @Param("from")LocalDateTime from,
             @Param("to")LocalDateTime to
     );
+
+    // 특정 회사의 날짜 범위에 대한 시동 횟수
+    @Query("SELECT COUNT(t) FROM TripLog t " +
+           "WHERE t.vehicle.company.id = :companyId " +
+           "AND t.startTime >= :startDate AND t.startTime <= :endDate")
+    Long countPowerOnByCompanyAndDateRange(
+            @Param("companyId") Long companyId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }
