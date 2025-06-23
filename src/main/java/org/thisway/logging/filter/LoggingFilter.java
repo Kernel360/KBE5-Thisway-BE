@@ -9,9 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingRequestWrapper;
-import org.springframework.web.util.ContentCachingResponseWrapper;
-import org.thisway.logging.utils.LogSanitizer;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -26,22 +23,14 @@ public class LoggingFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-
-        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
-        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-
         MDC.put("traceId", UUID.randomUUID().toString());
 
         try {
-            filterChain.doFilter(requestWrapper, responseWrapper);
+            filterChain.doFilter(request, response);
 
-            String requestBody = new String(requestWrapper.getContentAsByteArray(), request.getCharacterEncoding());
-            String responseBody = new String(responseWrapper.getContentAsByteArray(), response.getCharacterEncoding());
-
-            log.info("Request Body: {}", LogSanitizer.sanitize(requestBody));
-            log.info("Response Body: {}", LogSanitizer.sanitize(responseBody));
+            log.info("Request Body: {}", MDC.get("requestBody"));
+            log.info("Response Body: {}", MDC.get("responseBody"));
         } finally {
-            responseWrapper.copyBodyToResponse();
             MDC.clear();
         }
     }
