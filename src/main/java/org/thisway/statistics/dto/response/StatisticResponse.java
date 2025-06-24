@@ -74,6 +74,24 @@ public record StatisticResponse(
         statistics.getHour22(),
         statistics.getHour23()
     );
+  }
 
+  /**
+   * 배열 기반 생성자 (집계된 통계용)
+   */
+  public static StatisticResponse fromAggregatedData(
+      Long companyId, String dateRange, Integer powerOnCount, Double averageDailyPowerCount,
+      Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
+      Integer[] hourlyRates) {
+    return new StatisticResponse(
+        companyId, dateRange, powerOnCount, averageDailyPowerCount,
+        totalDrivingTime, peakHour, lowHour, averageOperationRate,
+        hourlyRates[0], hourlyRates[1], hourlyRates[2], hourlyRates[3],
+        hourlyRates[4], hourlyRates[5], hourlyRates[6], hourlyRates[7],
+        hourlyRates[8], hourlyRates[9], hourlyRates[10], hourlyRates[11],
+        hourlyRates[12], hourlyRates[13], hourlyRates[14], hourlyRates[15],
+        hourlyRates[16], hourlyRates[17], hourlyRates[18], hourlyRates[19],
+        hourlyRates[20], hourlyRates[21], hourlyRates[22], hourlyRates[23]
+    );
   }
 }

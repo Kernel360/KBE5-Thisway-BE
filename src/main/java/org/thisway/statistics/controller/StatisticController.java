@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.thisway.security.dto.request.MemberDetails;
+import org.thisway.statistics.constant.StatisticConstants;
 import org.thisway.statistics.dto.response.StatisticResponse;
 import org.thisway.statistics.service.StatisticService;
 import org.thisway.triplog.dto.response.TripLocationStats;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/statistics")
@@ -52,6 +55,11 @@ public class StatisticController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
+        log.info(StatisticConstants.LOG_API_DATE_RANGE);
+        log.info("회사 ID: {}", memberDetails.getCompanyId());
+        log.info("시작 날짜: {}", startDate);
+        log.info("종료 날짜: {}", endDate);
+        
         StatisticResponse response = statisticService.getStatisticByDateRange(
                 memberDetails.getCompanyId(), startDate, endDate
         );
@@ -69,6 +77,10 @@ public class StatisticController {
             @RequestParam Long companyId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate
     ) {
+        log.info(StatisticConstants.LOG_API_SAVE);
+        log.info("회사 ID: {}", companyId);
+        log.info("대상 날짜: {}", targetDate);
+        
         statisticService.saveStatistics(companyId, targetDate);
         return ResponseEntity.status(HttpStatus.OK).body("통계 저장이 완료되었습니다.");
     }
