@@ -18,9 +18,6 @@ import org.thisway.statistics.constant.StatisticConstants;
 @NoArgsConstructor
 public class Statistics extends BaseEntity {
 
-  private static final int HOURS_IN_DAY = 24;
-  private static final int DEFAULT_HOURLY_RATE = 0;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "company_id", nullable = false)
   private Company company;

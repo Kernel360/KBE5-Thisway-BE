@@ -10,11 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.statistics.dto.response.StatisticResponse;
 import org.thisway.triplog.dto.response.TripLocationStats;
 
-/**
- * 통계 서비스 Facade
- * - 분리된 서비스들을 조율하는 역할
- * - 클라이언트에게 단일 진입점 제공
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
