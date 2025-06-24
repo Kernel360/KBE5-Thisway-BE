@@ -18,6 +18,6 @@ public class AuthAuthorizationPolicy {
                         List.of("/api/auth/password")),
 
                 permitAll(HttpMethod.GET,
-                        List.of("/api/auth/health")));
+                        List.of("/api/health")));
     }
 }
