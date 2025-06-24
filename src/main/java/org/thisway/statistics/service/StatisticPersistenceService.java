@@ -13,7 +13,6 @@ import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
-import org.thisway.statistics.constant.StatisticConstants;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.repository.StatisticsRepository;
 
@@ -114,4 +113,4 @@ public class StatisticPersistenceService {
             log.info("신규 통계 저장 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         }
     }
-} 
+}

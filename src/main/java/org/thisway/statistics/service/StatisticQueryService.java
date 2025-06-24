@@ -2,7 +2,6 @@ package org.thisway.statistics.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -131,4 +130,4 @@ public class StatisticQueryService {
         
         return extremeHour;
     }
-} 
+}
