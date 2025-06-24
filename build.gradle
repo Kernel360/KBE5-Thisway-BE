@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
     id "com.avast.gradle.docker-compose" version "0.17.10"
+    id 'com.google.cloud.tools.jib' version '3.4.5'
 }
 
 dockerCompose {
@@ -26,8 +27,7 @@ configurations {
 }
 
 repositories {
-    mavenCentral()
-}
+    mavenCentral() }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -63,6 +63,23 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
+jib {
+  from {
+    image = 'eclipse-temurin:21-jre'       // 베이스 JRE 이미지
+  }
+  to {
+    // ECR URI: ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/REPO:TAG
+    image = "${System.getenv('AWS_ACCOUNT_ID')}.dkr.ecr.ap-northeast-2.amazonaws.com/thisway/app:${project.version}"
+  }
+  container {
+    mainClass = 'org.thisway.ThiswayApplication'  // 실제 메인 클래스 FQCN
+    ports = ['8080']
+    // 환경변수나 JVM 옵션도 여기에 지정 가능
+    jvmFlags = ['-Xms256m', '-Xmx512m']
+  }
+}
+
 
 tasks.named('test') {
     useJUnitPlatform()
