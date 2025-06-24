@@ -3,7 +3,7 @@ FROM prom/prometheus:v3.4.1
 
 # 2) root 권한으로 설정 파일 복사
 USER root
-COPY prometheus.yml /etc/prometheus/prometheus.yml
+COPY prometheus.dev.yml /etc/prometheus/prometheus.yml
 
 # # 3) (선택) Alert 룰 파일이 있다면 복사
 # COPY rules/ /etc/prometheus/rules/
