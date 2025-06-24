@@ -146,5 +146,4 @@ public class StatisticCalculationService {
     public Long calculatePowerOnCount(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         return tripLogRepository.countPowerOnByCompanyAndDateRange(companyId, startDateTime, endDateTime);
     }
-} 
- 
+}
