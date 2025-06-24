@@ -176,30 +176,30 @@ public class Statistics extends BaseEntity {
   // 시간대별 가동률 업데이트 메서드
   public void updateHourlyRates(Integer[] hourlyRates) {
     if (hourlyRates != null && hourlyRates.length == StatisticConstants.HOURS_IN_DAY) {
-      this.hour00 = getSafeValue(hourlyRates[StatisticConstants.HOUR_00]);
-      this.hour01 = getSafeValue(hourlyRates[StatisticConstants.HOUR_01]);
-      this.hour02 = getSafeValue(hourlyRates[StatisticConstants.HOUR_02]);
-      this.hour03 = getSafeValue(hourlyRates[StatisticConstants.HOUR_03]);
-      this.hour04 = getSafeValue(hourlyRates[StatisticConstants.HOUR_04]);
-      this.hour05 = getSafeValue(hourlyRates[StatisticConstants.HOUR_05]);
-      this.hour06 = getSafeValue(hourlyRates[StatisticConstants.HOUR_06]);
-      this.hour07 = getSafeValue(hourlyRates[StatisticConstants.HOUR_07]);
-      this.hour08 = getSafeValue(hourlyRates[StatisticConstants.HOUR_08]);
-      this.hour09 = getSafeValue(hourlyRates[StatisticConstants.HOUR_09]);
-      this.hour10 = getSafeValue(hourlyRates[StatisticConstants.HOUR_10]);
-      this.hour11 = getSafeValue(hourlyRates[StatisticConstants.HOUR_11]);
-      this.hour12 = getSafeValue(hourlyRates[StatisticConstants.HOUR_12]);
-      this.hour13 = getSafeValue(hourlyRates[StatisticConstants.HOUR_13]);
-      this.hour14 = getSafeValue(hourlyRates[StatisticConstants.HOUR_14]);
-      this.hour15 = getSafeValue(hourlyRates[StatisticConstants.HOUR_15]);
-      this.hour16 = getSafeValue(hourlyRates[StatisticConstants.HOUR_16]);
-      this.hour17 = getSafeValue(hourlyRates[StatisticConstants.HOUR_17]);
-      this.hour18 = getSafeValue(hourlyRates[StatisticConstants.HOUR_18]);
-      this.hour19 = getSafeValue(hourlyRates[StatisticConstants.HOUR_19]);
-      this.hour20 = getSafeValue(hourlyRates[StatisticConstants.HOUR_20]);
-      this.hour21 = getSafeValue(hourlyRates[StatisticConstants.HOUR_21]);
-      this.hour22 = getSafeValue(hourlyRates[StatisticConstants.HOUR_22]);
-      this.hour23 = getSafeValue(hourlyRates[StatisticConstants.HOUR_23]);
+      this.hour00 = getSafeValue(hourlyRates[0]);
+      this.hour01 = getSafeValue(hourlyRates[1]);
+      this.hour02 = getSafeValue(hourlyRates[2]);
+      this.hour03 = getSafeValue(hourlyRates[3]);
+      this.hour04 = getSafeValue(hourlyRates[4]);
+      this.hour05 = getSafeValue(hourlyRates[5]);
+      this.hour06 = getSafeValue(hourlyRates[6]);
+      this.hour07 = getSafeValue(hourlyRates[7]);
+      this.hour08 = getSafeValue(hourlyRates[8]);
+      this.hour09 = getSafeValue(hourlyRates[9]);
+      this.hour10 = getSafeValue(hourlyRates[10]);
+      this.hour11 = getSafeValue(hourlyRates[11]);
+      this.hour12 = getSafeValue(hourlyRates[12]);
+      this.hour13 = getSafeValue(hourlyRates[13]);
+      this.hour14 = getSafeValue(hourlyRates[14]);
+      this.hour15 = getSafeValue(hourlyRates[15]);
+      this.hour16 = getSafeValue(hourlyRates[16]);
+      this.hour17 = getSafeValue(hourlyRates[17]);
+      this.hour18 = getSafeValue(hourlyRates[18]);
+      this.hour19 = getSafeValue(hourlyRates[19]);
+      this.hour20 = getSafeValue(hourlyRates[20]);
+      this.hour21 = getSafeValue(hourlyRates[21]);
+      this.hour22 = getSafeValue(hourlyRates[22]);
+      this.hour23 = getSafeValue(hourlyRates[23]);
     }
   }
 
@@ -210,31 +210,35 @@ public class Statistics extends BaseEntity {
 
   // 특정 시간대 가동률 조회
   public Integer getHourlyRate(int hour) {
+    if (hour < 0 || hour >= StatisticConstants.HOURS_IN_DAY) {
+      return StatisticConstants.DEFAULT_HOURLY_RATE;
+    }
+    
     return switch (hour) {
-      case StatisticConstants.HOUR_00 -> hour00;
-      case StatisticConstants.HOUR_01 -> hour01;
-      case StatisticConstants.HOUR_02 -> hour02;
-      case StatisticConstants.HOUR_03 -> hour03;
-      case StatisticConstants.HOUR_04 -> hour04;
-      case StatisticConstants.HOUR_05 -> hour05;
-      case StatisticConstants.HOUR_06 -> hour06;
-      case StatisticConstants.HOUR_07 -> hour07;
-      case StatisticConstants.HOUR_08 -> hour08;
-      case StatisticConstants.HOUR_09 -> hour09;
-      case StatisticConstants.HOUR_10 -> hour10;
-      case StatisticConstants.HOUR_11 -> hour11;
-      case StatisticConstants.HOUR_12 -> hour12;
-      case StatisticConstants.HOUR_13 -> hour13;
-      case StatisticConstants.HOUR_14 -> hour14;
-      case StatisticConstants.HOUR_15 -> hour15;
-      case StatisticConstants.HOUR_16 -> hour16;
-      case StatisticConstants.HOUR_17 -> hour17;
-      case StatisticConstants.HOUR_18 -> hour18;
-      case StatisticConstants.HOUR_19 -> hour19;
-      case StatisticConstants.HOUR_20 -> hour20;
-      case StatisticConstants.HOUR_21 -> hour21;
-      case StatisticConstants.HOUR_22 -> hour22;
-      case StatisticConstants.HOUR_23 -> hour23;
+      case 0 -> hour00;
+      case 1 -> hour01;
+      case 2 -> hour02;
+      case 3 -> hour03;
+      case 4 -> hour04;
+      case 5 -> hour05;
+      case 6 -> hour06;
+      case 7 -> hour07;
+      case 8 -> hour08;
+      case 9 -> hour09;
+      case 10 -> hour10;
+      case 11 -> hour11;
+      case 12 -> hour12;
+      case 13 -> hour13;
+      case 14 -> hour14;
+      case 15 -> hour15;
+      case 16 -> hour16;
+      case 17 -> hour17;
+      case 18 -> hour18;
+      case 19 -> hour19;
+      case 20 -> hour20;
+      case 21 -> hour21;
+      case 22 -> hour22;
+      case 23 -> hour23;
       default -> StatisticConstants.DEFAULT_HOURLY_RATE;
     };
   }

@@ -29,7 +29,7 @@ public class StatisticCalculationService {
      * 공식: (시간 내 GPS 로그 개수) / (3600 * 업체 내 차량 대수) * 100
      */
     public Integer[] calculateHourlyOperationRates(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        log.info(StatisticConstants.LOG_CALCULATION_START);
+        log.info("=== 시간대별 가동률 계산 시작 ===");
         log.info("회사 ID: {}, 시작 시간: {}, 종료 시간: {}", companyId, startDateTime, endDateTime);
         
         // 1. 업체 내 차량 대수 조회
@@ -37,7 +37,7 @@ public class StatisticCalculationService {
         log.info("업체 내 차량 대수: {}", vehicleCount);
         
         if (vehicleCount == 0) {
-            log.info(StatisticConstants.LOG_NO_VEHICLES);
+            log.info("차량이 없어서 모든 시간대 가동률을 0으로 설정");
             Integer[] emptyRates = new Integer[StatisticConstants.HOURS_IN_DAY];
             for (int i = 0; i < StatisticConstants.HOURS_IN_DAY; i++) {
                 emptyRates[i] = StatisticConstants.DEFAULT_HOURLY_RATE;
@@ -68,7 +68,6 @@ public class StatisticCalculationService {
         
         log.info("=== 시간대별 가동률 계산 완료 ===");
         log.info("계산된 배열: {}", java.util.Arrays.toString(hourlyRates));
-        log.info(StatisticConstants.LOG_CALCULATION_COMPLETE);
         return hourlyRates;
     }
     
@@ -148,3 +147,4 @@ public class StatisticCalculationService {
         return tripLogRepository.countPowerOnByCompanyAndDateRange(companyId, startDateTime, endDateTime);
     }
 } 
+ 

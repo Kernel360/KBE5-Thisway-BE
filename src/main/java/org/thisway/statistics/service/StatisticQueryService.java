@@ -115,14 +115,12 @@ public class StatisticQueryService {
      */
     private int findExtremeHour(Integer[] hourlyTotals, boolean findMax) {
         int extremeHour = StatisticConstants.DEFAULT_PEAK_HOUR;
-        int extremeValue = hourlyTotals[StatisticConstants.HOUR_00] != null ? 
-            hourlyTotals[StatisticConstants.HOUR_00] : StatisticConstants.DEFAULT_HOURLY_RATE;
-        
+        int extremeValue = hourlyTotals[0] != null ?
+                hourlyTotals[0] : StatisticConstants.DEFAULT_HOURLY_RATE;
+
         for (int hour = 1; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-            Integer currentValue = hourlyTotals[hour];
-            if (currentValue == null) {
-                currentValue = StatisticConstants.DEFAULT_HOURLY_RATE;
-            }
+            int currentValue = hourlyTotals[hour] != null ?
+                    hourlyTotals[hour] : StatisticConstants.DEFAULT_HOURLY_RATE;
             
             boolean shouldUpdate = findMax ? currentValue > extremeValue : currentValue < extremeValue;
             if (shouldUpdate) {

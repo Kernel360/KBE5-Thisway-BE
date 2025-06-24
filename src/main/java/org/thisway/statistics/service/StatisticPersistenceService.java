@@ -2,6 +2,8 @@ package org.thisway.statistics.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import org.thisway.statistics.repository.StatisticsRepository;
 @Transactional
 public class StatisticPersistenceService {
     
+    private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
+    
     private final StatisticsRepository statisticsRepository;
     private final CompanyRepository companyRepository;
     private final StatisticCalculationService calculationService;
@@ -31,14 +35,13 @@ public class StatisticPersistenceService {
      * - 중복 방지: 같은 회사ID + 날짜 조합이 있으면 업데이트, 없으면 신규 저장
      */
     public void saveStatistics(Long companyId, LocalDate targetDate) {
-        log.info(StatisticConstants.LOG_SAVE_STATISTICS_CALL);
-        log.info("회사 ID: {}, 대상 날짜: {}", companyId, targetDate);
+        log.info("=== saveStatistics 호출 ===");
         
         // 1. 회사 정보 조회
         Company company = companyRepository.findById(companyId)
             .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
         
-        // 2. 해당 날짜의 시작과 끝 시간 설정
+        // 2. 해당 날짜의 시작과 끝 시간 설정 (한국 시간대 기준)
         LocalDateTime startDateTime = targetDate.atStartOfDay();
         LocalDateTime endDateTime = targetDate.atTime(23, 59, 59);
         
@@ -64,46 +67,51 @@ public class StatisticPersistenceService {
                 totalDrivingTime, peakHour, lowHour, averageOperationRate);
             existing.updateHourlyRates(hourlyOperationRates);
             statisticsRepository.save(existing);
-            log.info(StatisticConstants.LOG_STATISTICS_UPDATE_COMPLETE, companyId, targetDate);
+            log.info("기존 통계 업데이트 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         } else {
             // 기존 데이터가 없으면 신규 저장
+            // 한국 시간대 기준으로 날짜 설정
+            ZonedDateTime koreaDateTime = targetDate.atStartOfDay().atZone(KOREA_ZONE);
+            LocalDateTime dateToSave = koreaDateTime.toLocalDateTime();
+            log.info("저장할 날짜: {} (한국 시간대 기준)", dateToSave);
+            
             Statistics statistics = Statistics.builder()
                 .company(company)
-                .date(targetDate.atStartOfDay())
+                .date(dateToSave)
                 .powerOnCount(powerOnCount.intValue())
                 .averageDailyPowerCount(powerOnCount.doubleValue())
                 .totalDrivingTime(totalDrivingTime)
                 .peakHour(peakHour)
                 .lowHour(lowHour)
                 .averageOperationRate(averageOperationRate)
-                .hour00(hourlyOperationRates[StatisticConstants.HOUR_00])
-                .hour01(hourlyOperationRates[StatisticConstants.HOUR_01])
-                .hour02(hourlyOperationRates[StatisticConstants.HOUR_02])
-                .hour03(hourlyOperationRates[StatisticConstants.HOUR_03])
-                .hour04(hourlyOperationRates[StatisticConstants.HOUR_04])
-                .hour05(hourlyOperationRates[StatisticConstants.HOUR_05])
-                .hour06(hourlyOperationRates[StatisticConstants.HOUR_06])
-                .hour07(hourlyOperationRates[StatisticConstants.HOUR_07])
-                .hour08(hourlyOperationRates[StatisticConstants.HOUR_08])
-                .hour09(hourlyOperationRates[StatisticConstants.HOUR_09])
-                .hour10(hourlyOperationRates[StatisticConstants.HOUR_10])
-                .hour11(hourlyOperationRates[StatisticConstants.HOUR_11])
-                .hour12(hourlyOperationRates[StatisticConstants.HOUR_12])
-                .hour13(hourlyOperationRates[StatisticConstants.HOUR_13])
-                .hour14(hourlyOperationRates[StatisticConstants.HOUR_14])
-                .hour15(hourlyOperationRates[StatisticConstants.HOUR_15])
-                .hour16(hourlyOperationRates[StatisticConstants.HOUR_16])
-                .hour17(hourlyOperationRates[StatisticConstants.HOUR_17])
-                .hour18(hourlyOperationRates[StatisticConstants.HOUR_18])
-                .hour19(hourlyOperationRates[StatisticConstants.HOUR_19])
-                .hour20(hourlyOperationRates[StatisticConstants.HOUR_20])
-                .hour21(hourlyOperationRates[StatisticConstants.HOUR_21])
-                .hour22(hourlyOperationRates[StatisticConstants.HOUR_22])
-                .hour23(hourlyOperationRates[StatisticConstants.HOUR_23])
+                .hour00(hourlyOperationRates[0])
+                .hour01(hourlyOperationRates[1])
+                .hour02(hourlyOperationRates[2])
+                .hour03(hourlyOperationRates[3])
+                .hour04(hourlyOperationRates[4])
+                .hour05(hourlyOperationRates[5])
+                .hour06(hourlyOperationRates[6])
+                .hour07(hourlyOperationRates[7])
+                .hour08(hourlyOperationRates[8])
+                .hour09(hourlyOperationRates[9])
+                .hour10(hourlyOperationRates[10])
+                .hour11(hourlyOperationRates[11])
+                .hour12(hourlyOperationRates[12])
+                .hour13(hourlyOperationRates[13])
+                .hour14(hourlyOperationRates[14])
+                .hour15(hourlyOperationRates[15])
+                .hour16(hourlyOperationRates[16])
+                .hour17(hourlyOperationRates[17])
+                .hour18(hourlyOperationRates[18])
+                .hour19(hourlyOperationRates[19])
+                .hour20(hourlyOperationRates[20])
+                .hour21(hourlyOperationRates[21])
+                .hour22(hourlyOperationRates[22])
+                .hour23(hourlyOperationRates[23])
                 .build();
             
             statisticsRepository.save(statistics);
-            log.info(StatisticConstants.LOG_STATISTICS_SAVE_COMPLETE, companyId, targetDate);
+            log.info("신규 통계 저장 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         }
     }
 } 

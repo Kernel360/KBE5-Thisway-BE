@@ -55,10 +55,8 @@ public class StatisticController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        log.info(StatisticConstants.LOG_API_DATE_RANGE);
-        log.info("회사 ID: {}", memberDetails.getCompanyId());
-        log.info("시작 날짜: {}", startDate);
-        log.info("종료 날짜: {}", endDate);
+        log.info("=== 날짜 범위 통계 조회 API 호출 ===");
+        log.info("회사 ID: {}, 시작 날짜: {}, 종료 날짜: {}", memberDetails.getCompanyId(), startDate, endDate);
         
         StatisticResponse response = statisticService.getStatisticByDateRange(
                 memberDetails.getCompanyId(), startDate, endDate
@@ -77,9 +75,8 @@ public class StatisticController {
             @RequestParam Long companyId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate
     ) {
-        log.info(StatisticConstants.LOG_API_SAVE);
-        log.info("회사 ID: {}", companyId);
-        log.info("대상 날짜: {}", targetDate);
+        log.info("=== 통계 저장 API 호출 ===");
+        log.info("회사 ID: {}, 대상 날짜: {}", companyId, targetDate);
         
         statisticService.saveStatistics(companyId, targetDate);
         return ResponseEntity.status(HttpStatus.OK).body("통계 저장이 완료되었습니다.");
