@@ -46,7 +46,7 @@ public class TripLogController {
             @PageableDefault Pageable pageable
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(tripLogService.getTripLogs(memberDetails.getCompanyId(), pageable));
+                .body(tripLogService.findTripLogs(memberDetails.getCompanyId(), pageable));
     }
 
     @GetMapping("/detail/{id}")

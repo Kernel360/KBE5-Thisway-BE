@@ -16,7 +16,7 @@ public interface TripLogService {
 
     CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time);
 
-    TripLogsResponse getTripLogs(Long companyId, Pageable pageable);
+    TripLogsResponse findTripLogs(Long companyId, Pageable pageable);
 
     TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end);
 

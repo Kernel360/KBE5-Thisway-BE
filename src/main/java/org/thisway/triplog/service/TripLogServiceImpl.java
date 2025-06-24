@@ -61,21 +61,24 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
-        // Todo: 현재 운행중인 차량인지 확인하는 로직 추가
-        List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, time, LocalDateTime.now());
-        List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
-                .map(CurrentGpsLog::from)
-                .toList();
+        if (vehicleService.getVehicleById(vehicleId).isPowerOn()) {
+            List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, time, LocalDateTime.now());
+            List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
+                    .map(CurrentGpsLog::from)
+                    .toList();
 
-        if (!gpsLogs.isEmpty()) {
-            return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
+            if (!gpsLogs.isEmpty()) {
+                return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
+            } else {
+                throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
+            }
         } else {
-            throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
+            throw new CustomException(ErrorCode.VEHICLE_POWER_OFF);
         }
     }
 
     @Override
-    public TripLogsResponse getTripLogs(Long companyId, Pageable pageable) {
+    public TripLogsResponse findTripLogs(Long companyId, Pageable pageable) {
         Page<TripLog> TripLogs = tripLogRepository.findAllByCompanyOrderByStartTimeDesc(companyId, pageable);
 
         return TripLogsResponse.from(TripLogs);
@@ -83,15 +86,13 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end) {
-        List<PowerLogData> powerLogs = logRepository.findPowerLogsByVehicleIdAndPowerTime(vehicleId, start);
+        TripLog tripLog = tripLogRepository.findByVehicleIdAndStartTime(vehicleId, start);
         List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, start, end);
 
-        if (powerLogs.size() == 2 && powerLogs.getFirst().powerTime().equals(start) && powerLogs.getLast().powerTime()
-                .equals(end)) {
+        if (tripLog != null && tripLog.getStartTime().equals(start) && tripLog.getEndTime().equals(end)) {
             return TripLogDetailResponse.from(
-                    vehicleService.findVehicleById(vehicleId),
-                    powerLogs.getFirst(),
-                    powerLogs.getLast(),
+                    vehicleService.getVehicleById(vehicleId),
+                    tripLog,
                     gpsLogs.stream().map(CurrentGpsLog::from).toList(),
                     gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
             );
@@ -102,7 +103,7 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public void saveTripLog(PowerLogData powerOnLog, PowerLogData powerOffLog) {
-        Vehicle vehicle = vehicleService.findVehicleById(powerOnLog.vehicleId());
+        Vehicle vehicle = vehicleService.getVehicleById(powerOnLog.vehicleId());
         ReverseGeocodeResult onResult = reverseGeocodingConverter.convertToAddress(powerOnLog.latitude(), powerOnLog.longitude());
         ReverseGeocodeResult offResult = reverseGeocodingConverter.convertToAddress(powerOffLog.latitude(), powerOffLog.longitude());
 

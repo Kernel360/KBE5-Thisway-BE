@@ -36,4 +36,6 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
     Page<TripLog> findAllByCompanyOrderByStartTimeDesc(@Param("companyId") Long companyId, Pageable pageable);
 
     List<TripLog> findTop5ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
+
+    TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
 }

@@ -1,6 +1,5 @@
 package org.thisway.triplog.dto.response;
 
-import org.springframework.data.domain.Page;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
 import org.thisway.triplog.dto.TripLogBriefInfo;
 import org.thisway.triplog.entity.TripLog;

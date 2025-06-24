@@ -86,7 +86,8 @@ public class VehicleService {
         vehicle.update(request, vehicleModel);
     }
 
-    public Vehicle findVehicleById(Long id) {
+    @Transactional(readOnly = true)
+    public Vehicle getVehicleById(Long id) {
         return vehicleRepository.findById(id).orElseThrow(
                 () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
         );
