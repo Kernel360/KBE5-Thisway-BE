@@ -1,19 +1,22 @@
 package org.thisway.triplog.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.thisway.triplog.dto.TripLogBriefInfo;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
 import org.thisway.triplog.dto.response.TripLogDetailResponse;
+import org.thisway.triplog.dto.response.TripLogsResponse;
 import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.triplog.service.TripLogService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -38,9 +41,12 @@ public class TripLogController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<TripLogBriefInfo>> getAllTripLogs() {
+    public ResponseEntity<TripLogsResponse> getAllTripLogs(
+            @AuthenticationPrincipal MemberDetails memberDetails,
+            @PageableDefault Pageable pageable
+    ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(tripLogService.getTripLogs());
+                .body(tripLogService.getTripLogs(memberDetails.getCompanyId(), pageable));
     }
 
     @GetMapping("/detail/{id}")
