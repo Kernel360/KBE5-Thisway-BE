@@ -74,6 +74,10 @@ public class VehicleService {
         return VehiclesResponse.from(vehicleRepository.findAllByCompanyAndActiveTrue(company, pageable));
     }
 
+    public void saveVehicle(Vehicle vehicle) {
+        vehicleRepository.save(vehicle);
+    }
+
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);

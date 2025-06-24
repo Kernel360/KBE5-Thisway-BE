@@ -1,7 +1,7 @@
 package org.thisway.triplog.dto;
 
 import org.thisway.log.domain.GpsLogData;
-import org.thisway.log.domain.PowerLogData;
+import org.thisway.triplog.entity.TripLog;
 
 import java.time.LocalDateTime;
 
@@ -12,10 +12,10 @@ public record CurrentDrivingInfo(
         Double latitude,
         Double longitude
 ) {
-    public static CurrentDrivingInfo from (PowerLogData powerLogData, GpsLogData gpsLogData) {
+    public static CurrentDrivingInfo from (TripLog tripLog, GpsLogData gpsLogData) {
         return new CurrentDrivingInfo(
-                powerLogData.powerTime(),
-                gpsLogData.totalTripMeter() - powerLogData.totalTripMeter(),
+                tripLog.getStartTime(),
+                gpsLogData.totalTripMeter() - tripLog.getTotalTripMeter(),
                 gpsLogData.speed(),
                 gpsLogData.latitude(),
                 gpsLogData.longitude()

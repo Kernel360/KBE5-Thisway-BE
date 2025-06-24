@@ -8,12 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.log.domain.GpsLogData;
-import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.repository.LogRepository;
 import org.thisway.triplog.converter.ReverseGeocodingConverter;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
 import org.thisway.triplog.dto.CurrentGpsLog;
 import org.thisway.triplog.dto.ReverseGeocodeResult;
+import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
 import org.thisway.triplog.dto.response.TripLogDetailResponse;
 import org.thisway.triplog.dto.response.TripLogsResponse;
@@ -21,7 +21,6 @@ import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.triplog.entity.TripLog;
 import org.thisway.triplog.repository.TripLogRepository;
 import org.thisway.vehicle.dto.response.VehicleResponse;
-import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
@@ -42,15 +41,17 @@ public class TripLogServiceImpl implements TripLogService {
     @Override
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
         VehicleResponse vehicleResponse = vehicleService.getVehicleDetail(vehicleId);
-        List<TripLog> tripLogs = tripLogRepository.findTop5ByVehicleIdOrderByStartTimeDesc(vehicleId);
+        List<TripLog> tripLogs = tripLogRepository.findTop6ByVehicleIdOrderByStartTimeDesc(vehicleId);
         CurrentDrivingInfo currentDrivingInfo = null;
-        // Todo: 현재 위치 log 저장 로직 변경 후 적용 예정
-//        if (vehicleResponse.powerOn()) {
-//            currentDrivingInfo = getCurrentDrivingInfo(
-//                    powerLogs.getLast(),
-//                    logRepository.getCurrentGpsByVehicleId(vehicleId)
-//            );
-//        }
+
+        if (!tripLogs.isEmpty() && vehicleResponse.powerOn()) {
+            currentDrivingInfo = CurrentDrivingInfo.from(
+                    tripLogs.getFirst(),
+                    logRepository.getCurrentGpsByVehicleId(vehicleId)
+            );
+
+            tripLogs = tripLogs.subList(1, 6);
+        }
 
         return VehicleDetailResponse.from(
                 vehicleService.getVehicleDetail(vehicleId),
@@ -79,7 +80,7 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public TripLogsResponse findTripLogs(Long companyId, Pageable pageable) {
-        Page<TripLog> TripLogs = tripLogRepository.findAllByCompanyOrderByStartTimeDesc(companyId, pageable);
+        Page<TripLog> TripLogs = tripLogRepository.findAllByCompanyAndActiveTrueOrderByStartTimeDesc(companyId, pageable);
 
         return TripLogsResponse.from(TripLogs);
     }
@@ -102,25 +103,47 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    public void saveTripLog(PowerLogData powerOnLog, PowerLogData powerOffLog) {
-        Vehicle vehicle = vehicleService.getVehicleById(powerOnLog.vehicleId());
-        ReverseGeocodeResult onResult = reverseGeocodingConverter.convertToAddress(powerOnLog.latitude(), powerOnLog.longitude());
-        ReverseGeocodeResult offResult = reverseGeocodingConverter.convertToAddress(powerOffLog.latitude(), powerOffLog.longitude());
+    public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
+        TripLog tripLog;
+        ReverseGeocodeResult address = reverseGeocodingConverter.convertToAddress(tripLogSaveInput.latitude(), tripLogSaveInput.longitude());
 
-        TripLog tripLog = TripLog.builder()
-                .vehicle(vehicle)
-                .startTime(powerOnLog.powerTime())
-                .endTime(powerOffLog.powerTime())
-                .totalTripMeter(powerOffLog.totalTripMeter())
-                .onLatitude(powerOnLog.latitude())
-                .onLongitude(powerOnLog.longitude())
-                .onAddress(onResult.addr())
-                .onAddrDetail(onResult.addrDetail())
-                .offLatitude(powerOffLog.latitude())
-                .offLongitude(powerOffLog.longitude())
-                .offAddress(offResult.addr())
-                .offAddrDetail(offResult.addrDetail())
-                .build();
+        if (tripLogSaveInput.offTime() == null) {
+            tripLog = TripLog.builder()
+                    .vehicle(tripLogSaveInput.vehicle())
+                    .startTime(tripLogSaveInput.onTime())
+                    .totalTripMeter(tripLogSaveInput.totalTripMeter())
+                    .onLatitude(tripLogSaveInput.latitude())
+                    .onLongitude(tripLogSaveInput.longitude())
+                    .onAddress(address.addr())
+                    .onAddrDetail(address.addrDetail())
+                    .active(false)
+                    .build();
+        } else {
+            tripLog = tripLogRepository.findByVehicleIdAndStartTime(tripLogSaveInput.vehicle().getId(), tripLogSaveInput.onTime());
+
+            if (tripLog == null) {
+                tripLog = TripLog.builder()
+                        .vehicle(tripLogSaveInput.vehicle())
+                        .startTime(tripLogSaveInput.onTime())
+                        .endTime(tripLogSaveInput.offTime())
+                        .totalTripMeter(0)
+                        .offLatitude(tripLogSaveInput.latitude())
+                        .offLongitude(tripLogSaveInput.longitude())
+                        .offAddress(address.addr())
+                        .offAddrDetail(address.addrDetail())
+                        .active(true)
+                        .build();
+            } else {
+                tripLog.finishTrip(
+                        tripLogSaveInput.offTime(),
+                        tripLogSaveInput.totalTripMeter(),
+                        tripLogSaveInput.latitude(),
+                        tripLogSaveInput.longitude(),
+                        address.addr(),
+                        address.addrDetail()
+                );
+            }
+        }
 
         tripLogRepository.save(tripLog);
     }

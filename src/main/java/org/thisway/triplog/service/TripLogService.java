@@ -1,7 +1,7 @@
 package org.thisway.triplog.service;
 
 import org.springframework.data.domain.Pageable;
-import org.thisway.log.domain.PowerLogData;
+import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
 import org.thisway.triplog.dto.response.TripLogDetailResponse;
 import org.thisway.triplog.dto.response.TripLogsResponse;
@@ -20,6 +20,6 @@ public interface TripLogService {
 
     TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end);
 
-    void saveTripLog(PowerLogData powerOnLog, PowerLogData powerOffLog);
+    void saveTripLog(TripLogSaveInput tripLogSaveInput);
 
 }

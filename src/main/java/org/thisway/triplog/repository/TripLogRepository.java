@@ -30,12 +30,14 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
     @Query("""
         SELECT t FROM TripLog t
         JOIN t.vehicle v
-        WHERE v.company.id = :companyId
+        WHERE v.company.id = :companyId AND t.active = true
         ORDER BY t.startTime DESC
     """)
-    Page<TripLog> findAllByCompanyOrderByStartTimeDesc(@Param("companyId") Long companyId, Pageable pageable);
+    Page<TripLog> findAllByCompanyAndActiveTrueOrderByStartTimeDesc(@Param("companyId") Long companyId, Pageable pageable);
 
-    List<TripLog> findTop5ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
+    List<TripLog> findTop6ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
 
     TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
+
+    //TripLog findTop1ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
 }

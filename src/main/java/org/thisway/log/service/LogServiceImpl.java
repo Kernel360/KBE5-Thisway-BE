@@ -14,8 +14,10 @@ import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
+import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.service.TripLogService;
-import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.vehicle.entity.Vehicle;
+import org.thisway.vehicle.service.VehicleService;
 
 @Slf4j
 @Service
@@ -23,11 +25,11 @@ import org.thisway.vehicle.repository.VehicleRepository;
 @RequiredArgsConstructor
 public class LogServiceImpl implements LogService {
 
-    private final VehicleRepository vehicleRepository;
     private final EmulatorRepository emulatorRepository;
     private final LogRepository logRepository;
     private final LogDataConverter converter;
 
+    private final VehicleService vehicleService;
     private final TripLogService tripLogService;
 
     @Override
@@ -38,16 +40,17 @@ public class LogServiceImpl implements LogService {
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
+        Vehicle vehicle = vehicleService.getVehicleById(vehicleId);
+
         if ((request.onTime() != null && !request.onTime().isEmpty()) &&
                 (request.offTime() == null || request.offTime().isEmpty())) {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
-            vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
-                vehicle.updatePowerOn(true);
 
-                vehicleRepository.save(vehicle);
-            });
+            vehicle.updatePowerOn(true);
+            vehicleService.saveVehicle(vehicle);
+
             log.info("시동 ON 정보 로그 저장: MDN={}, onTime={}", request.mdn(), request.onTime());
         }
 
@@ -55,28 +58,25 @@ public class LogServiceImpl implements LogService {
             PowerLogData powerLogData = PowerLogData.from(
                     request, vehicleId, false, request.offTime(), converter);
             logRepository.savePowerLog(powerLogData);
-            vehicleRepository.findById(vehicleId).ifPresent(vehicle -> {
-                Integer totalTripMeter = converter.convertToInteger(request.sum());
-                vehicle.updatePowerOn(false);
 
-                vehicle.updateMileage(totalTripMeter);
-                vehicle.updateLocation(
-                        converter.convertCoordinate(request.lat()),
-                        converter.convertCoordinate(request.lon())
-                );
+            Integer totalTripMeter = converter.convertToInteger(request.sum());
+            vehicle.updatePowerOn(false);
+            vehicle.updateMileage(totalTripMeter);
+            vehicle.updateLocation(
+                    converter.convertCoordinate(request.lat()),
+                    converter.convertCoordinate(request.lon())
+            );
+            vehicleService.saveVehicle(vehicle);
 
-                vehicleRepository.save(vehicle);
-            });
             log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}, totalTripMeter={}",
                     request.mdn(), request.offTime(), request.sum());
-
-            tripLogService.saveTripLog(
-                    logRepository.findOnLogByVehicleIdAndPowerTime(vehicleId, converter.convertDateTimeWithSec(request.onTime())),
-                    powerLogData
-            );
-            log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
-                    request.mdn(), request.onTime(), request.offTime());
         }
+
+        tripLogService.saveTripLog(
+                TripLogSaveInput.from(vehicle, request, converter)
+        );
+        log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
+                request.mdn(), request.onTime(), request.offTime());
 
         log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
     }
