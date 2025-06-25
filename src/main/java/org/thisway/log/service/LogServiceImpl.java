@@ -67,13 +67,12 @@ public class LogServiceImpl implements LogService {
                     converter.convertCoordinate(request.lon())
             );
             vehicleService.saveVehicle(vehicle);
-
             log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}, totalTripMeter={}",
                     request.mdn(), request.offTime(), request.sum());
         }
 
         tripLogService.saveTripLog(
-                TripLogSaveInput.from(vehicle, request, converter)
+                    TripLogSaveInput.from(vehicle, request, converter)
         );
         log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
                 request.mdn(), request.onTime(), request.offTime());
