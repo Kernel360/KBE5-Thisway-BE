@@ -18,7 +18,7 @@ public interface TripLogService {
 
     TripLogsResponse findTripLogs(Long companyId, Pageable pageable);
 
-    TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end);
+    TripLogDetailResponse getTripLogDetails(Long tripLogId);
 
     void saveTripLog(TripLogSaveInput tripLogSaveInput);
 

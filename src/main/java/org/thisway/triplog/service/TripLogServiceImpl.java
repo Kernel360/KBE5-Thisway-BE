@@ -95,20 +95,16 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    public TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end) {
-        TripLog tripLog = tripLogRepository.findByVehicleIdAndStartTime(vehicleId, start);
-        List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, start, end);
+    public TripLogDetailResponse getTripLogDetails(Long tripLogId) {
+        TripLog tripLog = tripLogRepository.findById(tripLogId).orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
+        List<GpsLogData> gpsLogs = logService.findGpsLogs(tripLog.getVehicle().getId(), tripLog.getStartTime(), tripLog.getEndTime());
 
-        if (tripLog != null && tripLog.getStartTime().equals(start) && tripLog.getEndTime().equals(end)) {
-            return TripLogDetailResponse.from(
-                    vehicleService.getVehicleById(vehicleId),
-                    tripLog,
-                    gpsLogs.stream().map(CurrentGpsLog::from).toList(),
-                    gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
-            );
-        } else {
-            throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
-        }
+        return TripLogDetailResponse.from(
+                tripLog.getVehicle(),
+                tripLog,
+                gpsLogs.stream().map(CurrentGpsLog::from).toList(),
+                gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
+        );
     }
 
     @Override

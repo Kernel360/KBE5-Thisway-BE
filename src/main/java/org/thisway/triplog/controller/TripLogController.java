@@ -31,7 +31,7 @@ public class TripLogController {
     }
 
     @GetMapping("/current/{id}")
-    public ResponseEntity<CurrentTripLogResponse> getCurrentTripLog(
+    public ResponseEntity<CurrentTripLogResponse> getCurrentGpsLogs(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time
     ) {
@@ -49,12 +49,8 @@ public class TripLogController {
     }
 
     @GetMapping("/detail/{id}")
-    public ResponseEntity<TripLogDetailResponse> getTripLogDetail(
-            @PathVariable Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
-    ) {
+    public ResponseEntity<TripLogDetailResponse> getTripLogDetail(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(tripLogService.getTripLogDetails(id, startTime, endTime));
+                .body(tripLogService.getTripLogDetails(id));
     }
 }

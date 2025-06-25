@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public record TripLogBriefInfo(
+        Long Id,
         Long vehicleId,
         String carNumber,
         LocalDateTime startTime,
@@ -15,6 +16,7 @@ public record TripLogBriefInfo(
 ) {
     public static TripLogBriefInfo from(TripLog tripLog) {
         return new TripLogBriefInfo(
+                tripLog.getId(),
                 tripLog.getVehicle().getId(),
                 tripLog.getVehicle().getCarNumber(),
                 tripLog.getStartTime(),
