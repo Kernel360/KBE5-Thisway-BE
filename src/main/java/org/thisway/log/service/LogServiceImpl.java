@@ -10,6 +10,7 @@ import org.thisway.emulator.entity.Emulator;
 import org.thisway.emulator.repository.EmulatorRepository;
 import org.thisway.log.converter.LogDataConverter;
 import org.thisway.log.domain.GeofenceLogData;
+import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
@@ -18,6 +19,10 @@ import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.service.TripLogService;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.service.VehicleService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -98,5 +103,15 @@ public class LogServiceImpl implements LogService {
         Emulator emulator = emulatorRepository.findByMdn(mdn)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
         return emulator.getVehicle().getId();
+    }
+
+    @Override
+    public List<GpsLogData> findGpsLogs(Long Id, LocalDateTime start, LocalDateTime end) {
+        return logRepository.findGpsLogsByVehicleId(Id, start, end);
+    }
+
+    @Override
+    public Optional<GpsLogData> getCurrentGpsLog(Long Id, LocalDateTime start) {
+        return logRepository.getCurrentGpsByVehicleId(Id, start);
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.log.domain.GpsLogData;
-import org.thisway.log.repository.LogRepository;
+import org.thisway.log.service.LogService;
 import org.thisway.triplog.converter.ReverseGeocodingConverter;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
 import org.thisway.triplog.dto.CurrentGpsLog;
@@ -32,10 +32,9 @@ import java.util.*;
 public class TripLogServiceImpl implements TripLogService {
 
     private final VehicleService vehicleService;
+    private final LogService logService;
 
     private final TripLogRepository tripLogRepository;
-    private final LogRepository logRepository;
-
     private final ReverseGeocodingConverter reverseGeocodingConverter;
 
     @Override
@@ -47,7 +46,7 @@ public class TripLogServiceImpl implements TripLogService {
         if (!tripLogs.isEmpty() && vehicleResponse.powerOn()) {
             currentDrivingInfo = CurrentDrivingInfo.from(
                     tripLogs.getFirst(),
-                    logRepository.getCurrentGpsByVehicleId(vehicleId, tripLogs.getFirst().getStartTime())
+                    logService.getCurrentGpsLog(vehicleId, tripLogs.getFirst().getStartTime())
             );
 
             tripLogs = tripLogs.subList(1, 6);
@@ -63,7 +62,7 @@ public class TripLogServiceImpl implements TripLogService {
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
         if (vehicleService.getVehicleById(vehicleId).isPowerOn()) {
-            List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, time, LocalDateTime.now());
+            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now());
             List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
                     .map(CurrentGpsLog::from)
                     .toList();
@@ -88,7 +87,7 @@ public class TripLogServiceImpl implements TripLogService {
     @Override
     public TripLogDetailResponse getTripLogDetails(Long vehicleId, LocalDateTime start, LocalDateTime end) {
         TripLog tripLog = tripLogRepository.findByVehicleIdAndStartTime(vehicleId, start);
-        List<GpsLogData> gpsLogs = logRepository.findGpsLogsByVehicleId(vehicleId, start, end);
+        List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, start, end);
 
         if (tripLog != null && tripLog.getStartTime().equals(start) && tripLog.getEndTime().equals(end)) {
             return TripLogDetailResponse.from(
