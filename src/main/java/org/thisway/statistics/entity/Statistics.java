@@ -174,32 +174,32 @@ public class Statistics extends BaseEntity {
   }
 
   // 시간대별 가동률 업데이트 메서드
-  public void updateHourlyRates(Integer[] hourlyRates) {
+  public void updateHourlyRates(int[] hourlyRates) {
     if (hourlyRates != null && hourlyRates.length == StatisticConstants.HOURS_IN_DAY) {
-      this.hour00 = getSafeValue(hourlyRates[0]);
-      this.hour01 = getSafeValue(hourlyRates[1]);
-      this.hour02 = getSafeValue(hourlyRates[2]);
-      this.hour03 = getSafeValue(hourlyRates[3]);
-      this.hour04 = getSafeValue(hourlyRates[4]);
-      this.hour05 = getSafeValue(hourlyRates[5]);
-      this.hour06 = getSafeValue(hourlyRates[6]);
-      this.hour07 = getSafeValue(hourlyRates[7]);
-      this.hour08 = getSafeValue(hourlyRates[8]);
-      this.hour09 = getSafeValue(hourlyRates[9]);
-      this.hour10 = getSafeValue(hourlyRates[10]);
-      this.hour11 = getSafeValue(hourlyRates[11]);
-      this.hour12 = getSafeValue(hourlyRates[12]);
-      this.hour13 = getSafeValue(hourlyRates[13]);
-      this.hour14 = getSafeValue(hourlyRates[14]);
-      this.hour15 = getSafeValue(hourlyRates[15]);
-      this.hour16 = getSafeValue(hourlyRates[16]);
-      this.hour17 = getSafeValue(hourlyRates[17]);
-      this.hour18 = getSafeValue(hourlyRates[18]);
-      this.hour19 = getSafeValue(hourlyRates[19]);
-      this.hour20 = getSafeValue(hourlyRates[20]);
-      this.hour21 = getSafeValue(hourlyRates[21]);
-      this.hour22 = getSafeValue(hourlyRates[22]);
-      this.hour23 = getSafeValue(hourlyRates[23]);
+      this.hour00 = hourlyRates[0];
+      this.hour01 = hourlyRates[1];
+      this.hour02 = hourlyRates[2];
+      this.hour03 = hourlyRates[3];
+      this.hour04 = hourlyRates[4];
+      this.hour05 = hourlyRates[5];
+      this.hour06 = hourlyRates[6];
+      this.hour07 = hourlyRates[7];
+      this.hour08 = hourlyRates[8];
+      this.hour09 = hourlyRates[9];
+      this.hour10 = hourlyRates[10];
+      this.hour11 = hourlyRates[11];
+      this.hour12 = hourlyRates[12];
+      this.hour13 = hourlyRates[13];
+      this.hour14 = hourlyRates[14];
+      this.hour15 = hourlyRates[15];
+      this.hour16 = hourlyRates[16];
+      this.hour17 = hourlyRates[17];
+      this.hour18 = hourlyRates[18];
+      this.hour19 = hourlyRates[19];
+      this.hour20 = hourlyRates[20];
+      this.hour21 = hourlyRates[21];
+      this.hour22 = hourlyRates[22];
+      this.hour23 = hourlyRates[23];
     }
   }
 

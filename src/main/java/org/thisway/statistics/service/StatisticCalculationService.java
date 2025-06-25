@@ -28,44 +28,39 @@ public class StatisticCalculationService {
      * 시간대별 가동률 계산
      * 공식: (시간 내 GPS 로그 개수) / (3600 * 업체 내 차량 대수) * 100
      */
-    public Integer[] calculateHourlyOperationRates(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public int[] calculateHourlyOperationRates(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         log.info("=== 시간대별 가동률 계산 시작 ===");
         log.info("회사 ID: {}, 시작 시간: {}, 종료 시간: {}", companyId, startDateTime, endDateTime);
-        
+
         // 1. 업체 내 차량 대수 조회
         long vehicleCount = vehicleRepository.countByCompanyIdAndActiveTrue(companyId);
         log.info("업체 내 차량 대수: {}", vehicleCount);
-        
+
         if (vehicleCount == 0) {
             log.info("차량이 없어서 모든 시간대 가동률을 0으로 설정");
-            Integer[] emptyRates = new Integer[StatisticConstants.HOURS_IN_DAY];
-            for (int i = 0; i < StatisticConstants.HOURS_IN_DAY; i++) {
-                emptyRates[i] = StatisticConstants.DEFAULT_HOURLY_RATE;
-            }
-            return emptyRates;
+            return new int[StatisticConstants.HOURS_IN_DAY];
         }
-        
+
         // 2. 시간대별 GPS 로그 개수 조회
         Map<Integer, Long> hourlyGpsLogCounts = logRepository.countGpsLogsByCompanyAndHour(companyId, startDateTime, endDateTime);
         log.info("시간대별 GPS 로그 개수: {}", hourlyGpsLogCounts);
-        
+
         // 3. 시간대별 가동률 계산
-        Integer[] hourlyRates = new Integer[StatisticConstants.HOURS_IN_DAY];
-        log.info("=== 시간대별 가동률 계산 시작 ===");
+        int[] hourlyRates = new int[StatisticConstants.HOURS_IN_DAY];
         log.info("차량 대수: {}, 3600초: {}, 100%: {}", vehicleCount, StatisticConstants.SECONDS_IN_HOUR, StatisticConstants.PERCENTAGE_MULTIPLIER);
-        
+
         for (int hour = 0; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
             Long gpsLogCount = hourlyGpsLogCounts.getOrDefault(hour, 0L);
-            
+
             // 가동률 = (GPS 로그 개수) / (3600 * 차량 대수) * 100 (퍼센트)
             double denominator = StatisticConstants.SECONDS_IN_HOUR * vehicleCount;
             double operationRate = (gpsLogCount.doubleValue() / denominator) * StatisticConstants.PERCENTAGE_MULTIPLIER;
             hourlyRates[hour] = (int) operationRate;
-            
-            log.info("시간 {}시: GPS 로그 {}개, 분모 {}, 가동률 {}% (소수점: {})", 
+
+            log.info("시간 {}시: GPS 로그 {}개, 분모 {}, 가동률 {}% (소수점: {})",
                 hour, gpsLogCount, denominator, hourlyRates[hour], operationRate);
         }
-        
+
         log.info("=== 시간대별 가동률 계산 완료 ===");
         log.info("계산된 배열: {}", java.util.Arrays.toString(hourlyRates));
         return hourlyRates;
@@ -90,54 +85,50 @@ public class StatisticCalculationService {
     /**
      * 시간대별 가동률에서 피크 시간대 계산
      */
-    public Integer calculatePeakHourFromRates(Integer[] hourlyOperationRates) {
+    public Integer calculatePeakHourFromRates(int[] hourlyOperationRates) {
         int peakHour = StatisticConstants.DEFAULT_PEAK_HOUR;
         int maxRate = 0;
-        
+
         for (int hour = 0; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-            Integer rate = hourlyOperationRates[hour];
-            if (rate != null && rate > maxRate) {
+            int rate = hourlyOperationRates[hour];
+            if (rate > maxRate) {
                 maxRate = rate;
                 peakHour = hour;
             }
         }
-        
+
         return peakHour;
     }
-    
+
     /**
      * 시간대별 가동률에서 최소 시간대 계산
      */
-    public Integer calculateLowHourFromRates(Integer[] hourlyOperationRates) {
+    public Integer calculateLowHourFromRates(int[] hourlyOperationRates) {
         int lowHour = StatisticConstants.DEFAULT_LOW_HOUR;
         int minRate = Integer.MAX_VALUE;
-        
+
         for (int hour = 0; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-            Integer rate = hourlyOperationRates[hour];
-            if (rate != null && rate < minRate) {
+            int rate = hourlyOperationRates[hour];
+            if (rate < minRate) {
                 minRate = rate;
                 lowHour = hour;
             }
         }
-        
+
         return lowHour;
     }
     
     /**
      * 평균 가동률 계산 (시간대별 가동률의 평균)
      */
-    public Double calculateAverageOperationRate(Integer[] hourlyOperationRates) {
+    public Double calculateAverageOperationRate(int[] hourlyOperationRates) {
         double sum = 0.0;
-        int count = 0;
         
-        for (Integer rate : hourlyOperationRates) {
-            if (rate != null) {
-                sum += rate;
-                count++;
-            }
+        for (int rate : hourlyOperationRates) {
+            sum += rate;
         }
         
-        return count > 0 ? sum / count : StatisticConstants.DEFAULT_OPERATION_RATE;
+        return sum / StatisticConstants.HOURS_IN_DAY;
     }
     
     /**
