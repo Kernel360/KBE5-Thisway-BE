@@ -3,6 +3,7 @@ package org.thisway.log.dto.request.powerLog;
 public record PowerLogRequest(
         String mdn,
         String tid,
+        String mid,
         String pv,
         String did,
         String onTime,
