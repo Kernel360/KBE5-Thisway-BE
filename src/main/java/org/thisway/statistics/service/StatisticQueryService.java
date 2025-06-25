@@ -70,7 +70,7 @@ public class StatisticQueryService {
             .orElse(StatisticConstants.DEFAULT_OPERATION_RATE);
         
         // 5. 시간대별 가동률 합산
-        Integer[] hourlyTotals = calculateHourlyTotalsFromStatistics(statisticsList);
+        List<Integer> hourlyTotals = calculateHourlyTotalsFromStatistics(statisticsList);
         
         // 6. 피크/최소 시간 계산
         int peakHour = findExtremeHour(hourlyTotals, true);  // 최대값
@@ -87,7 +87,7 @@ public class StatisticQueryService {
     /**
      * 저장된 통계들에서 시간대별 가동률 합산
      */
-    private Integer[] calculateHourlyTotalsFromStatistics(List<Statistics> statisticsList) {
+    private List<Integer> calculateHourlyTotalsFromStatistics(List<Statistics> statisticsList) {
         int[] hourlyTotals = new int[StatisticConstants.HOURS_IN_DAY];
         
         for (Statistics stat : statisticsList) {
@@ -98,28 +98,27 @@ public class StatisticQueryService {
             }
         }
         
-        // int[]를 Integer[]로 변환
-        Integer[] result = new Integer[StatisticConstants.HOURS_IN_DAY];
+        List<Integer> result = new java.util.ArrayList<>();
         for (int i = 0; i < StatisticConstants.HOURS_IN_DAY; i++) {
-            result[i] = hourlyTotals[i];
+            result.add(hourlyTotals[i]);
         }
         return result;
     }
     
     /**
      * 시간대별 가동률에서 극값(최대/최소) 시간대 찾기
-     * @param hourlyTotals 시간대별 가동률 배열
+     * @param hourlyTotals 시간대별 가동률 리스트
      * @param findMax true면 최대값, false면 최소값
      * @return 극값을 가진 시간대
      */
-    private int findExtremeHour(Integer[] hourlyTotals, boolean findMax) {
+    private int findExtremeHour(List<Integer> hourlyTotals, boolean findMax) {
         int extremeHour = StatisticConstants.DEFAULT_PEAK_HOUR;
-        int extremeValue = hourlyTotals[0] != null ?
-                hourlyTotals[0] : StatisticConstants.DEFAULT_HOURLY_RATE;
+        int extremeValue = hourlyTotals.get(0) != null ?
+                hourlyTotals.get(0) : StatisticConstants.DEFAULT_HOURLY_RATE;
 
         for (int hour = 1; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-            int currentValue = hourlyTotals[hour] != null ?
-                    hourlyTotals[hour] : StatisticConstants.DEFAULT_HOURLY_RATE;
+            int currentValue = hourlyTotals.get(hour) != null ?
+                    hourlyTotals.get(hour) : StatisticConstants.DEFAULT_HOURLY_RATE;
             
             boolean shouldUpdate = findMax ? currentValue > extremeValue : currentValue < extremeValue;
             if (shouldUpdate) {
