@@ -295,35 +295,6 @@ public class LogRepository {
      * @return Map<시간대(0~23), GPS 로그 개수>
      */
     public Map<Integer, Long> countGpsLogsByCompanyAndHour(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
-        // 디버깅을 위한 로그 추가
-        System.out.println("=== GPS 로그 조회 디버깅 ===");
-        System.out.println("회사 ID: " + companyId);
-        System.out.println("시작 시간: " + startDateTime);
-        System.out.println("종료 시간: " + endDateTime);
-        
-        // 먼저 해당 회사의 차량 수 확인
-        String vehicleCountSql = "SELECT COUNT(*) FROM vehicle WHERE company_id = ? AND active = true";
-        Long vehicleCount = jdbcTemplate.queryForObject(vehicleCountSql, Long.class, companyId);
-        System.out.println("해당 회사 차량 수: " + vehicleCount);
-        
-        // GPS 로그가 있는지 먼저 확인
-        String gpsLogCheckSql = """
-            SELECT COUNT(*) 
-            FROM gps_log gl
-            JOIN vehicle v ON gl.vehicle_id = v.id
-            WHERE v.company_id = ? 
-            AND gl.occurred_time >= ? 
-            AND gl.occurred_time <= ?
-            AND v.active = true
-            """;
-        Long totalGpsLogs = jdbcTemplate.queryForObject(gpsLogCheckSql, Long.class, companyId, startDateTime, endDateTime);
-        System.out.println("전체 GPS 로그 수: " + totalGpsLogs);
-        
-        if (totalGpsLogs == 0) {
-            System.out.println("GPS 로그가 없습니다!");
-            return new HashMap<>();
-        }
-        
         // 시간대별 GPS 로그 개수 조회 (DB 호환성을 위해 EXTRACT 사용)
         String sql = """
             SELECT EXTRACT(HOUR FROM gl.occurred_time) as hour, COUNT(*) as count
@@ -340,18 +311,12 @@ public class LogRepository {
         Object[] params = new Object[]{companyId, startDateTime, endDateTime};
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, params);
-        System.out.println("시간대별 결과: " + results);
         
-        Map<Integer, Long> hourlyCounts = results.stream()
+        return results.stream()
                 .collect(Collectors.toMap(
                         row -> ((Number) row.get("hour")).intValue(),
                         row -> ((Number) row.get("count")).longValue()
                 ));
-        
-        System.out.println("시간대별 카운트: " + hourlyCounts);
-        System.out.println("=== GPS 로그 조회 디버깅 완료 ===");
-        
-        return hourlyCounts;
     }
 
 }
