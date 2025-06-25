@@ -12,7 +12,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.thisway.logging.constant.MdcKeys;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -24,8 +23,6 @@ public class LoggingFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        MDC.put(MdcKeys.TRACE_ID, UUID.randomUUID().toString());
-
         try {
             filterChain.doFilter(request, response);
 
