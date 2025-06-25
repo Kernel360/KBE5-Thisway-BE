@@ -47,7 +47,7 @@ public class TripLogServiceImpl implements TripLogService {
         if (!tripLogs.isEmpty() && vehicleResponse.powerOn()) {
             currentDrivingInfo = CurrentDrivingInfo.from(
                     tripLogs.getFirst(),
-                    logRepository.getCurrentGpsByVehicleId(vehicleId)
+                    logRepository.getCurrentGpsByVehicleId(vehicleId, tripLogs.getFirst().getStartTime())
             );
 
             tripLogs = tripLogs.subList(1, 6);
