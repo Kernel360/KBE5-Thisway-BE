@@ -1,18 +1,18 @@
 package org.thisway.log.repository;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thisway.log.domain.GeofenceLogData;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.GpsStatus;
 import org.thisway.log.domain.PowerLogData;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -155,7 +155,7 @@ public class LogRepository {
                 + "FROM power_log "
                 + "WHERE vehicle_id = ? AND power_time = ?";
 
-        Object[] params = new Object[]{ vehicleId, powerTime };
+        Object[] params = new Object[]{vehicleId, powerTime};
 
         return jdbcTemplate.queryForObject(sql,
                 (rs, rowNum) -> new PowerLogData(
@@ -204,18 +204,20 @@ public class LogRepository {
                 .collect(Collectors.joining(", "));
 
         String sql = String.format("""
-                SELECT gl.*
-                FROM gps_log gl
-                JOIN (
-                    SELECT vehicle_id, MAX(occurred_time) AS latest_time
-                    FROM gps_log
-                    WHERE vehicle_id IN (%s)
-                    GROUP BY vehicle_id
-                ) latest ON gl.vehicle_id = latest.vehicle_id AND gl.occurred_time = latest.latest_time
+                SELECT *
+                FROM (
+                    SELECT gl.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gl.vehicle_id
+                               ORDER BY gl.occurred_time DESC, gl.id DESC
+                           ) AS rn
+                    FROM gps_log gl
+                    WHERE gl.vehicle_id IN (%s)
+                ) ranked
+                WHERE ranked.rn = 1
                 """, inClause);
 
         List<GpsLogData> gpsList = jdbcTemplate.query(sql,
-                vehicleIds.toArray(),
                 (rs, rowNum) -> new GpsLogData(
                         rs.getLong("vehicle_id"),
                         rs.getString("mdn"),
@@ -227,7 +229,8 @@ public class LogRepository {
                         rs.getInt("total_trip_meter"),
                         rs.getInt("battery_voltage"),
                         rs.getTimestamp("occurred_time").toLocalDateTime()
-                )
+                ),
+                vehicleIds.toArray()
         );
 
         return gpsList.stream().collect(Collectors.toMap(GpsLogData::vehicleId, gps -> gps));
