@@ -1,6 +1,6 @@
 package org.thisway.triplog.service;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,15 +27,25 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TripLogServiceImpl implements TripLogService {
 
     private final VehicleService vehicleService;
     private final LogService logService;
-
     private final TripLogRepository tripLogRepository;
     private final ReverseGeocodingConverter reverseGeocodingConverter;
+
+    public TripLogServiceImpl(
+            VehicleService vehicleService,
+            @Lazy LogService logService,
+            TripLogRepository tripLogRepository,
+            ReverseGeocodingConverter reverseGeocodingConverter
+    ) {
+        this.vehicleService = vehicleService;
+        this.logService = logService;
+        this.tripLogRepository = tripLogRepository;
+        this.reverseGeocodingConverter = reverseGeocodingConverter;
+    }
 
     @Override
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
