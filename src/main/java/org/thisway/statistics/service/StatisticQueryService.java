@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +54,7 @@ public class StatisticQueryService {
         // 2. 날짜 범위 계산
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         
-        // 3. 합산 계산
+        // 3. 합산 계산 - Stream API 활용
         int totalPowerOnCount = statisticsList.stream()
             .mapToInt(Statistics::getPowerOnCount)
             .sum();
@@ -79,54 +81,40 @@ public class StatisticQueryService {
         // 7. 통계 응답 생성
         String dateRange = startDate + StatisticConstants.DATE_RANGE_SEPARATOR + endDate;
         return StatisticResponse.fromAggregatedData(
-            companyId, dateRange, Integer.valueOf(totalPowerOnCount), Double.valueOf(averageDailyPowerCount),
-            Integer.valueOf(totalDrivingTime), Integer.valueOf(peakHour), Integer.valueOf(lowHour), Double.valueOf(averageOperationRate), hourlyTotals
+            companyId, dateRange, totalPowerOnCount, averageDailyPowerCount,
+            totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyTotals
         );
     }
     
     /**
-     * 저장된 통계들에서 시간대별 가동률 합산
+     * 저장된 통계들에서 시간대별 가동률 합산 - Stream API 활용으로 최적화
      */
     private List<Integer> calculateHourlyTotalsFromStatistics(List<Statistics> statisticsList) {
-        int[] hourlyTotals = new int[StatisticConstants.HOURS_IN_DAY];
-        
-        for (Statistics stat : statisticsList) {
-            Integer[] hourlyRates = stat.getHourlyRatesArray();
-            for (int hour = 0; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-                Integer rate = hourlyRates[hour];
-                hourlyTotals[hour] += (rate != null ? rate : StatisticConstants.DEFAULT_HOURLY_RATE);
-            }
-        }
-        
-        List<Integer> result = new java.util.ArrayList<>();
-        for (int i = 0; i < StatisticConstants.HOURS_IN_DAY; i++) {
-            result.add(hourlyTotals[i]);
-        }
-        return result;
+        return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
+            .mapToObj(hour -> statisticsList.stream()
+                .mapToInt(stat -> {
+                    Integer rate = stat.getHourlyRate(hour);
+                    return rate != null ? rate : StatisticConstants.DEFAULT_HOURLY_RATE;
+                })
+                .sum())
+            .collect(Collectors.toList());
     }
     
     /**
-     * 시간대별 가동률에서 극값(최대/최소) 시간대 찾기
+     * 시간대별 가동률에서 극값(최대/최소) 시간대 찾기 - 최적화
      * @param hourlyTotals 시간대별 가동률 리스트
      * @param findMax true면 최대값, false면 최소값
      * @return 극값을 가진 시간대
      */
     private int findExtremeHour(List<Integer> hourlyTotals, boolean findMax) {
-        int extremeHour = StatisticConstants.DEFAULT_PEAK_HOUR;
-        int extremeValue = hourlyTotals.get(0) != null ?
-                hourlyTotals.get(0) : StatisticConstants.DEFAULT_HOURLY_RATE;
+        return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
+            .reduce((extremeHour, currentHour) -> {
+                int extremeValue = hourlyTotals.get(extremeHour);
+                int currentValue = hourlyTotals.get(currentHour);
 
-        for (int hour = 1; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
-            int currentValue = hourlyTotals.get(hour) != null ?
-                    hourlyTotals.get(hour) : StatisticConstants.DEFAULT_HOURLY_RATE;
-            
-            boolean shouldUpdate = findMax ? currentValue > extremeValue : currentValue < extremeValue;
-            if (shouldUpdate) {
-                extremeValue = currentValue;
-                extremeHour = hour;
-            }
-        }
-        
-        return extremeHour;
+                boolean shouldUpdate = findMax ? currentValue > extremeValue : currentValue < extremeValue;
+                return shouldUpdate ? currentHour : extremeHour;
+            })
+            .orElse(StatisticConstants.DEFAULT_PEAK_HOUR);
     }
 }

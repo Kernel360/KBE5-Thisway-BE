@@ -1,6 +1,7 @@
 package org.thisway.statistics.dto.response;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import org.thisway.statistics.entity.Statistics;
 
@@ -18,17 +19,8 @@ public record StatisticResponse(
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
   public static StatisticResponse from(Statistics statistics){
-
-    List<Integer> hours = List.of(
-        statistics.getHour00(), statistics.getHour01(), statistics.getHour02(),
-        statistics.getHour03(), statistics.getHour04(), statistics.getHour05(),
-        statistics.getHour06(), statistics.getHour07(), statistics.getHour08(),
-        statistics.getHour09(), statistics.getHour10(), statistics.getHour11(),
-        statistics.getHour12(), statistics.getHour13(), statistics.getHour14(),
-        statistics.getHour15(), statistics.getHour16(), statistics.getHour17(),
-        statistics.getHour18(), statistics.getHour19(), statistics.getHour20(),
-        statistics.getHour21(), statistics.getHour22(), statistics.getHour23()
-    );
+    // Statistics 엔티티의 getHourlyRatesArray() 메서드 활용
+    List<Integer> hours = Arrays.asList(statistics.getHourlyRatesArray());
 
     return new StatisticResponse(
         statistics.getCompany().getId(),
