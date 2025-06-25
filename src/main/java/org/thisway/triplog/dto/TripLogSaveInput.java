@@ -1,6 +1,5 @@
 package org.thisway.triplog.dto;
 
-import lombok.Getter;
 import org.thisway.log.converter.LogDataConverter;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.vehicle.entity.Vehicle;
