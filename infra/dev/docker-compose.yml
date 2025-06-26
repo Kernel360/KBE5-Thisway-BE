@@ -2,12 +2,13 @@ name: thisway
 
 services:
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:latest
     container_name: thisway-rabbitmq
     hostname: rabbitmq-dev
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # Management 콘솔
+      - "15692:15692"    # Prometheus 메트릭
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -16,6 +17,8 @@ services:
       - dev-net
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_management rabbitmq_prometheus && rabbitmq-server"
 
   redis:
     image: redis:6.2
@@ -32,6 +35,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: thisway
+    command:
+      - --character-set-server=utf8mb4,
+      - --collation-server=utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     networks:
@@ -39,6 +45,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
 
   prometheus:
     build:

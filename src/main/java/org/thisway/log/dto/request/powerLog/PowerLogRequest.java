@@ -1,5 +1,8 @@
 package org.thisway.log.dto.request.powerLog;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record PowerLogRequest(
         String mdn,
         String tid,
