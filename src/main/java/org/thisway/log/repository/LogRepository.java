@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thisway.log.domain.GeofenceLogData;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.GpsStatus;
 import org.thisway.log.domain.PowerLogData;
+
+import java.util.HashMap;
 
 @Repository
 @RequiredArgsConstructor
@@ -284,6 +285,38 @@ public class LogRepository {
                         rs.getTimestamp("occurred_time").toLocalDateTime()
                 ), params
         );
+    }
+
+    /**
+     * 특정 회사의 특정 날짜에 대해 시간대별 GPS 로그 개수를 반환
+     * @param companyId 회사 ID
+     * @param startDateTime 시작 날짜시간 (해당 날짜 00:00:00)
+     * @param endDateTime 종료 날짜시간 (해당 날짜 23:59:59)
+     * @return Map<시간대(0~23), GPS 로그 개수>
+     */
+    public Map<Integer, Long> countGpsLogsByCompanyAndHour(Long companyId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        // 시간대별 GPS 로그 개수 조회 (DB 호환성을 위해 EXTRACT 사용)
+        String sql = """
+            SELECT EXTRACT(HOUR FROM gl.occurred_time) as hour, COUNT(*) as count
+            FROM gps_log gl
+            JOIN vehicle v ON gl.vehicle_id = v.id
+            WHERE v.company_id = ? 
+            AND gl.occurred_time >= ? 
+            AND gl.occurred_time <= ?
+            AND v.active = true
+            GROUP BY EXTRACT(HOUR FROM gl.occurred_time)
+            ORDER BY hour
+            """;
+
+        Object[] params = new Object[]{companyId, startDateTime, endDateTime};
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, params);
+        
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row.get("hour")).intValue(),
+                        row -> ((Number) row.get("count")).longValue()
+                ));
     }
 
 }
