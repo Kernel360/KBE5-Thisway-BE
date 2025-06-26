@@ -39,4 +39,24 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
 
+
+    // 특정 회사의 날짜 범위에 대한 시동 횟수
+    @Query("SELECT COUNT(t) FROM TripLog t " +
+           "WHERE t.vehicle.company.id = :companyId " +
+           "AND t.startTime >= :startDate AND t.startTime <= :endDate")
+    Long countPowerOnByCompanyAndDateRange(
+            @Param("companyId") Long companyId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+    // 특정 회사의 날짜 범위에 대한 총 운행시간을 분 단위로 계산
+    @Query("SELECT t FROM TripLog t " +
+           "WHERE t.vehicle.company.id = :companyId " +
+           "AND t.startTime >= :startDate AND t.startTime <= :endDate")
+    List<TripLog> findTripLogsByCompanyAndDateRange(
+            @Param("companyId") Long companyId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

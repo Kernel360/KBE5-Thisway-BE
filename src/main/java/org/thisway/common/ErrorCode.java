@@ -71,7 +71,10 @@ public enum ErrorCode {
 
     // 운행 로그 x7xxx
     TRIP_LOG_NOT_FOUND("17000", "해당하는 로그가 존재하지 않습니다.", HttpStatus.BAD_REQUEST),
-    TRIP_LOG_ADDRESS_NOT_FOUND("17001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)
+    TRIP_LOG_ADDRESS_NOT_FOUND("17001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+
+    // 통계 로그 x8xxx
+    STATISTICS_NOT_FOUND("18000", "통계 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)
     ;
 
     private final String code;
