@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.triplog.dto.KakaoCoordToAddress;
 import org.thisway.triplog.dto.ReverseGeocodeResult;
 
 import java.util.List;

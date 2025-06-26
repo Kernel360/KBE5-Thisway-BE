@@ -33,4 +33,8 @@ public class BaseEntity {
     public void delete() {
         active = false;
     }
+
+    public void updateActive(Boolean active) {
+        this.active = active;
+    }
 }
