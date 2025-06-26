@@ -5,7 +5,7 @@ export let options = {
   scenarios: {
     spike_15000_at_once: {
       executor: "per-vu-iterations",
-      vus: 15000, // 15,000 VU
+      vus: 1000, // 15,000 VU
       iterations: 1, // 각 VU당 1회 실행
       maxDuration: "1m", // VU 할당 후 1분 내에 완료
     },

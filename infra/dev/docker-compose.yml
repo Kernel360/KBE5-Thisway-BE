@@ -6,9 +6,9 @@ services:
     container_name: thisway-rabbitmq
     hostname: rabbitmq-dev
     ports:
-      - "5672:5672"      # AMQP
-      - "15672:15672"    # Management 콘솔
-      - "15692:15692"    # Prometheus 메트릭
+      - "5672:5672" # AMQP
+      - "15672:15672" # Management 콘솔
+      - "15692:15692" # Prometheus 메트릭
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
