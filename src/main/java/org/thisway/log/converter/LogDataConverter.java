@@ -21,6 +21,9 @@ public class LogDataConverter {
     }
 
     public LocalDateTime convertDateTimeWithSec(String dateTime) {
+        if (dateTime == null || dateTime.trim().isEmpty()) {
+            return null;
+        }
         return LocalDateTime.parse(dateTime, DATE_TIME_FORMATTER_WITH_SEC);
     }
 

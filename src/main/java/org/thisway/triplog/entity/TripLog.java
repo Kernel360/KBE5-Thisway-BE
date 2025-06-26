@@ -22,31 +22,31 @@ public class TripLog extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime startTime;
 
-    @Column(nullable = false)
+    @Column
     private LocalDateTime endTime;
 
     @Column(nullable = false)
     private Integer totalTripMeter;
 
-    @Column(nullable = false)
+    @Column
     private Double onLatitude;
 
-    @Column(nullable = false)
+    @Column
     private Double onLongitude;
 
-    @Column(nullable = false)
+    @Column
     private String onAddr;
 
     @Column
     private String onAddrDetail;
 
-    @Column(nullable = false)
+    @Column
     private Double offLatitude;
 
-    @Column(nullable = false)
+    @Column
     private Double offLongitude;
 
-    @Column(nullable = false)
+    @Column
     private String offAddr;
 
     @Column
@@ -65,7 +65,8 @@ public class TripLog extends BaseEntity {
             Double offLatitude,
             Double offLongitude,
             String offAddress,
-            String offAddrDetail
+            String offAddrDetail,
+            Boolean active
     ) {
         this.vehicle = vehicle;
         this.startTime = startTime;
@@ -79,6 +80,23 @@ public class TripLog extends BaseEntity {
         this.offLongitude = offLongitude;
         this.offAddr = offAddress;
         this.offAddrDetail = offAddrDetail;
+        this.updateActive(active);
     }
 
+    public void finishTrip(
+            LocalDateTime offTime,
+            Integer totalTripMeter,
+            Double offLatitude,
+            Double offLongitude,
+            String offAddr,
+            String offAddrDetail
+    ) {
+        this.endTime = offTime;
+        this.totalTripMeter = totalTripMeter;
+        this.offLatitude = offLatitude;
+        this.offLongitude = offLongitude;
+        this.offAddr = offAddr;
+        this.offAddrDetail = offAddrDetail;
+        this.updateActive(true);
+    }
 }

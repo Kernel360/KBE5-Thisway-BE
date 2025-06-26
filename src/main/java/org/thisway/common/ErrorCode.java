@@ -58,6 +58,7 @@ public enum ErrorCode {
     VEHICLE_INVALID_MANUFACTURER("14007", "제조사 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_INVALID_MODEL_YEAR("14008", "연식 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_INVALID_MODEL("14009", "차량모델 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
+    VEHICLE_POWER_OFF("14010", "현재 운행 중인 차량이 아닙니다.", HttpStatus.BAD_REQUEST),
 
     // 에뮬레이터 x5xxx
     EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.BAD_REQUEST),

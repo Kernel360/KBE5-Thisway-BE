@@ -176,3 +176,29 @@ create index idx_power_log_power_time
 create index idx_power_log_vehicle_id
     on power_log (vehicle_id);
 
+create table trip_log
+(
+    id               bigint auto_increment
+        primary key,
+    active           bit          not null,
+    created_at       datetime(6)  not null,
+    updated_at       datetime(6)  null,
+    end_time         datetime(6)  null,
+    off_addr         varchar(255) null,
+    off_addr_detail  varchar(255) null,
+    off_latitude     double       null,
+    off_longitude    double       null,
+    on_addr          varchar(255) null,
+    on_addr_detail   varchar(255) null,
+    on_latitude      double       null,
+    on_longitude     double       null,
+    start_time       datetime(6)  not null,
+    total_trip_meter int          not null,
+    vehicle_id       bigint       not null,
+    constraint trip_log_ibfk_1
+        foreign key (vehicle_id) references vehicle (id)
+);
+
+create index idx_trip_log_vehicle_id
+    on power_log (vehicle_id);
+

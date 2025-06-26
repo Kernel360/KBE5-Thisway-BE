@@ -10,19 +10,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.thisway.security.dto.request.MemberDetails;
-import org.thisway.statistics.constant.StatisticConstants;
 import org.thisway.statistics.dto.response.StatisticResponse;
 import org.thisway.statistics.service.StatisticService;
 import org.thisway.triplog.dto.response.TripLocationStats;
 
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/statistics")
 public class StatisticController {

@@ -1,21 +1,23 @@
 package org.thisway.triplog.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.thisway.triplog.dto.TripLogBriefInfo;
+import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
 import org.thisway.triplog.dto.response.TripLogDetailResponse;
+import org.thisway.triplog.dto.response.TripLogsResponse;
 import org.thisway.triplog.dto.response.VehicleDetailResponse;
 import org.thisway.triplog.service.TripLogService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/trip-log")
 public class TripLogController {
@@ -29,7 +31,7 @@ public class TripLogController {
     }
 
     @GetMapping("/current/{id}")
-    public ResponseEntity<CurrentTripLogResponse> getCurrentTripLog(
+    public ResponseEntity<CurrentTripLogResponse> getCurrentGpsLogs(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime time
     ) {
@@ -38,18 +40,17 @@ public class TripLogController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<TripLogBriefInfo>> getAllTripLogs() {
+    public ResponseEntity<TripLogsResponse> getAllTripLogs(
+            @AuthenticationPrincipal MemberDetails memberDetails,
+            @PageableDefault Pageable pageable
+    ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(tripLogService.getTripLogs());
+                .body(tripLogService.findTripLogs(memberDetails.getCompanyId(), pageable));
     }
 
     @GetMapping("/detail/{id}")
-    public ResponseEntity<TripLogDetailResponse> getTripLogDetail(
-            @PathVariable Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime
-    ) {
+    public ResponseEntity<TripLogDetailResponse> getTripLogDetail(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(tripLogService.getTripLogDetails(id, startTime, endTime));
+                .body(tripLogService.getTripLogDetails(id));
     }
 }
