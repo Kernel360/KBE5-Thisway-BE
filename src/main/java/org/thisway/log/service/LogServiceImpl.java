@@ -22,7 +22,6 @@ import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -111,7 +110,7 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public Optional<GpsLogData> getCurrentGpsLog(Long Id, LocalDateTime start) {
+    public GpsLogData getCurrentGpsLog(Long Id, LocalDateTime start) {
         return logRepository.getCurrentGpsByVehicleId(Id, start);
     }
 }

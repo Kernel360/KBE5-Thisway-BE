@@ -39,5 +39,4 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
 
-    //TripLog findTop1ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
 }

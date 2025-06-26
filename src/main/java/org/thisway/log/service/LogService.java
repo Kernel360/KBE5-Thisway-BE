@@ -6,7 +6,6 @@ import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface LogService {
     void savePowerLog(PowerLogRequest request);
@@ -15,5 +14,5 @@ public interface LogService {
 
     List<GpsLogData> findGpsLogs(Long Id, LocalDateTime start, LocalDateTime end);
 
-    Optional<GpsLogData> getCurrentGpsLog(Long Id, LocalDateTime start);
+    GpsLogData getCurrentGpsLog(Long Id, LocalDateTime start);
 }
