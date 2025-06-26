@@ -74,6 +74,10 @@ public class VehicleService {
         return VehiclesResponse.from(vehicleRepository.findAllByCompanyAndActiveTrue(company, pageable));
     }
 
+    public void saveVehicle(Vehicle vehicle) {
+        vehicleRepository.save(vehicle);
+    }
+
     public void updateVehicle(Long id, VehicleUpdateRequest request) {
         Vehicle vehicle = getAuthorizedVehicle(id);
         vehicleUpdateValidator.validateUpdateRequest(vehicle, request);
@@ -86,7 +90,8 @@ public class VehicleService {
         vehicle.update(request, vehicleModel);
     }
 
-    public Vehicle findVehicleById(Long id) {
+    @Transactional(readOnly = true)
+    public Vehicle getVehicleById(Long id) {
         return vehicleRepository.findById(id).orElseThrow(
                 () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
         );
