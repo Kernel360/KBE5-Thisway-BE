@@ -1,7 +1,5 @@
 package org.thisway.vehicle.service;
 
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -14,6 +12,9 @@ import org.thisway.vehicle.dto.response.VehicleTracksResponse;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.repository.VehicleRepository;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class VehicleTrackService implements VehicleTrackClient {
@@ -23,7 +24,7 @@ public class VehicleTrackService implements VehicleTrackClient {
 
     @Override
     public VehicleTracksResponse trackVehicles(long companyId, Pageable pageable) {
-        Page<Vehicle> vehiclePage = vehicleRepository.findAllByCompanyIdAndActiveTrue(companyId, pageable);
+        Page<Vehicle> vehiclePage = vehicleRepository.findAllByCompanyIdAndPowerOnIsAndActiveTrue(companyId, true, pageable);
 
         List<Long> vehicleIds = vehiclePage.getContent().stream()
                 .map(Vehicle::getId)
