@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import org.thisway.statistics.entity.Statistics;
+import org.thisway.statistics.constant.StatisticConstants;
 
 public record StatisticResponse(
     Long companyId,
@@ -25,8 +26,8 @@ public record StatisticResponse(
     List<Integer> hours = Arrays.asList(statistics.getHourlyRatesArray());
 
     // peakHour와 lowHour의 실제 퍼센트 값 계산
-    Integer peakHourRate = statistics.getHourlyRate(statistics.getPeakHour());
-    Integer lowHourRate = statistics.getHourlyRate(statistics.getLowHour());
+    Integer peakHourRate = getSafeHourlyRate(statistics.getPeakHour(), hours);
+    Integer lowHourRate = getSafeHourlyRate(statistics.getLowHour(), hours);
 
     return new StatisticResponse(
         statistics.getCompany().getId(),
@@ -51,10 +52,8 @@ public record StatisticResponse(
       Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
       List<Integer> hourlyRates) {
 
-    Integer peakHourRate = (peakHour >= 0 && peakHour < hourlyRates.size()) ?
-        hourlyRates.get(peakHour) : 0;
-    Integer lowHourRate = (lowHour >= 0 && lowHour < hourlyRates.size()) ? 
-        hourlyRates.get(lowHour) : 0;
+    Integer peakHourRate = getSafeHourlyRate(peakHour, hourlyRates);
+    Integer lowHourRate = getSafeHourlyRate(lowHour, hourlyRates);
 
     return new StatisticResponse(
         companyId,
@@ -69,5 +68,12 @@ public record StatisticResponse(
         averageOperationRate,
         hourlyRates
     );
+  }
+
+  private static Integer getSafeHourlyRate(Integer hour, List<Integer> hourlyRates) {
+    if (hour == null || hour < 0 || hour >= hourlyRates.size()) {
+      return StatisticConstants.DEFAULT_HOURLY_RATE;
+    }
+    return hourlyRates.get(hour);
   }
 }
