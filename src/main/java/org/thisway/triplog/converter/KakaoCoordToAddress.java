@@ -1,4 +1,4 @@
-package org.thisway.triplog.dto;
+package org.thisway.triplog.converter;
 
 import java.util.List;
 

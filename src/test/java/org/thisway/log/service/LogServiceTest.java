@@ -15,9 +15,10 @@ import org.thisway.log.domain.PowerLogData;
 import org.thisway.log.dto.request.geofenceLog.GeofenceLogRequest;
 import org.thisway.log.dto.request.powerLog.PowerLogRequest;
 import org.thisway.log.repository.LogRepository;
-import org.thisway.triplog.service.TripLogService;
+import org.thisway.triplog.dto.TripLogSaveInput;
+import org.thisway.triplog.service.TripLogServiceImpl;
 import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -42,11 +43,11 @@ public class LogServiceTest {
     @Mock
     private EmulatorRepository emulatorRepository;
     @Mock
-    private VehicleRepository vehicleRepository;
-    @InjectMocks
-    private LogService logService;
+    private VehicleService vehicleService;
     @Mock
-    private TripLogService tripLogService;
+    private TripLogServiceImpl tripLogService;
+    @InjectMocks
+    private LogServiceImpl logService;
 
     private void setupMocks() {
         when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));
@@ -118,9 +119,11 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
+            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
 
             logService.savePowerLog(request);
             verify(logRepository).savePowerLog(any(PowerLogData.class));
+            verify(tripLogService).saveTripLog(any(TripLogSaveInput.class));
         }
 
         @Test
@@ -130,13 +133,13 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
-            when(vehicleRepository.findById(VEHICLE_ID)).thenReturn(Optional.of(vehicle));
+            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
             when(vehicle.isPowerOn()).thenReturn(true);
 
             logService.savePowerLog(request);
 
             verify(vehicle).updatePowerOn(true);
-            verify(vehicleRepository).save(vehicle);
+            verify(vehicleService).saveVehicle(vehicle);
             assertThat(vehicle.isPowerOn()).isTrue();
         }
 
@@ -147,13 +150,13 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 10, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
-            when(vehicleRepository.findById(VEHICLE_ID)).thenReturn(Optional.of(vehicle));
+            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
             when(vehicle.isPowerOn()).thenReturn(false);
 
             logService.savePowerLog(request);
 
             verify(vehicle).updatePowerOn(false);
-            verify(vehicleRepository).save(vehicle);
+            verify(vehicleService).saveVehicle(vehicle);
             assertThat(vehicle.isPowerOn()).isFalse();
         }
     }

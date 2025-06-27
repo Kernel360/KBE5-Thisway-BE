@@ -1,6 +1,7 @@
 package org.thisway.log.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.thisway.log.domain.GeofenceLogData;
@@ -236,28 +237,36 @@ public class LogRepository {
         return gpsList.stream().collect(Collectors.toMap(GpsLogData::vehicleId, gps -> gps));
     }
 
-    public GpsLogData getCurrentGpsByVehicleId(Long vehicleId) {
+    public GpsLogData getCurrentGpsByVehicleId(Long vehicleId, LocalDateTime start) {
         String sql =
                 "SELECT vehicle_id, mdn, gps_status, latitude, longitude, angle, speed, total_trip_meter, battery_voltage, occurred_time "
                         + "FROM gps_log "
-                        + "WHERE vehicle_id = ? "
+                        + "WHERE vehicle_id = ? AND occurred_time >= ? "
                         + "ORDER BY occurred_time DESC "
                         + "LIMIT 1";
 
-        return jdbcTemplate.queryForObject(sql,
-                (rs, rowNum) -> new GpsLogData(
-                        rs.getLong("vehicle_id"),
-                        rs.getString("mdn"),
-                        GpsStatus.fromCode(rs.getString("gps_status")),
-                        rs.getDouble("latitude"),
-                        rs.getDouble("longitude"),
-                        rs.getInt("angle"),
-                        rs.getInt("speed"),
-                        rs.getInt("total_trip_meter"),
-                        rs.getInt("battery_voltage"),
-                        rs.getTimestamp("occurred_time").toLocalDateTime()
-                ), vehicleId
-        );
+        Object[] params = new Object[]{
+                vehicleId,
+                start
+        };
+
+        try {
+            return jdbcTemplate.queryForObject(sql,
+                    (rs, rowNum) -> new GpsLogData(
+                            rs.getLong("vehicle_id"),
+                            rs.getString("mdn"),
+                            GpsStatus.fromCode(rs.getString("gps_status")),
+                            rs.getDouble("latitude"),
+                            rs.getDouble("longitude"),
+                            rs.getInt("angle"),
+                            rs.getInt("speed"),
+                            rs.getInt("total_trip_meter"),
+                            rs.getInt("battery_voltage"),
+                            rs.getTimestamp("occurred_time").toLocalDateTime()
+                    ), params);
+        } catch (EmptyResultDataAccessException e){
+            return null;
+        }
     }
 
     public List<GpsLogData> findGpsLogsByVehicleId(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {

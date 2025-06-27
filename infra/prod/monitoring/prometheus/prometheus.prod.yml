@@ -1,0 +1,31 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          app: "prometheus"
+
+  # Spring Boot ECS 서비스 (Cloud Map DNS 기반)
+  - job_name: "spring-boot-application"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 15s
+    dns_sd_configs:
+      - names:
+          # Hosted Zone(thisway-app) 까지 포함한 전체 이름
+          - "metrics.thisway-app"
+        type: A
+        port: 8080
+
+remote_write:
+  - url: https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/ws-5945d8d5-a29e-480f-bfbd-b0399b443a65/api/v1/remote_write
+    sigv4:
+      region: ap-northeast-2
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
