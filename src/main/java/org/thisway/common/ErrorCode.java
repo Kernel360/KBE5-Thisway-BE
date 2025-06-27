@@ -1,12 +1,13 @@
 package org.thisway.common;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 /*
  * 서버 에러: 0xxxx
@@ -18,6 +19,7 @@ public enum ErrorCode {
 
     /* 서버 에러 */
     SERVER_ERROR("00000", "서버에러 입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // 이메일 에러 x7xxx
     EMAIL_SEND_ERROR("07000", "이메일 발송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
@@ -26,6 +28,8 @@ public enum ErrorCode {
     REDIS_RETRIEVE_ERROR("08001", "저장된 데이터를 가져오는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     /* 비즈니스 에러 */
+    INVALID_INPUT_VALUE("10000", "요청 데이터가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
+
     // 업체 에러 x1xxx
     COMPANY_NOT_FOUND("11000", "회사 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     COMPANY_ALREADY_EXIST("11001", "이미 존재하는 회사입니다.", HttpStatus.BAD_REQUEST),
@@ -74,7 +78,7 @@ public enum ErrorCode {
     TRIP_LOG_ADDRESS_NOT_FOUND("17001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // 통계 로그 x8xxx
-    STATISTICS_NOT_FOUND("18000", "통계 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST)
+    STATISTICS_NOT_FOUND("18000", "통계 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;
@@ -82,13 +86,9 @@ public enum ErrorCode {
     private final HttpStatus status;
 
     private static final Map<String, ErrorCode> CODE_MAP = Arrays.stream(values())
-        .collect(Collectors.toMap(ErrorCode::getCode, Function.identity()));
+            .collect(Collectors.toMap(ErrorCode::getCode, Function.identity()));
 
-    public static ErrorCode fromCode(String code){
+    public static ErrorCode fromCode(String code) {
         return CODE_MAP.getOrDefault(code, SERVER_ERROR);
-    }
-
-    public int getStatusValue() {
-        return status.value();
     }
 }
