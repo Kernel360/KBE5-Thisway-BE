@@ -12,7 +12,9 @@ public record StatisticResponse(
     Double averageDailyPowerCount,
     Integer totalDrivingTime,
     Integer peakHour,
+    Integer peakHourRate,
     Integer lowHour,
+    Integer lowHourRate,
     Double averageOperationRate,
     List<Integer> hours
 ) {
@@ -22,6 +24,10 @@ public record StatisticResponse(
     // Statistics 엔티티의 getHourlyRatesArray() 메서드 활용
     List<Integer> hours = Arrays.asList(statistics.getHourlyRatesArray());
 
+    // peakHour와 lowHour의 실제 퍼센트 값 계산
+    Integer peakHourRate = statistics.getHourlyRate(statistics.getPeakHour());
+    Integer lowHourRate = statistics.getHourlyRate(statistics.getLowHour());
+
     return new StatisticResponse(
         statistics.getCompany().getId(),
         statistics.getDate().format(FORMATTER),
@@ -29,7 +35,9 @@ public record StatisticResponse(
         statistics.getAverageDailyPowerCount(),
         statistics.getTotalDrivingTime(),
         statistics.getPeakHour(),
+        peakHourRate,
         statistics.getLowHour(),
+        lowHourRate,
         statistics.getAverageOperationRate(),
         hours
     );
@@ -43,6 +51,11 @@ public record StatisticResponse(
       Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
       List<Integer> hourlyRates) {
 
+    Integer peakHourRate = (peakHour >= 0 && peakHour < hourlyRates.size()) ?
+        hourlyRates.get(peakHour) : 0;
+    Integer lowHourRate = (lowHour >= 0 && lowHour < hourlyRates.size()) ? 
+        hourlyRates.get(lowHour) : 0;
+
     return new StatisticResponse(
         companyId,
         dateRange,
@@ -50,7 +63,9 @@ public record StatisticResponse(
         averageDailyPowerCount,
         totalDrivingTime,
         peakHour,
+        peakHourRate,
         lowHour,
+        lowHourRate,
         averageOperationRate,
         hourlyRates
     );
