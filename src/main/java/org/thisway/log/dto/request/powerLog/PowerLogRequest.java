@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record PowerLogRequest(
         String mdn,
         String tid,
+        String mid,
         String pv,
         String did,
         String onTime,

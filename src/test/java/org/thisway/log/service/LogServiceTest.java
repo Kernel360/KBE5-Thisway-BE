@@ -1,13 +1,5 @@
 package org.thisway.log.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,6 +18,12 @@ import org.thisway.log.repository.LogRepository;
 import org.thisway.triplog.service.TripLogService;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.repository.VehicleRepository;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class LogServiceTest {
@@ -60,6 +58,7 @@ public class LogServiceTest {
         return new PowerLogRequest(
                 VALID_MDN,
                 "A001",
+                "6",
                 "5",
                 "1",
                 "20210901092000",
@@ -76,6 +75,7 @@ public class LogServiceTest {
         return new PowerLogRequest(
                 VALID_MDN,
                 "A001",
+                "6",
                 "5",
                 "1",
                 "20210901092000",

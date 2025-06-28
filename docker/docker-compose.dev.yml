@@ -1,0 +1,56 @@
+version: '3.8'
+
+name: thisway
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: thisway-rabbitmq
+    hostname: rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file:
+      - env/common.env
+      - env/rabbitmq.env
+    restart: unless-stopped
+    networks:
+      - dev-net
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  redis:
+    image: redis:6.2
+    container_name: thisway-redis
+    ports:
+      - "6379:6379"
+    env_file:
+      - env/common.env
+      - env/redis.env
+    networks:
+      - dev-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: thisway-mysql
+    restart: unless-stopped
+    env_file:
+      - env/common.env
+      - env/mysql.env
+    ports:
+      - "3306:3306"
+    networks:
+      - dev-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d
+
+networks:
+  dev-net:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+    driver: local
+  mysql-data:
+    driver: local
