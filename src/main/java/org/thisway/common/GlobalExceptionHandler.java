@@ -3,9 +3,12 @@ package org.thisway.common;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
@@ -13,34 +16,39 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        var fieldError = e.getBindingResult().getFieldErrors().stream().findFirst();
-        ErrorCode errorCode = ErrorCode.SERVER_ERROR;
+        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
 
-        if(fieldError.isPresent()){
-            String code = fieldError.get().getDefaultMessage();
-            errorCode = ErrorCode.fromCode(code);
+        String messageCode = fieldErrors.get(0).getDefaultMessage();
+        ErrorCode errorCode = ErrorCode.fromCode(messageCode);
+        if (errorCode == ErrorCode.SERVER_ERROR) {
+            errorCode = ErrorCode.INVALID_INPUT_VALUE;
         }
 
-        return ResponseEntity.status(errorCode.getStatus())
-            .body(new ApiErrorResponse(errorCode.getCode(), errorCode.getMessage()));
+        log.warn("클라이언트 요청 오류: {}", errorCode.getMessage(), e);
+
+        return ApiErrorResponse.of(errorCode);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiErrorResponse> handleRuntimeException(RuntimeException e) {
-        log.error(e.getMessage(), e);
+        log.error("서버 내부 오류 발생", e);
         return ApiErrorResponse.of(ErrorCode.SERVER_ERROR);
     }
 
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiErrorResponse> handleCustomException(CustomException e) {
-        HttpStatus status = e.getErrorCode().getStatus();
+        ErrorCode errorCode = e.getErrorCode();
+        HttpStatus status = errorCode.getStatus();
+        String message = errorCode.getMessage();
+
         if (status.is5xxServerError()) {
-            log.error(e.getMessage(), e);
+            log.error("비즈니스 예외 발생: {}", message, e);
         } else if (status.is4xxClientError()) {
-            log.warn(e.getMessage(), e);
+            log.warn("클라이언트 요청 오류: {}", message);
         } else {
-            log.info(e.getMessage(), e);
+            log.info("예외 발생: {}", message);
         }
-        return ApiErrorResponse.of(e.getErrorCode());
+
+        return ApiErrorResponse.of(errorCode);
     }
 }
