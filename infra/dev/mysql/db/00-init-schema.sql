@@ -12,9 +12,7 @@ create table company
     gps_cycle   int          not null,
     memo        varchar(255) not null,
     name        varchar(255) not null
-) ENGINE=InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
+);
 
 create table member
 (
@@ -34,9 +32,7 @@ create table member
         unique (email),
     constraint FKax2gealrg44mnq3ibas3q9de6
         foreign key (company_id) references company (id)
-) ENGINE=InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
+);
 
 create table vehicle_model
 (
@@ -48,10 +44,7 @@ create table vehicle_model
     manufacturer varchar(255) not null,
     model_year   int          not null,
     name         varchar(255) not null
-) ENGINE=InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
-
+);
 
 create table vehicle
 (
