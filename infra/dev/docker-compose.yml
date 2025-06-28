@@ -17,6 +17,8 @@ services:
       - dev-net
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_management rabbitmq_prometheus && rabbitmq-server"
 
   redis:
     image: redis:6.2
