@@ -1,10 +1,5 @@
 package org.thisway.log.repository;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,7 +9,11 @@ import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.GpsStatus;
 import org.thisway.log.domain.PowerLogData;
 
-import java.util.HashMap;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -111,6 +110,92 @@ public class LogRepository {
         jdbcTemplate.update(geofenceLogSql, geofenceLogParams);
     }
 
+    public List<PowerLogData> findPowerLogsByVehicleId(Long vehicleId) {
+        String sql =
+                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                        + "FROM power_log "
+                        + "WHERE vehicle_id = ? "
+                        + "ORDER BY power_time";
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                ), vehicleId
+        );
+    }
+
+    public List<PowerLogData> findAllPowerLogs() {
+        String sql =
+                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                        + "FROM power_log "
+                        + "ORDER BY power_time";
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                )
+        );
+    }
+
+    public PowerLogData findOnLogByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime powerTime) {
+        String sql = "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                + "FROM power_log "
+                + "WHERE vehicle_id = ? AND power_time = ?";
+
+        Object[] params = new Object[]{vehicleId, powerTime};
+
+        return jdbcTemplate.queryForObject(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                ), params
+        );
+    }
+
+    public List<PowerLogData> findPowerLogsByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime start) {
+        String sql =
+                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
+                        + "FROM power_log "
+                        + "WHERE vehicle_id = ? AND power_time >= ? "
+                        + "ORDER BY power_time "
+                        + "LIMIT 2";
+
+        Object[] params = new Object[]{vehicleId, start};
+
+        return jdbcTemplate.query(sql,
+                (rs, rowNum) -> new PowerLogData(
+                        rs.getLong("vehicle_id"),
+                        rs.getString("mdn"),
+                        rs.getBoolean("power_status"),
+                        rs.getTimestamp("power_time").toLocalDateTime(),
+                        GpsStatus.fromCode(rs.getString("gps_status")),
+                        rs.getDouble("latitude"),
+                        rs.getDouble("longitude"),
+                        rs.getInt("total_trip_meter")
+                ), params
+        );
+    }
+
     public Map<Long, GpsLogData> findCurrentGpsByVehicleIds(List<Long> vehicleIds) {
         if (vehicleIds.isEmpty()) {
             return Collections.emptyMap();
@@ -120,18 +205,20 @@ public class LogRepository {
                 .collect(Collectors.joining(", "));
 
         String sql = String.format("""
-                SELECT gl.*
-                FROM gps_log gl
-                JOIN (
-                    SELECT vehicle_id, MAX(occurred_time) AS latest_time
-                    FROM gps_log
-                    WHERE vehicle_id IN (%s)
-                    GROUP BY vehicle_id
-                ) latest ON gl.vehicle_id = latest.vehicle_id AND gl.occurred_time = latest.latest_time
+                SELECT *
+                FROM (
+                    SELECT gl.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY gl.vehicle_id
+                               ORDER BY gl.occurred_time DESC, gl.id DESC
+                           ) AS rn
+                    FROM gps_log gl
+                    WHERE gl.vehicle_id IN (%s)
+                ) ranked
+                WHERE ranked.rn = 1
                 """, inClause);
 
         List<GpsLogData> gpsList = jdbcTemplate.query(sql,
-                vehicleIds.toArray(),
                 (rs, rowNum) -> new GpsLogData(
                         rs.getLong("vehicle_id"),
                         rs.getString("mdn"),
@@ -143,7 +230,8 @@ public class LogRepository {
                         rs.getInt("total_trip_meter"),
                         rs.getInt("battery_voltage"),
                         rs.getTimestamp("occurred_time").toLocalDateTime()
-                )
+                ),
+                vehicleIds.toArray()
         );
 
         return gpsList.stream().collect(Collectors.toMap(GpsLogData::vehicleId, gps -> gps));
