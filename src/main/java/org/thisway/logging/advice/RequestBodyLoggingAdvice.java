@@ -39,9 +39,11 @@ public class RequestBodyLoggingAdvice extends RequestBodyAdviceAdapter {
             Type targetType,
             Class<? extends HttpMessageConverter<?>> converterType
     ) {
-        String path = ((ServletServerHttpRequest) inputMessage).getServletRequest().getRequestURI();
-        if (LoggingExcludeUrls.shouldSkip(path)) {
-            return super.afterBodyRead(body, inputMessage, parameter, targetType, converterType);
+        if (inputMessage instanceof ServletServerHttpRequest servletRequest) {
+            String path = servletRequest.getServletRequest().getRequestURI();
+            if (LoggingExcludeUrls.shouldSkip(path)) {
+                return super.afterBodyRead(body, inputMessage, parameter, targetType, converterType);
+            }
         }
 
         try {
