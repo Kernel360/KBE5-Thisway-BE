@@ -59,7 +59,7 @@ public class TripLogServiceImpl implements TripLogService {
                     logService.getCurrentGpsLog(vehicleId, tripLogs.getFirst().getStartTime())
             );
 
-            tripLogs = tripLogs.subList(1, 6);
+            tripLogs.removeFirst();
         }
 
         return VehicleDetailResponse.from(
