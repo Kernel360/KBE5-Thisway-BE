@@ -11,6 +11,7 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
+import org.thisway.logging.constant.LoggingExcludeUrls;
 
 @ControllerAdvice
 @Slf4j
@@ -36,6 +37,11 @@ public class ResponseBodyLoggingAdvice implements ResponseBodyAdvice<Object> {
             ServerHttpRequest request,
             ServerHttpResponse response
     ) {
+        String path = request.getURI().getPath();
+        if (LoggingExcludeUrls.shouldSkip(path)) {
+            return body;
+        }
+
         try {
             String bodyJson = objectMapper.writeValueAsString(body);
             log.info("Response Body: {}", bodyJson);

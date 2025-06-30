@@ -2,12 +2,13 @@ name: thisway
 
 services:
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:latest
     container_name: thisway-rabbitmq
     hostname: rabbitmq-dev
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "15692:15692"
     env_file:
       - env/common.env
       - env/rabbitmq.env
@@ -16,6 +17,8 @@ services:
       - dev-net
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_management rabbitmq_prometheus && rabbitmq-server"
 
   redis:
     image: redis:6.2
@@ -41,7 +44,8 @@ services:
       - dev-net
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./db:/docker-entrypoint-initdb.d
+      - ./mysql/conf/my.conf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/db:/docker-entrypoint-initdb.d
 
   prometheus:
     build:

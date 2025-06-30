@@ -1,6 +1,5 @@
 package org.thisway.company.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,8 @@ import org.thisway.company.controller.dto.response.AdminCompaniesResponse;
 import org.thisway.company.controller.dto.response.AdminCompanyDetailResponse;
 import org.thisway.company.service.AdminCompanyService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/api/admin/companies")
 @RequiredArgsConstructor
@@ -30,8 +31,7 @@ public class AdminCompanyController {
     @GetMapping("/{id}")
     public ResponseEntity<AdminCompanyDetailResponse> getCompanyDetail(@PathVariable Long id) {
         AdminCompanyDetailResponse response = AdminCompanyDetailResponse.from(
-                adminCompanyService.getCompanyDetail(id)
-        );
+                adminCompanyService.getCompanyDetail(id));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
@@ -40,8 +40,7 @@ public class AdminCompanyController {
     @GetMapping
     public ResponseEntity<AdminCompaniesResponse> getCompanies(@PageableDefault Pageable pageable) {
         AdminCompaniesResponse response = AdminCompaniesResponse.from(
-                adminCompanyService.getCompanies(pageable)
-        );
+                adminCompanyService.getCompanies(pageable));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
@@ -57,8 +56,7 @@ public class AdminCompanyController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateCompany(
             @PathVariable long id,
-            @RequestBody @Validated AdminCompanyUpdateRequest request
-    ) {
+            @RequestBody @Validated AdminCompanyUpdateRequest request) {
         adminCompanyService.updateCompany(request.toCompanyUpdateInput(id));
 
         return ResponseEntity.status(HttpStatus.OK)
