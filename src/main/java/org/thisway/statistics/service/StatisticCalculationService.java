@@ -106,15 +106,24 @@ public class StatisticCalculationService {
     public Integer calculateLowHourFromRates(int[] hourlyOperationRates) {
         int lowHour = StatisticConstants.DEFAULT_LOW_HOUR;
         int minRate = Integer.MAX_VALUE;
+        boolean foundNonZero = false;
 
         for (int hour = 0; hour < StatisticConstants.HOURS_IN_DAY; hour++) {
             int rate = hourlyOperationRates[hour];
-            if (rate < minRate) {
+            
+            // 0인 시간대는 제외하고 가장 낮은 값 찾기
+            if (rate > 0 && rate < minRate) {
                 minRate = rate;
                 lowHour = hour;
+                foundNonZero = true;
             }
         }
 
+        if (!foundNonZero) {
+            return StatisticConstants.DEFAULT_LOW_HOUR;
+        }
+
+        log.info("최저 가동률 시간대: {}시 (가동률: {}%)", lowHour, minRate);
         return lowHour;
     }
     

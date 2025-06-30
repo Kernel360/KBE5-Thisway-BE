@@ -71,50 +71,66 @@ public class StatisticQueryService {
             .average()
             .orElse(StatisticConstants.DEFAULT_OPERATION_RATE);
         
-        // 5. 시간대별 가동률 합산
-        List<Integer> hourlyTotals = calculateHourlyTotalsFromStatistics(statisticsList);
+        // 5. 시간대별 가동률 평균 계산
+        List<Integer> hourlyAverages = calculateHourlyAveragesFromStatistics(statisticsList);
         
         // 6. 피크/최소 시간 계산
-        int peakHour = findExtremeHour(hourlyTotals, true);  // 최대값
-        int lowHour = findExtremeHour(hourlyTotals, false);  // 최소값
+        int peakHour = findExtremeHour(hourlyAverages, true);  // 최대값
+        int lowHour = findExtremeHour(hourlyAverages, false);  // 최소값
         
         // 7. 통계 응답 생성
         String dateRange = startDate + StatisticConstants.DATE_RANGE_SEPARATOR + endDate;
         return StatisticResponse.fromAggregatedData(
             companyId, dateRange, totalPowerOnCount, averageDailyPowerCount,
-            totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyTotals
+            totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyAverages
         );
     }
     
     /**
-     * 저장된 통계들에서 시간대별 가동률 합산 - Stream API 활용으로 최적화
+     * 저장된 통계들에서 시간대별 가동률 평균 계산
      */
-    private List<Integer> calculateHourlyTotalsFromStatistics(List<Statistics> statisticsList) {
+    private List<Integer> calculateHourlyAveragesFromStatistics(List<Statistics> statisticsList) {
         return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
-            .mapToObj(hour -> statisticsList.stream()
-                .mapToInt(stat -> {
-                    Integer rate = stat.getHourlyRate(hour);
-                    return rate != null ? rate : StatisticConstants.DEFAULT_HOURLY_RATE;
-                })
-                .sum())
+            .mapToObj(hour -> {
+                double average = statisticsList.stream()
+                    .mapToInt(stat -> {
+                        Integer rate = stat.getHourlyRate(hour);
+                        return rate != null ? rate : StatisticConstants.DEFAULT_HOURLY_RATE;
+                    })
+                    .average()
+                    .orElse(StatisticConstants.DEFAULT_OPERATION_RATE);
+                return (int) Math.round(average);
+            })
             .collect(Collectors.toList());
     }
     
     /**
      * 시간대별 가동률에서 극값(최대/최소) 시간대 찾기 - 최적화
-     * @param hourlyTotals 시간대별 가동률 리스트
+     * @param hourlyAverages 시간대별 가동률 리스트
      * @param findMax true면 최대값, false면 최소값
      * @return 극값을 가진 시간대
      */
-    private int findExtremeHour(List<Integer> hourlyTotals, boolean findMax) {
-        return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
-            .reduce((extremeHour, currentHour) -> {
-                int extremeValue = hourlyTotals.get(extremeHour);
-                int currentValue = hourlyTotals.get(currentHour);
-
-                boolean shouldUpdate = findMax ? currentValue > extremeValue : currentValue < extremeValue;
-                return shouldUpdate ? currentHour : extremeHour;
-            })
-            .orElse(StatisticConstants.DEFAULT_PEAK_HOUR);
+    private int findExtremeHour(List<Integer> hourlyAverages, boolean findMax) {
+        if (findMax) {
+            return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
+                .reduce((extremeHour, currentHour) -> {
+                    int extremeValue = hourlyAverages.get(extremeHour);
+                    int currentValue = hourlyAverages.get(currentHour);
+                    return currentValue > extremeValue ? currentHour : extremeHour;
+                })
+                .orElse(StatisticConstants.DEFAULT_PEAK_HOUR);
+        } else {
+            // 최소값 찾기 - 0인 값 제외
+            return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
+                .filter(hour -> hourlyAverages.get(hour) > 0)
+                .reduce((lowHour, currentHour) -> {
+                    int lowValue = hourlyAverages.get(lowHour);
+                    int currentValue = hourlyAverages.get(currentHour);
+                    return currentValue < lowValue ? currentHour : lowHour;
+                })
+                .orElseGet(() -> {
+                    return StatisticConstants.DEFAULT_LOW_HOUR;
+                });
+        }
     }
 }
