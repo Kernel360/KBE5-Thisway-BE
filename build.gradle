@@ -10,6 +10,7 @@ dockerCompose {
     useComposeFiles = ["${rootDir}/infra/dev/docker-compose.yml"]
     projectName     = "thisway"        // (선택) docker-compose project name
     buildBeforeUp = true            // 필요시 up 전에 build 실행
+    removeVolumes = false           // 필요시 컨테이너 종료 시 볼륨 제거
 }
 
 group = 'org'
@@ -82,7 +83,6 @@ jib {
     jvmFlags = ['-Xms256m', '-Xmx512m']
   }
 }
-
 
 tasks.named('test') {
     useJUnitPlatform()
