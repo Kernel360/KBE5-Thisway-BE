@@ -55,6 +55,7 @@ class GpsLogSaveServiceTest {
         List<GpsLogEntry> entries = new ArrayList<>();
         for (int i = 0; i < entryCount; i++) {
             entries.add(new GpsLogEntry(
+                    "20",
                     "33",
                     "A",
                     "4140338",
@@ -82,6 +83,8 @@ class GpsLogSaveServiceTest {
         setupMocks();
         LocalDateTime occurredTime = LocalDateTime.of(2021, 9, 1, 9, 20);
         when(converter.convertDateTime(anyString())).thenReturn(occurredTime);
+        when(converter.convertToInteger("20")).thenReturn(20);
+        when(converter.convertToInteger("33")).thenReturn(33);
 
         gpsLogSaveService.saveGpsLog(request);
         verify(logRepository).saveGpsLogs(anyList());
@@ -95,11 +98,38 @@ class GpsLogSaveServiceTest {
         setupMocks();
         LocalDateTime occurredTime = LocalDateTime.of(2021, 9, 1, 9, 20);
         when(converter.convertDateTime(anyString())).thenReturn(occurredTime);
+        when(converter.convertToInteger("20")).thenReturn(20);
+        when(converter.convertToInteger("33")).thenReturn(33);
 
         gpsLogSaveService.saveGpsLog(request);
         ArgumentCaptor<List<GpsLogData>> gpsLogDataListCaptor = ArgumentCaptor.forClass((Class) List.class);
         verify(logRepository).saveGpsLogs(gpsLogDataListCaptor.capture());
         List<GpsLogData> capturedGpsLogDataList = gpsLogDataListCaptor.getValue();
         assertThat(capturedGpsLogDataList.size()).isEqualTo(entryCount);
+    }
+
+    @Test
+    @DisplayName("분과 초 필드를 사용한 시간 처리 테스트")
+    void 분과_초_필드를_사용하여_정확한_시간을_계산해야한다() {
+        GpsLogRequest request = createValidGpsLogRequest(VALID_MDN, 1);
+        setupMocks();
+
+        LocalDateTime baseTime = LocalDateTime.of(2021, 9, 1, 9, 0);
+        when(converter.convertDateTime(anyString())).thenReturn(baseTime);
+
+        when(converter.convertToInteger("20")).thenReturn(20);
+        when(converter.convertToInteger("33")).thenReturn(33);
+
+        gpsLogSaveService.saveGpsLog(request);
+
+        ArgumentCaptor<List<GpsLogData>> gpsLogDataListCaptor = ArgumentCaptor.forClass((Class) List.class);
+        verify(logRepository).saveGpsLogs(gpsLogDataListCaptor.capture());
+
+        List<GpsLogData> capturedList = gpsLogDataListCaptor.getValue();
+        assertThat(capturedList).hasSize(1);
+
+        GpsLogData capturedData = capturedList.get(0);
+        LocalDateTime expectedTime = LocalDateTime.of(2021, 9, 1, 9, 20, 33);
+        assertThat(capturedData.occurredTime()).isEqualTo(expectedTime);
     }
 }

@@ -48,12 +48,19 @@ public class GpsLogSaveService {
         }
 
         for (GpsLogEntry entry : request.cList()) {
+            LocalDateTime timeWithMinutes = baseTime;
+
+            if (entry.min() != null & !entry.min().isEmpty()) {
+                int minutes = converter.convertToInteger(entry.min());
+                timeWithMinutes = timeWithMinutes.withMinute(minutes);
+            }
+
             LocalDateTime occurredTime;
             if (entry.sec() != null && !entry.sec().isEmpty()) {
                 int seconds = converter.convertToInteger(entry.sec());
-                occurredTime = baseTime.withSecond(seconds);
+                occurredTime = timeWithMinutes.withSecond(seconds);
             } else {
-                occurredTime = baseTime;
+                occurredTime = timeWithMinutes;
             }
 
             GpsLogData gpsLogData = GpsLogData.from(entry, mdn, vehicleId, occurredTime, converter);
