@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - feat/201-cd-test
 
 env:
   AWS_REGION: ap-northeast-2
@@ -42,7 +43,7 @@ jobs:
             --jib.to.auth.password=${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   deploy:
-    if: ${{ github.ref == 'refs/heads/develop' }}
+    # if: ${{ github.ref == 'refs/heads/develop' }}
     needs: build
     runs-on: ubuntu-latest
 
