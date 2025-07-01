@@ -69,7 +69,8 @@ jobs:
 
       - name: ECS 서비스 강제 재배포
         run: |
-          aws ecs update-service \
+          AWS_PAGER="" aws ecs update-service \
             --cluster thisway-cluster \
             --service ${{ steps.find-service.outputs.SERVICE }} \
-            --force-new-deployment
+            --force-new-deployment \
+            --no-cli-pager > /dev/null
