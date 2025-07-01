@@ -9,7 +9,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
   IMAGE_REPO: thisway/app
 
 jobs:
