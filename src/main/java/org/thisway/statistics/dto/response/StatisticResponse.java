@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.constant.StatisticConstants;
-import org.thisway.triplog.dto.response.TripLocationStats;
+import org.thisway.triplog.dto.TripLocationStats;
 
 public record StatisticResponse(
     Long companyId,

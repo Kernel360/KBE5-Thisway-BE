@@ -11,13 +11,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
 import org.thisway.statistics.constant.StatisticConstants;
 import org.thisway.statistics.dto.response.StatisticResponse;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.repository.StatisticsRepository;
-import org.thisway.triplog.dto.response.TripLocationStats;
+import org.thisway.triplog.dto.TripLocationRaw;
+import org.thisway.triplog.dto.TripLocationStats;
 import org.thisway.triplog.repository.TripLogRepository;
 
 @Slf4j
@@ -138,6 +137,13 @@ public class StatisticQueryService {
      */
     private List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("출발지 통계 조회: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
-        return tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
+        List<TripLocationRaw> rawLocation = tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
+
+        long total = rawLocation.stream().mapToLong(TripLocationRaw::count).sum();
+
+        return rawLocation.stream()
+                .map(raw -> TripLocationStats.from(raw, total))
+                .limit(3)
+                .toList();
     }
 }
