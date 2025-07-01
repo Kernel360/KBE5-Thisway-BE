@@ -45,87 +45,87 @@ public class Statistics extends BaseEntity {
 
   // 시간대별 가동률
   @Column(nullable = false)
-  private Integer hour00;
+  private Double hour00;
 
   @Column(nullable = false)
-  private Integer hour01;
+  private Double hour01;
 
   @Column(nullable = false)
-  private Integer hour02;
+  private Double hour02;
 
   @Column(nullable = false)
-  private Integer hour03;
+  private Double hour03;
 
   @Column(nullable = false)
-  private Integer hour04;
+  private Double hour04;
 
   @Column(nullable = false)
-  private Integer hour05;
+  private Double hour05;
 
   @Column(nullable = false)
-  private Integer hour06;
+  private Double hour06;
 
   @Column(nullable = false)
-  private Integer hour07;
+  private Double hour07;
 
   @Column(nullable = false)
-  private Integer hour08;
+  private Double hour08;
 
   @Column(nullable = false)
-  private Integer hour09;
+  private Double hour09;
 
   @Column(nullable = false)
-  private Integer hour10;
+  private Double hour10;
 
   @Column(nullable = false)
-  private Integer hour11;
+  private Double hour11;
 
   @Column(nullable = false)
-  private Integer hour12;
+  private Double hour12;
 
   @Column(nullable = false)
-  private Integer hour13;
+  private Double hour13;
 
   @Column(nullable = false)
-  private Integer hour14;
+  private Double hour14;
 
   @Column(nullable = false)
-  private Integer hour15;
+  private Double hour15;
 
   @Column(nullable = false)
-  private Integer hour16;
+  private Double hour16;
 
   @Column(nullable = false)
-  private Integer hour17;
+  private Double hour17;
 
   @Column(nullable = false)
-  private Integer hour18;
+  private Double hour18;
 
   @Column(nullable = false)
-  private Integer hour19;
+  private Double hour19;
 
   @Column(nullable = false)
-  private Integer hour20;
+  private Double hour20;
 
   @Column(nullable = false)
-  private Integer hour21;
+  private Double hour21;
 
   @Column(nullable = false)
-  private Integer hour22;
+  private Double hour22;
 
   @Column(nullable = false)
-  private Integer hour23;
+  private Double hour23;
 
   @Builder
   public Statistics(Company company, LocalDateTime date, Integer powerOnCount,
       Double averageDailyPowerCount, Integer totalDrivingTime,
       Integer peakHour, Integer lowHour, Double averageOperationRate,
-      Integer hour00, Integer hour01, Integer hour02, Integer hour03,
-      Integer hour04, Integer hour05, Integer hour06, Integer hour07,
-      Integer hour08, Integer hour09, Integer hour10, Integer hour11,
-      Integer hour12, Integer hour13, Integer hour14, Integer hour15,
-      Integer hour16, Integer hour17, Integer hour18, Integer hour19,
-      Integer hour20, Integer hour21, Integer hour22, Integer hour23) {
+      Double hour00, Double hour01, Double hour02, Double hour03,
+      Double hour04, Double hour05, Double hour06, Double hour07,
+      Double hour08, Double hour09, Double hour10, Double hour11,
+      Double hour12, Double hour13, Double hour14, Double hour15,
+      Double hour16, Double hour17, Double hour18, Double hour19,
+      Double hour20, Double hour21, Double hour22, Double hour23) {
     this.company = company;
     this.date = date;
     this.powerOnCount = powerOnCount;
@@ -174,7 +174,7 @@ public class Statistics extends BaseEntity {
   }
 
   // 시간대별 가동률 업데이트 메서드
-  public void updateHourlyRates(int[] hourlyRates) {
+  public void updateHourlyRates(double[] hourlyRates) {
     if (hourlyRates != null && hourlyRates.length == StatisticConstants.HOURS_IN_DAY) {
       this.hour00 = hourlyRates[0];
       this.hour01 = hourlyRates[1];
@@ -204,12 +204,12 @@ public class Statistics extends BaseEntity {
   }
 
   // 안전한 값 반환
-  private Integer getSafeValue(Integer value) {
+  private Double getSafeValue(Double value) {
     return value != null ? value : StatisticConstants.DEFAULT_HOURLY_RATE;
   }
 
   // 특정 시간대 가동률 조회
-  public Integer getHourlyRate(int hour) {
+  public Double getHourlyRate(int hour) {
     if (hour < 0 || hour >= StatisticConstants.HOURS_IN_DAY) {
       return StatisticConstants.DEFAULT_HOURLY_RATE;
     }
@@ -246,8 +246,8 @@ public class Statistics extends BaseEntity {
   /**
    * 시간대별 가동률을 배열로 반환
    */
-  public Integer[] getHourlyRatesArray() {
-    return new Integer[]{
+  public Double[] getHourlyRatesArray() {
+    return new Double[]{
       hour00, hour01, hour02, hour03, hour04, hour05, hour06, hour07,
       hour08, hour09, hour10, hour11, hour12, hour13, hour14, hour15,
       hour16, hour17, hour18, hour19, hour20, hour21, hour22, hour23
