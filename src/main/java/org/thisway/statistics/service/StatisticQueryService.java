@@ -40,9 +40,9 @@ public class StatisticQueryService {
         // 1. 해당 날짜 범위의 저장된 통계 데이터들 조회
         List<Statistics> statisticsList = statisticsRepository.findByCompanyIdAndDateRange(companyId, startDate, endDate);
         
-        if (statisticsList.isEmpty()) {
-            throw new CustomException(ErrorCode.STATISTICS_NOT_FOUND);
-        }
+//        if (statisticsList.isEmpty()) {
+//            throw new CustomException(ErrorCode.STATISTICS_NOT_FOUND);
+//        }
         
         // 2. 날짜 범위 계산
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
@@ -65,7 +65,7 @@ public class StatisticQueryService {
             .orElse(StatisticConstants.DEFAULT_OPERATION_RATE);
         
         // 5. 시간대별 가동률 평균 계산
-        List<Integer> hourlyAverages = calculateHourlyAveragesFromStatistics(statisticsList);
+        List<Double> hourlyAverages = calculateHourlyAveragesFromStatistics(statisticsList);
         
         // 6. 피크/최소 시간 계산
         int peakHour = findExtremeHour(hourlyAverages, true);  // 최대값
@@ -87,17 +87,18 @@ public class StatisticQueryService {
     /**
      * 저장된 통계들에서 시간대별 가동률 평균 계산
      */
-    private List<Integer> calculateHourlyAveragesFromStatistics(List<Statistics> statisticsList) {
+    private List<Double> calculateHourlyAveragesFromStatistics(List<Statistics> statisticsList) {
         return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
             .mapToObj(hour -> {
                 double average = statisticsList.stream()
-                    .mapToInt(stat -> {
-                        Integer rate = stat.getHourlyRate(hour);
+                    .mapToDouble(stat -> {
+                        Double rate = stat.getHourlyRate(hour);
+                        log.info("hour: {}, rate: {}", hour, rate);
                         return rate != null ? rate : StatisticConstants.DEFAULT_HOURLY_RATE;
                     })
                     .average()
                     .orElse(StatisticConstants.DEFAULT_OPERATION_RATE);
-                return (int) Math.round(average);
+                return average;
             })
             .collect(Collectors.toList());
     }
@@ -108,12 +109,12 @@ public class StatisticQueryService {
      * @param findMax true면 최대값, false면 최소값
      * @return 극값을 가진 시간대
      */
-    private int findExtremeHour(List<Integer> hourlyAverages, boolean findMax) {
+    private int findExtremeHour(List<Double> hourlyAverages, boolean findMax) {
         if (findMax) {
             return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
                 .reduce((extremeHour, currentHour) -> {
-                    int extremeValue = hourlyAverages.get(extremeHour);
-                    int currentValue = hourlyAverages.get(currentHour);
+                    double extremeValue = hourlyAverages.get(extremeHour);
+                    double currentValue = hourlyAverages.get(currentHour);
                     return currentValue > extremeValue ? currentHour : extremeHour;
                 })
                 .orElse(StatisticConstants.DEFAULT_PEAK_HOUR);
@@ -122,8 +123,8 @@ public class StatisticQueryService {
             return IntStream.range(0, StatisticConstants.HOURS_IN_DAY)
                 .filter(hour -> hourlyAverages.get(hour) > 0)
                 .reduce((lowHour, currentHour) -> {
-                    int lowValue = hourlyAverages.get(lowHour);
-                    int currentValue = hourlyAverages.get(currentHour);
+                    double lowValue = hourlyAverages.get(lowHour);
+                    double currentValue = hourlyAverages.get(currentHour);
                     return currentValue < lowValue ? currentHour : lowHour;
                 })
                 .orElseGet(() -> {

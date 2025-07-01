@@ -49,7 +49,7 @@ public class StatisticPersistenceService {
         // 3. 통계 계산
         Long powerOnCount = calculationService.calculatePowerOnCount(companyId, startDateTime, endDateTime);
         Integer totalDrivingTime = calculationService.calculateTotalDrivingTime(companyId, startDateTime, endDateTime);
-        int[] hourlyOperationRates = calculationService.calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
+        double[] hourlyOperationRates = calculationService.calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
         Integer peakHour = calculationService.calculatePeakHourFromRates(hourlyOperationRates);
         Integer lowHour = calculationService.calculateLowHourFromRates(hourlyOperationRates);
         Double averageOperationRate = calculationService.calculateAverageOperationRate(hourlyOperationRates);
