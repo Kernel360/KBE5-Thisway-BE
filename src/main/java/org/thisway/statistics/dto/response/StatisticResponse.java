@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.constant.StatisticConstants;
+import org.thisway.triplog.dto.response.TripLocationStats;
 
 public record StatisticResponse(
     Long companyId,
@@ -17,11 +18,12 @@ public record StatisticResponse(
     Integer lowHour,
     Integer lowHourRate,
     Double averageOperationRate,
-    List<Integer> hours
+    List<Integer> hours,
+    List<TripLocationStats> locationStats
 ) {
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  public static StatisticResponse from(Statistics statistics){
+  public static StatisticResponse from(Statistics statistics, List<TripLocationStats> locationStats) {
     // Statistics 엔티티의 getHourlyRatesArray() 메서드 활용
     List<Integer> hours = Arrays.asList(statistics.getHourlyRatesArray());
 
@@ -40,7 +42,8 @@ public record StatisticResponse(
         statistics.getLowHour(),
         lowHourRate,
         statistics.getAverageOperationRate(),
-        hours
+        hours,
+        locationStats
     );
   }
 
@@ -50,7 +53,7 @@ public record StatisticResponse(
   public static StatisticResponse fromAggregatedData(
       Long companyId, String dateRange, Integer powerOnCount, Double averageDailyPowerCount,
       Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
-      List<Integer> hourlyRates) {
+      List<Integer> hourlyRates, List<TripLocationStats> locationStats) {
 
     Integer peakHourRate = getSafeHourlyRate(peakHour, hourlyRates);
     Integer lowHourRate = getSafeHourlyRate(lowHour, hourlyRates);
@@ -66,7 +69,8 @@ public record StatisticResponse(
         lowHour,
         lowHourRate,
         averageOperationRate,
-        hourlyRates
+        hourlyRates,
+        locationStats
     );
   }
 

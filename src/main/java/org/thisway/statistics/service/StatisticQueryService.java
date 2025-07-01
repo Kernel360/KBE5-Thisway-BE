@@ -2,6 +2,7 @@ package org.thisway.statistics.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,14 +28,6 @@ public class StatisticQueryService {
     
     private final StatisticsRepository statisticsRepository;
     private final TripLogRepository tripLogRepository;
-    
-    /**
-     * 출발지 통계 조회
-     */
-    public List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("출발지 통계 조회: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
-        return tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
-    }
     
     /**
      * 날짜 범위 기반 통계 조회
@@ -77,12 +70,17 @@ public class StatisticQueryService {
         // 6. 피크/최소 시간 계산
         int peakHour = findExtremeHour(hourlyAverages, true);  // 최대값
         int lowHour = findExtremeHour(hourlyAverages, false);  // 최소값
+
+        // 7. 시작 위치 통계
+        LocalDateTime startTime = LocalDateTime.of(startDate, LocalTime.MIN);
+        LocalDateTime endTime = LocalDateTime.of(endDate, LocalTime.MAX);
+        List<TripLocationStats> locationStats = getStartLocationStatBetweenDates(companyId, startTime, endTime);
         
         // 7. 통계 응답 생성
         String dateRange = startDate + StatisticConstants.DATE_RANGE_SEPARATOR + endDate;
         return StatisticResponse.fromAggregatedData(
             companyId, dateRange, totalPowerOnCount, averageDailyPowerCount,
-            totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyAverages
+            totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyAverages, locationStats
         );
     }
     
@@ -132,5 +130,13 @@ public class StatisticQueryService {
                     return StatisticConstants.DEFAULT_LOW_HOUR;
                 });
         }
+    }
+
+    /**
+     * 출발지 통계 조회
+     */
+    private List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
+        log.info("출발지 통계 조회: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
+        return tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
     }
 }
