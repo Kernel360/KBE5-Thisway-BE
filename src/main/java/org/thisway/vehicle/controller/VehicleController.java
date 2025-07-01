@@ -7,16 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -53,9 +47,12 @@ public class VehicleController {
     }
 
     @GetMapping
-    public ResponseEntity<VehiclesResponse> getVehicles(@PageableDefault Pageable pageable) {
+    public ResponseEntity<VehiclesResponse> getVehicles(
+            @PageableDefault Pageable pageable,
+            @ModelAttribute VehicleSearchRequest searchRequest
+    ) {
         return ResponseEntity.status(HttpStatus.OK)
-                .body(vehicleService.getVehicles(pageable));
+                .body(vehicleService.getVehicles(searchRequest, pageable));
     }
 
     @PatchMapping("/{id}")

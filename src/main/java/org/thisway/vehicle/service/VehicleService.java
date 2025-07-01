@@ -1,6 +1,5 @@
 package org.thisway.vehicle.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,6 +13,7 @@ import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -24,6 +24,8 @@ import org.thisway.vehicle.entity.VehicleModel;
 import org.thisway.vehicle.repository.VehicleModelRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -67,11 +69,11 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
-    public VehiclesResponse getVehicles(Pageable pageable) {
+    public VehiclesResponse getVehicles(VehicleSearchRequest searchRequest, Pageable pageable) {
         validatePageable(pageable);
         Member member = getCurrentMember();
         Company company = getMemberCompany(member);
-        return VehiclesResponse.from(vehicleRepository.findAllByCompanyAndActiveTrue(company, pageable));
+        return VehiclesResponse.from(vehicleRepository.searchActiveVehicles(company, searchRequest, pageable));
     }
 
     public void saveVehicle(Vehicle vehicle) {

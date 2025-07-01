@@ -1,21 +1,5 @@
 package org.thisway.vehicle.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +20,7 @@ import org.thisway.member.entity.MemberRole;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -45,6 +30,19 @@ import org.thisway.vehicle.entity.VehicleModel;
 import org.thisway.vehicle.repository.VehicleModelRepository;
 import org.thisway.vehicle.repository.VehicleRepository;
 import org.thisway.vehicle.validation.VehicleUpdateValidator;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class VehicleServiceTest {
@@ -265,13 +263,15 @@ class VehicleServiceTest {
         );
         Page<Vehicle> mockPage = new PageImpl<>(vehicles);
 
-        when(vehicleRepository.findAllByCompanyAndActiveTrue(eq(mockCompany), eq(pageRequest))).thenReturn(mockPage);
+        VehicleSearchRequest searchRequest = new VehicleSearchRequest(null);
+
+        when(vehicleRepository.searchActiveVehicles(eq(mockCompany), eq(searchRequest), eq(pageRequest))).thenReturn(mockPage);
 
         // when
-        VehiclesResponse response = vehicleService.getVehicles(pageRequest);
+        VehiclesResponse response = vehicleService.getVehicles(searchRequest, pageRequest);
 
         // then
-        verify(vehicleRepository).findAllByCompanyAndActiveTrue(eq(mockCompany), eq(pageRequest));
+        verify(vehicleRepository).searchActiveVehicles(eq(mockCompany), eq(searchRequest), eq(pageRequest));
         assertEquals(2, response.vehicles().size());
         assertEquals(1, response.totalPages());
         assertEquals(2L, response.totalElements());
