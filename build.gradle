@@ -93,7 +93,7 @@ jib {
     mainClass = 'org.thisway.ThiswayApplication'  // 실제 메인 클래스 FQCN
     // jvmFlags = ['-Xms256m', '-Xmx512m']
     jvmFlags = [
-      "-javaagent:/pinpoint-bootstrap-3.0.3.jar",
+      "-javaagent:/pinpoint-agent/pinpoint-bootstrap-3.0.3.jar",
       "-Dpinpoint.agentId=\${HOSTNAME}",
       "-Dpinpoint.applicationName=thisway",
       "-Dpinpoint.profiler.profiles.active=release"
