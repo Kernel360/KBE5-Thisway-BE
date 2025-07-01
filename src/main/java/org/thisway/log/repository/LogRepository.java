@@ -311,7 +311,7 @@ public class LogRepository {
             SELECT EXTRACT(HOUR FROM gl.occurred_time) as hour, COUNT(*) as count
             FROM gps_log gl
             JOIN vehicle v ON gl.vehicle_id = v.id
-            WHERE v.company_id = ? 
+            WHERE v.company_id = ? AND total_trip_meter != 0
             AND gl.occurred_time >= ? 
             AND gl.occurred_time <= ?
             AND v.active = true

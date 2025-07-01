@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.thisway.statistics.entity.Statistics;
 import org.thisway.statistics.constant.StatisticConstants;
+import org.thisway.triplog.dto.TripLocationStats;
 
 public record StatisticResponse(
     Long companyId,
@@ -13,21 +14,22 @@ public record StatisticResponse(
     Double averageDailyPowerCount,
     Integer totalDrivingTime,
     Integer peakHour,
-    Integer peakHourRate,
+    Double peakHourRate,
     Integer lowHour,
-    Integer lowHourRate,
+    Double lowHourRate,
     Double averageOperationRate,
-    List<Integer> hours
+    List<Double> hours,
+    List<TripLocationStats> locationStats
 ) {
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  public static StatisticResponse from(Statistics statistics){
+  public static StatisticResponse from(Statistics statistics, List<TripLocationStats> locationStats) {
     // Statistics 엔티티의 getHourlyRatesArray() 메서드 활용
-    List<Integer> hours = Arrays.asList(statistics.getHourlyRatesArray());
+    List<Double> hours = Arrays.asList(statistics.getHourlyRatesArray());
 
     // peakHour와 lowHour의 실제 퍼센트 값 계산
-    Integer peakHourRate = getSafeHourlyRate(statistics.getPeakHour(), hours);
-    Integer lowHourRate = getSafeHourlyRate(statistics.getLowHour(), hours);
+    Double peakHourRate = getSafeHourlyRate(statistics.getPeakHour(), hours);
+    Double lowHourRate = getSafeHourlyRate(statistics.getLowHour(), hours);
 
     return new StatisticResponse(
         statistics.getCompany().getId(),
@@ -40,7 +42,8 @@ public record StatisticResponse(
         statistics.getLowHour(),
         lowHourRate,
         statistics.getAverageOperationRate(),
-        hours
+        hours,
+        locationStats
     );
   }
 
@@ -50,10 +53,10 @@ public record StatisticResponse(
   public static StatisticResponse fromAggregatedData(
       Long companyId, String dateRange, Integer powerOnCount, Double averageDailyPowerCount,
       Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
-      List<Integer> hourlyRates) {
+      List<Double> hourlyRates, List<TripLocationStats> locationStats) {
 
-    Integer peakHourRate = getSafeHourlyRate(peakHour, hourlyRates);
-    Integer lowHourRate = getSafeHourlyRate(lowHour, hourlyRates);
+    Double peakHourRate = getSafeHourlyRate(peakHour, hourlyRates);
+    Double lowHourRate = getSafeHourlyRate(lowHour, hourlyRates);
 
     return new StatisticResponse(
         companyId,
@@ -66,11 +69,12 @@ public record StatisticResponse(
         lowHour,
         lowHourRate,
         averageOperationRate,
-        hourlyRates
+        hourlyRates,
+        locationStats
     );
   }
 
-  private static Integer getSafeHourlyRate(Integer hour, List<Integer> hourlyRates) {
+  private static Double getSafeHourlyRate(Integer hour, List<Double> hourlyRates) {
     if (hour == null || hour < 0 || hour >= hourlyRates.size()) {
       return StatisticConstants.DEFAULT_HOURLY_RATE;
     }

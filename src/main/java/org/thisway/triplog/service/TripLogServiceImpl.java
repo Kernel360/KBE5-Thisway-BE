@@ -80,7 +80,7 @@ public class TripLogServiceImpl implements TripLogService {
             if (!gpsLogs.isEmpty()) {
                 return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
             } else {
-                throw new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND);
+                return null;
             }
         } else {
             throw new CustomException(ErrorCode.VEHICLE_POWER_OFF);

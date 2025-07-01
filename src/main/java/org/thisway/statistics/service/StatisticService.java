@@ -1,14 +1,12 @@
 package org.thisway.statistics.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.statistics.dto.response.StatisticResponse;
-import org.thisway.triplog.dto.response.TripLocationStats;
 
 @Slf4j
 @Service
@@ -18,15 +16,6 @@ public class StatisticService {
     
     private final StatisticPersistenceService persistenceService;
     private final StatisticQueryService queryService;
-    
-    /**
-     * 출발지 통계 조회
-     */
-    @Transactional(readOnly = true)
-    public List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("출발지 통계 조회 요청: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
-        return queryService.getStartLocationStatBetweenDates(companyId, startTime, endTime);
-    }
     
     /**
      * 통계 저장 (배치용)

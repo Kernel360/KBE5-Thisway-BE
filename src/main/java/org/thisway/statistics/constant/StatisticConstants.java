@@ -15,7 +15,7 @@ public final class StatisticConstants {
     public static final double DEFAULT_OPERATION_RATE = 0.0;
     
     // 기본값 상수
-    public static final int DEFAULT_HOURLY_RATE = 0;
+    public static final double DEFAULT_HOURLY_RATE = 0;
     public static final int DEFAULT_PEAK_HOUR = 0;
     public static final int DEFAULT_LOW_HOUR = 0;
     

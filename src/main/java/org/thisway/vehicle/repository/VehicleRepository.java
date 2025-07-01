@@ -8,7 +8,7 @@ import org.thisway.vehicle.entity.Vehicle;
 
 import java.util.Optional;
 
-public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
+public interface VehicleRepository extends JpaRepository<Vehicle, Long>, VehicleQueryRepository {
 
     Optional<Vehicle> findByIdAndActiveTrue(Long id);
 
