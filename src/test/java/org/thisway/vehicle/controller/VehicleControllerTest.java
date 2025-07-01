@@ -1,23 +1,7 @@
 // java
 package org.thisway.vehicle.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,6 +25,18 @@ import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.dto.response.VehiclesResponse;
 import org.thisway.vehicle.service.VehicleService;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -221,7 +217,7 @@ class VehicleControllerTest {
                 new VehicleResponse(2L, "기아", 2023, "K5", "34나5678", "흰색", 3000, true, null, null));
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 1, 2, 0, 10);
 
-        given(vehicleService.getVehicles(any()))
+        given(vehicleService.getVehicles(any(), any()))
                 .willReturn(vehiclesResponse);
 
         // when & then
@@ -252,7 +248,7 @@ class VehicleControllerTest {
         Page<VehicleResponse> page = new PageImpl<>(vehicles);
         VehiclesResponse vehiclesResponse = new VehiclesResponse(vehicles, 2, 3, 1, 2);
 
-        given(vehicleService.getVehicles(any())).willReturn(vehiclesResponse);
+        given(vehicleService.getVehicles(any(), any())).willReturn(vehiclesResponse);
 
         // when & then
         MvcResult mvcResult = mockMvc.perform(
@@ -285,7 +281,7 @@ class VehicleControllerTest {
 
         VehiclesResponse descResponse = new VehiclesResponse(descendingOrder, 1, 2, 0, 10);
 
-        given(vehicleService.getVehicles(argThat(pageable -> pageable.getSort().getOrderFor("carNumber") != null &&
+        given(vehicleService.getVehicles(any(), argThat(pageable -> pageable.getSort().getOrderFor("carNumber") != null &&
                 pageable.getSort().getOrderFor("carNumber").getDirection().isDescending())))
                 .willReturn(descResponse);
 
