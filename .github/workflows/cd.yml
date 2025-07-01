@@ -38,7 +38,6 @@ jobs:
       - name: 컨테이너 이미지 빌드 & 푸시 (Jib)
         run: |
           ./gradlew clean jib \
-            --image=${ECR_REGISTRY}/${IMAGE_REPO}:${{ github.sha }} \
             --jib.to.auth.username=${{ secrets.AWS_ACCESS_KEY_ID }} \
             --jib.to.auth.password=${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
