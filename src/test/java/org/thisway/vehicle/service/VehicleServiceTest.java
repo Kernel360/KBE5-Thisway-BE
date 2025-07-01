@@ -20,6 +20,7 @@ import org.thisway.member.entity.MemberRole;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
+import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
 import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
 import org.thisway.vehicle.dto.response.VehicleResponse;
@@ -262,13 +263,15 @@ class VehicleServiceTest {
         );
         Page<Vehicle> mockPage = new PageImpl<>(vehicles);
 
-        when(vehicleRepository.findAllByCompanyAndActiveTrue(eq(mockCompany), eq(pageRequest))).thenReturn(mockPage);
+        VehicleSearchRequest searchRequest = new VehicleSearchRequest(null);
+
+        when(vehicleRepository.searchActiveVehicles(eq(mockCompany), eq(searchRequest), eq(pageRequest))).thenReturn(mockPage);
 
         // when
-        VehiclesResponse response = vehicleService.getVehicles(any(), pageRequest);
+        VehiclesResponse response = vehicleService.getVehicles(searchRequest, pageRequest);
 
         // then
-        verify(vehicleRepository).findAllByCompanyAndActiveTrue(eq(mockCompany), eq(pageRequest));
+        verify(vehicleRepository).searchActiveVehicles(eq(mockCompany), eq(searchRequest), eq(pageRequest));
         assertEquals(2, response.vehicles().size());
         assertEquals(1, response.totalPages());
         assertEquals(2L, response.totalElements());
