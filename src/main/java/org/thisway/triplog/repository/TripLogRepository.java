@@ -53,7 +53,7 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     // 특정 회사의 날짜 범위에 대한 총 운행시간을 분 단위로 계산
     @Query("SELECT t FROM TripLog t " +
-           "WHERE t.vehicle.company.id = :companyId " +
+           "WHERE t.vehicle.company.id = :companyId AND t.active = true " +
            "AND t.startTime >= :startDate AND t.startTime <= :endDate")
     List<TripLog> findTripLogsByCompanyAndDateRange(
             @Param("companyId") Long companyId,
