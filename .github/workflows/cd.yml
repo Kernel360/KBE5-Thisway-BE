@@ -48,7 +48,8 @@ jobs:
 
       - name: 컨테이너 이미지 빌드 & 푸시 (Jib)
         run: |
-          ./gradlew clean jib
+          ./gradlew clean jib \
+            -Djib.to.image=$ECR_REGISTRY/$IMAGE_REPO
 
       - name: ECS 서비스 이름 조회
         id: find-service
