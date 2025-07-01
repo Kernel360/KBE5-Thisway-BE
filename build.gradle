@@ -72,15 +72,25 @@ jib {
   from {
     image = 'eclipse-temurin:21-jre'       // 베이스 JRE 이미지
   }
+
   to {
     // ECR URI: ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/REPO:TAG
     image = "${System.getenv('AWS_ACCOUNT_ID')}.dkr.ecr.ap-northeast-2.amazonaws.com/thisway/app:${project.version}"
   }
+
   container {
     mainClass = 'org.thisway.ThiswayApplication'  // 실제 메인 클래스 FQCN
+    // jvmFlags = ['-Xms256m', '-Xmx512m']
+    jvmFlags = [
+      "-javaagent:/pinpoint-bootstrap-3.0.3.jar",
+      "-Dpinpoint.agentId=\${HOSTNAME}",
+      "-Dpinpoint.applicationName=thisway",
+      "-Dpinpoint.profiler.profiles.active=release"
+    ]
+    environment = [
+    'SPRING_PROFILES_ACTIVE':'prod',
+    ]
     ports = ['8080']
-    // 환경변수나 JVM 옵션도 여기에 지정 가능
-    jvmFlags = ['-Xms256m', '-Xmx512m']
   }
 }
 
