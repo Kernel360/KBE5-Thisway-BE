@@ -1,7 +1,6 @@
 ### custom ###
 src/main/**/application.yml
 src/main/**/db-environment.yml
-src/main/**/application-dev.yml
 gradle.properties
 build.local.gradle
 logs/
