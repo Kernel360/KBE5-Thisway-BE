@@ -6,8 +6,14 @@ on:
       - main
       - develop
 
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+  IMAGE_REPO: thisway/app
+
 jobs:
-  build:
+  deploy:
+    if: ${{ github.ref == 'refs/heads/develop' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -20,53 +26,51 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Gradle 설정
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: 애플리케이션 빌드
-        run: ./gradlew clean bootJar
-
-      - name: 빌드 아티팩트 업로드
-        uses: actions/upload-artifact@v4
+      - name: Gradle 캐시 설정 (선택)
+        uses: actions/cache@v3
         with:
-          name: app
-          path: build/libs/*.jar
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-  deploy:
-    if: ${{ github.ref == 'refs/heads/develop' }}
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 아티팩트 다운로드
-        uses: actions/download-artifact@v4
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          name: app
-          path: .
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: EC2로 JAR 복사
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          source: "*.jar"
-          target: "/home/ec2-user"
+      - name: Amazon ECR 로그인
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: EC2에서 애플리케이션 실행
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            # (1) systemd 데몬 리로드 및 서비스 재시작
-            sudo systemctl daemon-reload
-            sudo systemctl restart thisway.service
+      - name: 컨테이너 이미지 빌드 & 푸시 (Jib)
+        run: |
+          ./gradlew clean jib \
+            -Djib.to.image=$ECR_REGISTRY/$IMAGE_REPO
 
-            # (2) 서비스 상태 확인
-            sudo systemctl status thisway.service --no-pager
+      - name: ECS 서비스 이름 조회
+        id: find-service
+        shell: bash
+        run: |
+          export AWS_PAGER=""
 
-            echo "Application started via systemd service."
+          {
+            SERVICE_ARN=$(aws ecs list-services \
+              --cluster thisway-cluster \
+              --query "serviceArns[?contains(@, 'thisway-app-task-service')]" \
+              --output text)
+          } &> /dev/null
+
+          SERVICE_NAME=${SERVICE_ARN##*/}
+          echo "SERVICE=${SERVICE_NAME}" >> $GITHUB_OUTPUT
+
+      - name: ECS 서비스 강제 재배포
+        run: |
+          AWS_PAGER="" aws ecs update-service \
+            --cluster thisway-cluster \
+            --service ${{ steps.find-service.outputs.SERVICE }} \
+            --force-new-deployment \
+            --no-cli-pager > /dev/null

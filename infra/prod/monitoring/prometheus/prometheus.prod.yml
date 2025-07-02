@@ -21,6 +21,16 @@ scrape_configs:
         type: A
         port: 8080
 
+  - job_name: "RabbitMQ"
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+    dns_sd_configs:
+      - names:
+          # Hosted Zone(thisway-app) 까지 포함한 전체 이름
+          - "rabbitmq.thisway-app"
+        type: A
+        port: 15692
+
 remote_write:
   - url: https://aps-workspaces.ap-northeast-2.amazonaws.com/workspaces/ws-5945d8d5-a29e-480f-bfbd-b0399b443a65/api/v1/remote_write
     sigv4:
