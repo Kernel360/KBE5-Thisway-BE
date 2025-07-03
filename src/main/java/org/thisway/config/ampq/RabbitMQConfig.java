@@ -1,11 +1,10 @@
 package org.thisway.config.ampq;
 
-import java.util.List;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -13,15 +12,18 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.thisway.common.RabbitMqGlobalErrorHandler;
 
 @Configuration
+@RequiredArgsConstructor
+@Slf4j
 public class RabbitMQConfig {
 
     public static final String GPS_LOG_QUEUE = "gps_log.queue";
     public static final String GPS_LOG_EXCHANGE = "gps_log.exchange";
     public static final String GPS_LOG_ROUTING_KEY = "gps_log.routingKey";
+
+    private final RabbitMqGlobalErrorHandler rabbitMqGlobalErrorHandler;
 
     // @Bean
     // public TaskExecutor publisherTaskExecutor() {
@@ -81,6 +83,7 @@ public class RabbitMQConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(jackson2JsonMessageConverter);
+        factory.setErrorHandler(rabbitMqGlobalErrorHandler);
         return factory;
     }
 }
