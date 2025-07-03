@@ -6,9 +6,11 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,25 +26,6 @@ public class RabbitMQConfig {
     public static final String GPS_LOG_ROUTING_KEY = "gps_log.routingKey";
 
     private final RabbitMqGlobalErrorHandler rabbitMqGlobalErrorHandler;
-
-    // @Bean
-    // public TaskExecutor publisherTaskExecutor() {
-    // ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    // executor.setCorePoolSize(10); // 원하는 퍼블리셔 수
-    // executor.setMaxPoolSize(50);
-    // executor.initialize();
-    // return executor;
-    // }
-    //
-    // public void publishConcurrently(
-    // List<Message> messages,
-    // RabbitTemplate amqpTemplate) {
-    // for (Message msg : messages) {
-    // publisherTaskExecutor().execute(() -> {
-    // amqpTemplate.convertAndSend(GPS_LOG_ROUTING_KEY, msg);
-    // });
-    // }
-    // }
 
     @Bean
     public Queue gpsLogQueue() {
@@ -70,7 +53,8 @@ public class RabbitMQConfig {
     @Bean
     public RabbitTemplate rabbitTemplate(
             ConnectionFactory connectionFactory,
-            Jackson2JsonMessageConverter messageConverter) {
+            Jackson2JsonMessageConverter messageConverter
+    ) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter);
         return rabbitTemplate;
@@ -79,11 +63,20 @@ public class RabbitMQConfig {
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory,
-            Jackson2JsonMessageConverter jackson2JsonMessageConverter) {
+            Jackson2JsonMessageConverter jackson2JsonMessageConverter
+    ) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(jackson2JsonMessageConverter);
         factory.setErrorHandler(rabbitMqGlobalErrorHandler);
+
+        factory.setAdviceChain(
+            RetryInterceptorBuilder.stateless()
+                .maxAttempts(3)
+            .recoverer(new RejectAndDontRequeueRecoverer())
+            .build()
+        );
+
         return factory;
     }
 }
