@@ -2,7 +2,6 @@ package org.thisway.logging.filter;
 
 import java.io.IOException;
 
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.micrometer.common.lang.NonNull;
@@ -12,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
-@Component
 @Slf4j
 public class LoggingFilter extends OncePerRequestFilter {
 
@@ -32,7 +30,10 @@ public class LoggingFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         log.info("Request [{} {}]", request.getMethod(), request.getRequestURI());
-        filterChain.doFilter(request, response);
-        log.info("Response Status {}", response.getStatus());
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            log.info("Response Status {}", response.getStatus());
+        }
     }
 }
