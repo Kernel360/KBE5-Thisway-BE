@@ -15,10 +15,7 @@ import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleCreateRequest;
 import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.dto.request.VehicleUpdateRequest;
-import org.thisway.vehicle.dto.response.VehicleDashboardResponse;
-import org.thisway.vehicle.dto.response.VehicleResponse;
-import org.thisway.vehicle.dto.response.VehicleTracksResponse;
-import org.thisway.vehicle.dto.response.VehiclesResponse;
+import org.thisway.vehicle.dto.response.*;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleModel;
 import org.thisway.vehicle.repository.VehicleModelRepository;
@@ -100,6 +97,14 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
+    public Boolean getVehiclePowerState(Long id) {
+        Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(
+                () -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND)
+        );
+        return vehicle.isPowerOn();
+    }
+
+    @Transactional(readOnly = true)
     public VehicleDashboardResponse getVehicleDashboard() {
         long companyId = securityService.getCurrentMemberDetails().getCompanyId();
         long totalVehicles = vehicleRepository.countByCompanyIdAndActiveTrue(companyId);
@@ -115,6 +120,10 @@ public class VehicleService {
 
     public VehicleTracksResponse getVehicleTracks(long companyId, Pageable pageable) {
         return vehicleTrackClient.trackVehicles(companyId, pageable);
+    }
+
+    public List<VehicleTrackResponse> getVehicleTracks(long companyId) {
+        return vehicleTrackClient.trackVehicles(companyId);
     }
 
     private Vehicle findActiveVehicle(Long id) {

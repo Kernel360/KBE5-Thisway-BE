@@ -54,4 +54,29 @@ public class VehicleTrackService implements VehicleTrackClient {
 
         return VehicleTracksResponse.from(trackPage);
     }
+
+    @Override
+    public List<VehicleTrackResponse> trackVehicles(long companyId) {
+        List<Vehicle> vehicles = vehicleRepository.getAllDrivingVehicles(companyId);
+
+        List<Long> vehicleIds = vehicles.stream()
+                .map(Vehicle::getId)
+                .toList();
+
+        Map<Long, GpsLogData> gpsMap = logRepository.findCurrentGpsByVehicleIds(vehicleIds);
+
+        return vehicles.stream()
+                .map(vehicle -> {
+                    GpsLogData gps = gpsMap.get(vehicle.getId());
+                    return new VehicleTrackResponse(
+                            vehicle.getId(),
+                            vehicle.getCarNumber(),
+                            vehicle.isPowerOn(),
+                            gps != null ? gps.latitude() : null,
+                            gps != null ? gps.longitude() : null,
+                            gps != null ? gps.angle() : null
+                    );
+                })
+                .toList();
+    }
 }

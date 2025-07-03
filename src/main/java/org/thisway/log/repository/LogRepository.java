@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thisway.log.domain.GeofenceLogData;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.domain.GpsStatus;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional
 public class LogRepository {
 
     private final JdbcTemplate jdbcTemplate;
@@ -108,92 +110,6 @@ public class LogRepository {
                 + "angle"
                 + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(geofenceLogSql, geofenceLogParams);
-    }
-
-    public List<PowerLogData> findPowerLogsByVehicleId(Long vehicleId) {
-        String sql =
-                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
-                        + "FROM power_log "
-                        + "WHERE vehicle_id = ? "
-                        + "ORDER BY power_time";
-
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> new PowerLogData(
-                        rs.getLong("vehicle_id"),
-                        rs.getString("mdn"),
-                        rs.getBoolean("power_status"),
-                        rs.getTimestamp("power_time").toLocalDateTime(),
-                        GpsStatus.fromCode(rs.getString("gps_status")),
-                        rs.getDouble("latitude"),
-                        rs.getDouble("longitude"),
-                        rs.getInt("total_trip_meter")
-                ), vehicleId
-        );
-    }
-
-    public List<PowerLogData> findAllPowerLogs() {
-        String sql =
-                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
-                        + "FROM power_log "
-                        + "ORDER BY power_time";
-
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> new PowerLogData(
-                        rs.getLong("vehicle_id"),
-                        rs.getString("mdn"),
-                        rs.getBoolean("power_status"),
-                        rs.getTimestamp("power_time").toLocalDateTime(),
-                        GpsStatus.fromCode(rs.getString("gps_status")),
-                        rs.getDouble("latitude"),
-                        rs.getDouble("longitude"),
-                        rs.getInt("total_trip_meter")
-                )
-        );
-    }
-
-    public PowerLogData findOnLogByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime powerTime) {
-        String sql = "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
-                + "FROM power_log "
-                + "WHERE vehicle_id = ? AND power_time = ?";
-
-        Object[] params = new Object[]{vehicleId, powerTime};
-
-        return jdbcTemplate.queryForObject(sql,
-                (rs, rowNum) -> new PowerLogData(
-                        rs.getLong("vehicle_id"),
-                        rs.getString("mdn"),
-                        rs.getBoolean("power_status"),
-                        rs.getTimestamp("power_time").toLocalDateTime(),
-                        GpsStatus.fromCode(rs.getString("gps_status")),
-                        rs.getDouble("latitude"),
-                        rs.getDouble("longitude"),
-                        rs.getInt("total_trip_meter")
-                ), params
-        );
-    }
-
-    public List<PowerLogData> findPowerLogsByVehicleIdAndPowerTime(Long vehicleId, LocalDateTime start) {
-        String sql =
-                "SELECT vehicle_id, mdn, power_status, power_time, gps_status, latitude, longitude, total_trip_meter "
-                        + "FROM power_log "
-                        + "WHERE vehicle_id = ? AND power_time >= ? "
-                        + "ORDER BY power_time "
-                        + "LIMIT 2";
-
-        Object[] params = new Object[]{vehicleId, start};
-
-        return jdbcTemplate.query(sql,
-                (rs, rowNum) -> new PowerLogData(
-                        rs.getLong("vehicle_id"),
-                        rs.getString("mdn"),
-                        rs.getBoolean("power_status"),
-                        rs.getTimestamp("power_time").toLocalDateTime(),
-                        GpsStatus.fromCode(rs.getString("gps_status")),
-                        rs.getDouble("latitude"),
-                        rs.getDouble("longitude"),
-                        rs.getInt("total_trip_meter")
-                ), params
-        );
     }
 
     public Map<Long, GpsLogData> findCurrentGpsByVehicleIds(List<Long> vehicleIds) {

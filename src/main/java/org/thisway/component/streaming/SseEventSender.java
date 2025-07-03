@@ -14,7 +14,7 @@ public class SseEventSender {
 
     private final SseConnection sseConnection;
 
-    public <T> void send(SseEmitter emitter, String eventName, T data) {
+    public void send(SseEmitter emitter, String eventName, Object data) {
         try {
             emitter.send(SseEmitter.event()
                     .name(eventName)
@@ -25,13 +25,21 @@ public class SseEventSender {
         }
     }
 
-    public <T> void sendToPrefix(String prefix, String eventName, T data) {
+    public void sendToPrefix(String prefix, String eventName, Object data) {
         Set<String> keys = sseConnection.findKeysByPrefix(prefix);
 
         for (String key : keys) {
-            sseConnection.get(key).ifPresent(
-                            emitter -> send(emitter, eventName, data)
-            );
+            sendLiveDataWithBuffering(key, eventName, data);
         }
+    }
+
+    public void sendLiveDataWithBuffering(String key, String eventName, Object data) {
+        sseConnection.getContext(key).ifPresent(context -> {
+            if (context.initialChunkCompleted.get()) {
+                send(context.emitter, eventName, data);
+            } else {
+                context.bufferedLiveData.add(data);
+            }
+        });
     }
 }
