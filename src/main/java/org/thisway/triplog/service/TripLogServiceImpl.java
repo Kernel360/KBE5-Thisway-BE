@@ -11,7 +11,7 @@ import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.service.LogService;
 import org.thisway.triplog.converter.ReverseGeocodingConverter;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
-import org.thisway.triplog.dto.CurrentGpsLog;
+import org.thisway.triplog.dto.CoordinatesInfo;
 import org.thisway.triplog.dto.ReverseGeocodeResult;
 import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
@@ -24,6 +24,7 @@ import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -72,13 +73,13 @@ public class TripLogServiceImpl implements TripLogService {
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
         if (vehicleService.getVehicleById(vehicleId).isPowerOn()) {
-            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now());
-            List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
-                    .map(CurrentGpsLog::from)
+            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+            List<CoordinatesInfo> coordinatesInfos = gpsLogs.stream()
+                    .map(CoordinatesInfo::from)
                     .toList();
 
             if (!gpsLogs.isEmpty()) {
-                return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
+                return CurrentTripLogResponse.from(gpsLogs.getLast(), coordinatesInfos);
             } else {
                 return null;
             }
@@ -102,7 +103,7 @@ public class TripLogServiceImpl implements TripLogService {
         return TripLogDetailResponse.from(
                 tripLog.getVehicle(),
                 tripLog,
-                gpsLogs.stream().map(CurrentGpsLog::from).toList(),
+                gpsLogs.stream().map(CoordinatesInfo::from).toList(),
                 gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
         );
     }
