@@ -2,11 +2,7 @@ package org.thisway.config.ampq;
 
 import java.util.List;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,6 +18,8 @@ public class RabbitMQConfig {
     public static final String GPS_LOG_QUEUE = "gps_log.queue";
     public static final String GPS_LOG_EXCHANGE = "gps_log.exchange";
     public static final String GPS_LOG_ROUTING_KEY = "gps_log.routingKey";
+
+    public static final String BROADCAST_GPS_LOG_EXCHANGE = "gps_log.broadcast.exchange";
 
     // @Bean
     // public TaskExecutor publisherTaskExecutor() {
@@ -42,6 +40,7 @@ public class RabbitMQConfig {
     // }
     // }
 
+    /* Direct Exchange */
     @Bean
     public Queue gpsLogQueue() {
         return new Queue(GPS_LOG_QUEUE);
@@ -60,6 +59,25 @@ public class RabbitMQConfig {
                 .with(GPS_LOG_ROUTING_KEY);
     }
 
+    /* Fanout Exchange */
+    @Bean
+    public FanoutExchange broadcastExchange() {
+        return new FanoutExchange(BROADCAST_GPS_LOG_EXCHANGE);
+    }
+
+    @Bean
+    public Queue broadcastQueue() {
+        return new AnonymousQueue();
+    }
+
+    @Bean
+    public Binding broadcastBinding() {
+        return BindingBuilder
+                .bind(broadcastQueue())
+                .to(broadcastExchange());
+    }
+
+    /* 공통 */
     @Bean
     public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();

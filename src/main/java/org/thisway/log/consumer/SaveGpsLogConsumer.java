@@ -18,7 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "gps-log-collect-mode", havingValue = "rabbitmq")
 @Slf4j
-public class GpsLogConsumer {
+public class SaveGpsLogConsumer {
 
     private final GpsLogSaveService gpsLogSaveService;
 
