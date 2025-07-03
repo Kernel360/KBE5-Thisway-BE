@@ -1,6 +1,6 @@
 package org.thisway.triplog.dto.response;
 
-import org.thisway.triplog.dto.CurrentGpsLog;
+import org.thisway.triplog.dto.CoordinatesInfo;
 import org.thisway.triplog.entity.TripLog;
 import org.thisway.vehicle.entity.Vehicle;
 
@@ -16,12 +16,12 @@ public record TripLogDetailResponse(
         Double avgSpeed,
         String onAddress,
         String offAddress,
-        List<CurrentGpsLog> gpsLogs
+        List<CoordinatesInfo> gpsLogs
 ) {
     public static TripLogDetailResponse from (
             Vehicle vehicle,
             TripLog tripLog,
-            List<CurrentGpsLog> gpsLogs,
+            List<CoordinatesInfo> gpsLogs,
             Double avgSpeed
     ) {
         return new TripLogDetailResponse(
