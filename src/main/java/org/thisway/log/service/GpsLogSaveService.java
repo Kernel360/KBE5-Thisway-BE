@@ -1,8 +1,5 @@
 package org.thisway.log.service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +12,10 @@ import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.dto.request.gpsLog.GpsLogRequest;
 import org.thisway.log.repository.LogRepository;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +75,7 @@ public class GpsLogSaveService {
 
     private Long getVehicleIdByMdn(String mdn) {
         Emulator emulator = emulatorRepository.findByMdn(mdn)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND, "mdn: %s".formatted(mdn)));
         return emulator.getVehicle().getId();
     }
 }
