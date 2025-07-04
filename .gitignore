@@ -1,5 +1,4 @@
 ### custom ###
-src/main/**/application.yml
 src/main/**/db-environment.yml
 gradle.properties
 build.local.gradle
