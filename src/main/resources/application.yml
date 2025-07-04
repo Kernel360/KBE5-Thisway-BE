@@ -1,0 +1,7 @@
+spring.application.name: thisway
+
+spring:
+  profiles:
+    active:
+      - ${SPRING_PROFILES_ACTIVE:dev}
+
