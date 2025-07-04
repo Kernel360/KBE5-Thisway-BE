@@ -11,7 +11,9 @@ public class LoggingExcludeUrls {
 
     public static final Set<String> EXACT_PATHS = Set.of(
             "/actuator/prometheus",
-            "/actuator/health"
+            "/actuator/health",
+            "/api/health"
+
     );
 
     public static final List<String> PREFIX_PATHS = List.of(

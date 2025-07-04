@@ -11,7 +11,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
     open-in-view: true
 
   application:
@@ -23,14 +22,14 @@ spring:
       port: ${REDIS_PORT}
 
   rabbitmq:
-    host: ${RABBITMQ_HOST}
+    host: localhost
     port: 5672
-    username: ${RABBITMQ_USER}
-    password: ${RABBITMQ_PW}
+    username: guest
+    password: guest
 
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
@@ -40,19 +39,23 @@ spring:
           starttls:
             enable: true
 
+  output:
+    ansi:
+      enabled: always
+
   security:
     debug: true
 
 custom:
   verification-code-expiration-millis: 600000
-  verification-code-key-prefix: ${CUSTOM_VERIFICATION_CODE_KEY_PREFIX}
+  verification-code-key-prefix: ${CUSTOM_VERIFICATION_CODE_KEY_PREFIX:"verify:email:"}
 
 security:
   jwt:
     secret-key: ${JWT_SECRET_KEY}
-    access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS}
+    access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS:86400000}
 
-gps-log-collect-mode: ${GPS_LOG_COLLECT_MODE}
+gps-log-collect-mode: ${GPS_LOG_COLLECT_MODE:direct}
 
 kakao:
   rest-api-key: ${REST_API_KEY}
@@ -67,3 +70,4 @@ management:
   endpoint:
     health:
       show-details: always
+
