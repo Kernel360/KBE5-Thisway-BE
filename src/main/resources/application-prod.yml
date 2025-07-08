@@ -1,0 +1,69 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+    open-in-view: true
+
+  application:
+    name: thisway
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: 5672
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PW}
+
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    debug: true
+
+custom:
+  verification-code-expiration-millis: 600000
+  verification-code-key-prefix: ${CUSTOM_VERIFICATION_CODE_KEY_PREFIX}
+
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+    access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS}
+
+gps-log-collect-mode: ${GPS_LOG_COLLECT_MODE}
+
+kakao:
+  rest-api-key: ${REST_API_KEY}
+
+management:
+  endpoints:
+    web:
+      exclude: "env,beans,metrics,threaddump"
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always

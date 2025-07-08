@@ -12,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.thisway.logging.filter.LoggingFilter;
 import org.thisway.security.config.policy.RequestAuthorizationPolicy;
 import org.thisway.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.security.filter.JsonAuthenticationFilter;
@@ -26,7 +27,8 @@ public class SecurityConfig {
             GlobalExceptionHandlerFilter globalExceptionHandlerFilter,
             JsonAuthenticationFilter jsonAuthenticationFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            RequestAuthorizationPolicy requestAuthorizationPolicy
+            RequestAuthorizationPolicy requestAuthorizationPolicy,
+            LoggingFilter loggingFilter
     ) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
@@ -37,6 +39,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS))
 
+                .addFilterBefore(loggingFilter,
+                        SecurityContextHolderFilter.class)
                 .addFilterBefore(globalExceptionHandlerFilter,
                         SecurityContextHolderFilter.class)
                 .addFilterAt(jsonAuthenticationFilter,

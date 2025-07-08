@@ -22,7 +22,7 @@ public class SaveGpsLogConsumer {
 
     private final GpsLogSaveService gpsLogSaveService;
 
-    @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "5")
+    @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5")
     public void receiveGpsLog(GpsLogRequest request, @Headers Map<String, Object> headers) {
         String traceId = (String) headers.get(MdcKeys.TRACE_ID);
         MDC.put(MdcKeys.TRACE_ID, traceId);
