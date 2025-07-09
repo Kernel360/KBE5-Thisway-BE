@@ -67,6 +67,8 @@ public class GpsLogSaveService {
             gpsLogDataList.add(gpsLogData);
         }
 
+        logRepository.saveGpsLogs(gpsLogDataList);
+
         log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogDataList.size());
     }
 
