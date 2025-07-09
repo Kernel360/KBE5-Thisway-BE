@@ -1,7 +1,5 @@
 package org.thisway.config.ampq;
 
-import java.util.List;
-
 import org.springframework.amqp.core.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,24 +28,6 @@ public class RabbitMQConfig {
 
     public static final String BROADCAST_GPS_LOG_EXCHANGE = "gps_log.broadcast.exchange";
 
-    // @Bean
-    // public TaskExecutor publisherTaskExecutor() {
-    // ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    // executor.setCorePoolSize(10); // 원하는 퍼블리셔 수
-    // executor.setMaxPoolSize(50);
-    // executor.initialize();
-    // return executor;
-    // }
-    //
-    // public void publishConcurrently(
-    // List<Message> messages,
-    // RabbitTemplate amqpTemplate) {
-    // for (Message msg : messages) {
-    // publisherTaskExecutor().execute(() -> {
-    // amqpTemplate.convertAndSend(GPS_LOG_ROUTING_KEY, msg);
-    // });
-    // }
-    // }
     private final RabbitMqGlobalErrorHandler rabbitMqGlobalErrorHandler;
 
     /* Direct Exchange */
