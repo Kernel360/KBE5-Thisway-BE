@@ -1,4 +1,4 @@
-package org.thisway.emulator.entity;
+package org.thisway.emulator.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.thisway.component.streaming.SseConnection;
 import org.thisway.component.streaming.SseEventSender;
-import org.thisway.emulator.service.EmulatorService;
+import org.thisway.emulator.application.EmulatorService;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.dto.request.gpsLog.GpsLogEntry;
 import org.thisway.log.service.LogService;

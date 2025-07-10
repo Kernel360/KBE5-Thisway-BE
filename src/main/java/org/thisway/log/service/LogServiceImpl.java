@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.emulator.entity.Emulator;
-import org.thisway.emulator.repository.EmulatorRepository;
+import org.thisway.emulator.domain.Emulator;
+import org.thisway.emulator.interfaces.EmulatorRepository;
 import org.thisway.log.converter.LogDataConverter;
 import org.thisway.log.domain.GeofenceLogData;
 import org.thisway.log.domain.GpsLogData;
@@ -76,7 +76,7 @@ public class LogServiceImpl implements LogService {
         }
 
         tripLogService.saveTripLog(
-                    TripLogSaveInput.from(vehicle, request, converter)
+                TripLogSaveInput.from(vehicle, request, converter)
         );
         log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
                 request.mdn(), request.onTime(), request.offTime());

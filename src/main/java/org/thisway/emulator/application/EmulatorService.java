@@ -1,4 +1,4 @@
-package org.thisway.emulator.service;
+package org.thisway.emulator.application;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,12 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.emulator.entity.Emulator;
-import org.thisway.emulator.repository.EmulatorRepository;
-import org.thisway.emulator.service.dto.input.EmulatorCreateInput;
-import org.thisway.emulator.service.dto.input.EmulatorUpdateInput;
-import org.thisway.emulator.service.dto.output.EmulatorOutput;
-import org.thisway.emulator.service.dto.output.EmulatorsOutput;
+import org.thisway.emulator.domain.Emulator;
+import org.thisway.emulator.interfaces.EmulatorRepository;
 import org.thisway.vehicle.dto.VehicleReference;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.repository.VehicleRepository;
