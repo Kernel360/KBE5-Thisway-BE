@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository
+        extends JpaRepository<Member, Long>, MemberQueryRepository {
 
     Optional<Member> findByIdAndActiveTrue(Long id);
 
@@ -17,8 +18,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByEmail(String email);
 
     Page<Member> findAllByActiveTrueAndRoleIn(Set<MemberRole> role, Pageable pageable);
-
-    Page<Member> findAllByActiveTrueAndRoleInAndCompanyId(Set<MemberRole> roles, long companyId, Pageable pageable);
 
     long countByActiveTrueAndCompanyIdAndRole(long company, MemberRole role);
 }

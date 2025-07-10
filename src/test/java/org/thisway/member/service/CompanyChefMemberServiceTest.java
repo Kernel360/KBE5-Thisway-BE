@@ -24,6 +24,7 @@ import org.thisway.company.entity.Company;
 import org.thisway.company.repository.CompanyRepository;
 import org.thisway.company.support.CompanyFixture;
 import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
+import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
 import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
 import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
 import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
@@ -154,7 +155,10 @@ class CompanyChefMemberServiceTest {
 
         // when
         Pageable pageable = PageRequest.of(0, 10);
-        CompanyChefMembersOutput result = companyChefMemberService.getMembers(pageable);
+        var criteria = CompanyChefMemberSearchCriteria.builder()
+            .memberName(null)
+            .build();
+        CompanyChefMembersOutput result = companyChefMemberService.getMembers(pageable, criteria);
 
         // then
         assertThat(result.pageInfo().numberOfElements()).isEqualTo(1);
