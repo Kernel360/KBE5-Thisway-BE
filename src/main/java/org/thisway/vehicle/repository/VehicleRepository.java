@@ -3,7 +3,7 @@ package org.thisway.vehicle.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.thisway.company.entity.Company;
+import org.thisway.company.domain.Company;
 import org.thisway.vehicle.entity.Vehicle;
 
 import java.util.Optional;
