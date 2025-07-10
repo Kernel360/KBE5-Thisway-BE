@@ -12,6 +12,7 @@ build/
 !**/src/test/**/build/
 
 .env
+http-test/
 
 ### STS ###
 .apt_generated
