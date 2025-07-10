@@ -14,6 +14,10 @@ import org.thisway.member.entity.QMember;
 import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -38,21 +42,33 @@ public class MemberQueryRepositoryImpl implements MemberQueryRepository {
                 .and(m.role.in(role));
 
         String memberName = criteria.memberName();
-        if (StringUtils.hasText(memberName)) 
+        if (StringUtils.hasText(memberName))
             builder.and(m.name.containsIgnoreCase(memberName.trim()));
 
-        List<Member> content = queryFactory
-            .selectFrom(m)
-            .where(builder)
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
+        JPAQuery<Member> query =  queryFactory
+                .selectFrom(m)
+                .where(builder);
+
+        pageable.getSort().forEach(order -> {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            PathBuilder<Member> path = new PathBuilder<>(Member.class, m.getMetadata());
+            OrderSpecifier<String> spec = new OrderSpecifier<>(
+                    direction,
+                    path.get(order.getProperty(), String.class)
+            );
+            query.orderBy(spec);
+        });
+
+        List<Member> content = query
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
         long total = queryFactory
-            .select(m.count())
-            .from(m)
-            .where(builder)
-            .fetchOne();
+                .select(m.count())
+                .from(m)
+                .where(builder)
+                .fetchOne();
 
         return new PageImpl<>(content, pageable, total);
     }

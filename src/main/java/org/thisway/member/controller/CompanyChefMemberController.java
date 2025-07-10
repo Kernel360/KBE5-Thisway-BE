@@ -1,6 +1,7 @@
 package org.thisway.member.controller;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,10 @@ public class CompanyChefMemberController {
     @GetMapping
     public ResponseEntity<CompanyChefMembersResponse> getMembers(
             @ModelAttribute CompanyChefMemberSearchRequest search,
-            @PageableDefault Pageable pageable
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         CompanyChefMembersResponse response = CompanyChefMembersResponse.from(
                 companyChefMemberService.getMembers(pageable, search.toCriteria()));
