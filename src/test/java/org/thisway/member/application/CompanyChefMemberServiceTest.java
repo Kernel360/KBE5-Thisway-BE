@@ -22,8 +22,8 @@ import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
 import org.thisway.member.infrastructure.MemberRepository;
 import org.thisway.member.domain.MemberFixture;
-import org.thisway.security.dto.request.MemberDetails;
-import org.thisway.security.service.SecurityService;
+import org.thisway.support.security.dto.request.MemberDetails;
+import org.thisway.support.security.service.SecurityService;
 
 import java.util.List;
 

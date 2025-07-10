@@ -12,7 +12,7 @@ import org.thisway.company.domain.Company;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
 import org.thisway.member.infrastructure.MemberRepository;
-import org.thisway.security.service.SecurityService;
+import org.thisway.support.security.service.SecurityService;
 
 import java.util.Set;
 
