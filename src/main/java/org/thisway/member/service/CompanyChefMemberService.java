@@ -1,7 +1,7 @@
 package org.thisway.member.service;
 
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,15 +10,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.company.entity.Company;
-import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
-import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
-import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
-import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
-import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
+import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
+import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
+import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
+import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
+import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 import org.thisway.security.service.SecurityService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -48,11 +51,16 @@ public class CompanyChefMemberService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyChefMembersOutput getMembers(Pageable pageable) {
+    public CompanyChefMembersOutput getMembers(
+            Pageable pageable,
+            CompanyChefMemberSearchCriteria criteria
+    ) {
         long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
-        Page<Member> members = memberRepository.findAllByActiveTrueAndRoleInAndCompanyId(
-                COMPANY_CHEF_ACCESS_AUTHORITIES, authenticatedMemberCompanyId, pageable
-        );
+        Page<Member> members = memberRepository.searchActiveMembers(
+                COMPANY_CHEF_ACCESS_AUTHORITIES,
+                authenticatedMemberCompanyId,
+                criteria,
+                pageable);
 
         return CompanyChefMembersOutput.from(members);
     }

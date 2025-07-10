@@ -11,9 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,16 +23,21 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thisway.common.PageInfo;
-import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
-import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
 import org.thisway.member.controller.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.controller.dto.request.CompanyChefMemberUpdateRequest;
 import org.thisway.member.controller.dto.response.CompanyChefMemberDetailResponse;
-import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 import org.thisway.member.controller.dto.response.CompanyChefMemberSummaryResponse;
 import org.thisway.member.controller.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.service.CompanyChefMemberService;
+import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
+import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
+import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
+import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -105,7 +109,10 @@ class CompanyChefMemberControllerTest {
                 pageInfo
         );
 
-        given(companyChefMemberService.getMembers(any()))
+        given(companyChefMemberService.getMembers(
+            any(),
+            any(CompanyChefMemberSearchCriteria.class)
+        ))
                 .willReturn(adminMembersOutput);
 
         // when
