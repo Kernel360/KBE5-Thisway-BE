@@ -1,4 +1,4 @@
-package org.thisway.company.intrastructure;
+package org.thisway.company.infrastructure;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

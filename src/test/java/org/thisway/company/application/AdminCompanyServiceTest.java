@@ -8,7 +8,7 @@ import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 import org.thisway.company.domain.Company;
 import org.thisway.company.domain.CompanyFixture;
-import org.thisway.company.intrastructure.CompanyRepository;
+import org.thisway.company.infrastructure.CompanyRepository;
 
 import java.util.List;
 import java.util.Optional;
