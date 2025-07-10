@@ -1,10 +1,5 @@
 package org.thisway.member.service;
 
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.BDDMockito.given;
-
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,21 +15,27 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.entity.Company;
-import org.thisway.company.repository.CompanyRepository;
-import org.thisway.company.support.CompanyFixture;
-import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
-import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
-import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
-import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
-import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
-import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
+import org.thisway.company.domain.Company;
+import org.thisway.company.domain.CompanyFixture;
+import org.thisway.company.intrastructure.CompanyRepository;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.service.dto.CompanyChefMemberSearchCriteria;
+import org.thisway.member.service.dto.input.CompanyChefMemberRegisterInput;
+import org.thisway.member.service.dto.input.CompanyChefMemberUpdateInput;
+import org.thisway.member.service.dto.output.CompanyChefMemberDetailOutput;
+import org.thisway.member.service.dto.output.CompanyChefMemberSummaryOutput;
+import org.thisway.member.service.dto.output.CompanyChefMembersOutput;
 import org.thisway.member.support.MemberFixture;
 import org.thisway.security.dto.request.MemberDetails;
 import org.thisway.security.service.SecurityService;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @RequiredArgsConstructor
@@ -156,8 +157,8 @@ class CompanyChefMemberServiceTest {
         // when
         Pageable pageable = PageRequest.of(0, 10);
         var criteria = CompanyChefMemberSearchCriteria.builder()
-            .memberName(null)
-            .build();
+                .memberName(null)
+                .build();
         CompanyChefMembersOutput result = companyChefMemberService.getMembers(pageable, criteria);
 
         // then

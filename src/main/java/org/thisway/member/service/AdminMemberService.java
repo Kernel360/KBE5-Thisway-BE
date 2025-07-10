@@ -1,6 +1,5 @@
 package org.thisway.member.service;
 
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,15 +8,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.entity.Company;
-import org.thisway.company.repository.CompanyRepository;
+import org.thisway.company.domain.Company;
+import org.thisway.company.intrastructure.CompanyRepository;
+import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
+import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.service.dto.input.AdminMemberRegisterInput;
 import org.thisway.member.service.dto.input.AdminMemberUpdateInput;
 import org.thisway.member.service.dto.output.AdminMemberDetailOutput;
 import org.thisway.member.service.dto.output.AdminMembersOutput;
-import org.thisway.member.entity.Member;
-import org.thisway.member.entity.MemberRole;
-import org.thisway.member.repository.MemberRepository;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor

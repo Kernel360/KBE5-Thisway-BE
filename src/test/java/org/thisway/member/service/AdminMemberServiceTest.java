@@ -1,8 +1,5 @@
 package org.thisway.member.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,17 +13,20 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.entity.Company;
-import org.thisway.company.repository.CompanyRepository;
-import org.thisway.company.support.CompanyFixture;
+import org.thisway.company.domain.Company;
+import org.thisway.company.domain.CompanyFixture;
+import org.thisway.company.intrastructure.CompanyRepository;
+import org.thisway.member.entity.Member;
+import org.thisway.member.entity.MemberRole;
+import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.service.dto.input.AdminMemberRegisterInput;
 import org.thisway.member.service.dto.input.AdminMemberUpdateInput;
 import org.thisway.member.service.dto.output.AdminMemberDetailOutput;
 import org.thisway.member.service.dto.output.AdminMembersOutput;
-import org.thisway.member.entity.Member;
-import org.thisway.member.entity.MemberRole;
-import org.thisway.member.repository.MemberRepository;
 import org.thisway.member.support.MemberFixture;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @RequiredArgsConstructor

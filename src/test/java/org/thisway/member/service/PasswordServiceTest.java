@@ -1,13 +1,5 @@
 package org.thisway.member.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-import static org.thisway.company.support.CompanyFixture.createCompany;
-
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,14 +11,22 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.company.entity.Company;
-import org.thisway.company.repository.CompanyRepository;
+import org.thisway.company.domain.Company;
+import org.thisway.company.intrastructure.CompanyRepository;
 import org.thisway.component.EmailComponent;
 import org.thisway.component.RedisComponent;
-import org.thisway.member.service.dto.VerificationPayload;
 import org.thisway.member.entity.Member;
 import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.service.dto.VerificationPayload;
 import org.thisway.member.support.MemberFixture;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.thisway.company.domain.CompanyFixture.createCompany;
 
 @SpringBootTest
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)

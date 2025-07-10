@@ -1,6 +1,6 @@
 package org.thisway.member.support;
 
-import org.thisway.company.entity.Company;
+import org.thisway.company.domain.Company;
 import org.thisway.member.entity.Member;
 import org.thisway.member.entity.MemberRole;
 

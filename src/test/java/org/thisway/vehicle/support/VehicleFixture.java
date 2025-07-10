@@ -1,6 +1,6 @@
 package org.thisway.vehicle.support;
 
-import org.thisway.company.entity.Company;
+import org.thisway.company.domain.Company;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.entity.VehicleModel;
 

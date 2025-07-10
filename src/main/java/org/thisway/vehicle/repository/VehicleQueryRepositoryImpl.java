@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
-import org.thisway.company.entity.Company;
+import org.thisway.company.domain.Company;
 import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.entity.QVehicle;
 import org.thisway.vehicle.entity.Vehicle;
