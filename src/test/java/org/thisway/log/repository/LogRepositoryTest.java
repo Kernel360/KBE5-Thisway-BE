@@ -32,7 +32,7 @@ public class LogRepositoryTest {
 
     @Test
     @DisplayName("GPS 로그 저장 테스트")
-    void GPS_로그_배치_저장_테스트() {
+    void GPS_로그_벌크_저장_테스트() {
         List<GpsLogData> gpsLogDataList = Arrays.asList(
                 new GpsLogData(
                         VEHICLE_ID,
@@ -61,7 +61,7 @@ public class LogRepositoryTest {
         );
 
         logRepository.saveGpsLogs(gpsLogDataList);
-        verify(jdbcTemplate).batchUpdate(anyString(), anyList());
+        verify(jdbcTemplate).update(anyString(), any(Object[].class));
     }
 
     @Test
