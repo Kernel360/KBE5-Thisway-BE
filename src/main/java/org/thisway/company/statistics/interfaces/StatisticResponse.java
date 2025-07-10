@@ -2,7 +2,7 @@ package org.thisway.company.statistics.interfaces;
 
 import org.thisway.company.statistics.StatisticConstants;
 import org.thisway.company.statistics.domain.Statistics;
-import org.thisway.triplog.dto.TripLocationStats;
+import org.thisway.vehicle.triplog.domain.TripLocationStats;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;

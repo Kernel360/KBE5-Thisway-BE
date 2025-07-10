@@ -9,10 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
 import org.thisway.emulator.domain.Emulator;
-import org.thisway.emulator.interfaces.EmulatorRepository;
-import org.thisway.vehicle.dto.VehicleReference;
-import org.thisway.vehicle.entity.Vehicle;
-import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.emulator.infrastructure.EmulatorRepository;
+import org.thisway.vehicle.domain.VehicleReference;
+import org.thisway.vehicle.domain.Vehicle;
+import org.thisway.vehicle.infrastructure.VehicleRepository;
 
 @Slf4j
 @Service

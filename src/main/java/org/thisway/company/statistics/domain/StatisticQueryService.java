@@ -7,9 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.company.statistics.StatisticConstants;
 import org.thisway.company.statistics.infrastructure.StatisticsRepository;
 import org.thisway.company.statistics.interfaces.StatisticResponse;
-import org.thisway.triplog.dto.TripLocationRaw;
-import org.thisway.triplog.dto.TripLocationStats;
-import org.thisway.triplog.repository.TripLogRepository;
+import org.thisway.vehicle.triplog.domain.TripLocationRaw;
+import org.thisway.vehicle.triplog.domain.TripLocationStats;
+import org.thisway.vehicle.triplog.infrastructure.TripLogRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
