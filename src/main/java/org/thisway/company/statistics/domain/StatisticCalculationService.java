@@ -1,19 +1,19 @@
 package org.thisway.company.statistics.domain;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.log.repository.LogRepository;
 import org.thisway.company.statistics.StatisticConstants;
-import org.thisway.triplog.entity.TripLog;
-import org.thisway.triplog.repository.TripLogRepository;
-import org.thisway.vehicle.repository.VehicleRepository;
+import org.thisway.vehicle.infrastructure.VehicleRepository;
+import org.thisway.vehicle.log.infrastructure.LogRepository;
+import org.thisway.vehicle.triplog.domain.TripLog;
+import org.thisway.vehicle.triplog.infrastructure.TripLogRepository;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
