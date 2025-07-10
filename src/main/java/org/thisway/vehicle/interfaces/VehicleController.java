@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
-import org.thisway.security.dto.request.MemberDetails;
-import org.thisway.security.utils.JwtTokenUtil;
+import org.thisway.support.security.dto.request.MemberDetails;
+import org.thisway.support.security.utils.JwtTokenUtil;
 import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
 import org.thisway.vehicle.application.VehicleService;
 

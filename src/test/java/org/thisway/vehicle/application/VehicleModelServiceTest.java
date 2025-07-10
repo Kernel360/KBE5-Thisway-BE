@@ -11,7 +11,7 @@ import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
-import org.thisway.security.service.SecurityService;
+import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.vehicle_model.application.VehicleModelService;
 import org.thisway.vehicle.vehicle_model.domain.VehicleModel;
 import org.thisway.vehicle.vehicle_model.interfaces.VehicleModelCreateRequest;

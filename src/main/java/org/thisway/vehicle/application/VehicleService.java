@@ -11,7 +11,7 @@ import org.thisway.company.domain.Company;
 import org.thisway.company.infrastructure.CompanyRepository;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
-import org.thisway.security.service.SecurityService;
+import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.domain.Vehicle;
 import org.thisway.vehicle.interfaces.*;
 import org.thisway.vehicle.domain.VehicleTrackClient;
