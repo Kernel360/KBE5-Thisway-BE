@@ -1,6 +1,5 @@
 package org.thisway.member.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -8,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thisway.member.controller.dto.request.CompanyChefMemberRegisterRequest;
 import org.thisway.member.controller.dto.request.CompanyChefMemberUpdateRequest;
+import org.thisway.member.controller.dto.request.CompanyChefMemberSearchRequest;
 import org.thisway.member.controller.dto.response.CompanyChefMemberDetailResponse;
 import org.thisway.member.controller.dto.response.CompanyChefMemberSummaryResponse;
 import org.thisway.member.controller.dto.response.CompanyChefMembersResponse;
 import org.thisway.member.service.CompanyChefMemberService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/company-chef/members")
@@ -40,11 +43,11 @@ public class CompanyChefMemberController {
 
     @GetMapping
     public ResponseEntity<CompanyChefMembersResponse> getMembers(
+            @ModelAttribute CompanyChefMemberSearchRequest search,
             @PageableDefault Pageable pageable
     ) {
         CompanyChefMembersResponse response = CompanyChefMembersResponse.from(
-                companyChefMemberService.getMembers(pageable)
-        );
+                companyChefMemberService.getMembers(pageable, search.toCriteria()));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
