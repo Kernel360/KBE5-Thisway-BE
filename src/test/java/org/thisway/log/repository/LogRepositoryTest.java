@@ -61,7 +61,7 @@ public class LogRepositoryTest {
         );
 
         logRepository.saveGpsLogs(gpsLogDataList);
-        verify(jdbcTemplate).batchUpdate(anyString(), anyList());
+        verify(jdbcTemplate).update(anyString(), any(Object[].class));
     }
 
     @Test
