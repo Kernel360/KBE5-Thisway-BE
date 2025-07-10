@@ -6,7 +6,11 @@ import org.thisway.company.entity.Company;
 import org.thisway.vehicle.dto.request.VehicleSearchRequest;
 import org.thisway.vehicle.entity.Vehicle;
 
+import java.util.List;
+
 public interface VehicleQueryRepository {
 
     Page<Vehicle> searchActiveVehicles(Company company, VehicleSearchRequest request, Pageable pageable);
+
+    List<Vehicle> getAllDrivingVehicles(Long companyId);
 }

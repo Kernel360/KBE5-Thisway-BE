@@ -11,4 +11,5 @@ public record GpsLogEntry(
         String sum,
         String bat
 ) {
+
 }

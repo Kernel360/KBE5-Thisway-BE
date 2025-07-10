@@ -5,6 +5,10 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: ${DB_DRIVER_CLASS_NAME}
 
+  batch:
+    jdbc:
+      initialize-schema: never
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -12,7 +16,7 @@ spring:
       hibernate:
         format_sql: true
 
-    open-in-view: true
+    open-in-view: false
 
   application:
     name: thisway

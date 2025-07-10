@@ -60,4 +60,12 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("""
+        SELECT t.startTime FROM TripLog t
+        WHERE t.vehicle.id = :vehicleId AND t.active = false
+        ORDER BY t.startTime DESC
+        LIMIT 1
+    """)
+    LocalDateTime findTop1StartTimeByVehicleId(@Param("vehicleId") Long vehicleId);
 }

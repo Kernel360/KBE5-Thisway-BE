@@ -10,8 +10,8 @@ import org.thisway.common.ErrorCode;
 import org.thisway.log.domain.GpsLogData;
 import org.thisway.log.service.LogService;
 import org.thisway.triplog.converter.ReverseGeocodingConverter;
+import org.thisway.triplog.dto.CoordinatesInfo;
 import org.thisway.triplog.dto.CurrentDrivingInfo;
-import org.thisway.triplog.dto.CurrentGpsLog;
 import org.thisway.triplog.dto.ReverseGeocodeResult;
 import org.thisway.triplog.dto.TripLogSaveInput;
 import org.thisway.triplog.dto.response.CurrentTripLogResponse;
@@ -24,7 +24,8 @@ import org.thisway.vehicle.dto.response.VehicleResponse;
 import org.thisway.vehicle.service.VehicleService;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.time.ZoneId;
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -71,14 +72,11 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
-        if (vehicleService.getVehicleById(vehicleId).isPowerOn()) {
-            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now());
-            List<CurrentGpsLog> currentGpsLogs = gpsLogs.stream()
-                    .map(CurrentGpsLog::from)
-                    .toList();
+        if (vehicleService.getVehiclePowerState(vehicleId)) {
+            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
 
             if (!gpsLogs.isEmpty()) {
-                return CurrentTripLogResponse.from(gpsLogs.getLast(), currentGpsLogs);
+                return CurrentTripLogResponse.from(gpsLogs);
             } else {
                 return null;
             }
@@ -95,19 +93,34 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    public TripLogDetailResponse getTripLogDetails(Long tripLogId) {
-        TripLog tripLog = tripLogRepository.findById(tripLogId).orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
+    public TripLogDetailResponse getTripLogDetails(Long tripId) {
+        TripLog tripLog = tripLogRepository.findById(tripId).orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         List<GpsLogData> gpsLogs = logService.findGpsLogs(tripLog.getVehicle().getId(), tripLog.getStartTime(), tripLog.getEndTime());
 
         return TripLogDetailResponse.from(
                 tripLog.getVehicle(),
                 tripLog,
-                gpsLogs.stream().map(CurrentGpsLog::from).toList(),
                 gpsLogs.stream().mapToInt(GpsLogData::speed).average().orElse(0)
         );
     }
+    @Override
+    public LocalDateTime getLastStartTimeByVehicle(Long vehicleId) {
+        return tripLogRepository.findTop1StartTimeByVehicleId(vehicleId);
+    }
 
     @Override
+    public List<CoordinatesInfo> getGpsLogsInTripLog(Long tripId) {
+        TripLog tripLog = tripLogRepository.findById(tripId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
+        return logService.findGpsLogs(
+                tripLog.getVehicle().getId(),
+                tripLog.getStartTime(),
+                tripLog.getEndTime()
+        ).stream().map(CoordinatesInfo::from).toList();
+    }
+
+    @Override
+    @Transactional
     public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
         TripLog tripLog;
         ReverseGeocodeResult address = reverseGeocodingConverter.convertToAddress(tripLogSaveInput.latitude(), tripLogSaveInput.longitude());

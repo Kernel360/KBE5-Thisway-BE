@@ -14,6 +14,7 @@ import org.thisway.emulator.service.dto.input.EmulatorCreateInput;
 import org.thisway.emulator.service.dto.input.EmulatorUpdateInput;
 import org.thisway.emulator.service.dto.output.EmulatorOutput;
 import org.thisway.emulator.service.dto.output.EmulatorsOutput;
+import org.thisway.vehicle.dto.VehicleReference;
 import org.thisway.vehicle.entity.Vehicle;
 import org.thisway.vehicle.repository.VehicleRepository;
 
@@ -99,5 +100,11 @@ public class EmulatorService {
                 .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
 
         emulatorRepository.delete(emulator);
+    }
+
+    @Transactional(readOnly = true)
+    public VehicleReference getVehicleReferenceByMdn(String mdn) {
+        return emulatorRepository.findVehicleByMdn(mdn)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
     }
 }

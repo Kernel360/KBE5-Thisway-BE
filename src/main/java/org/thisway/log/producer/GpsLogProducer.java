@@ -25,7 +25,9 @@ public class GpsLogProducer {
     public void sendGpsLog(GpsLogRequest request) {
         log.debug("Sending GPS log to RabbitMQ: {}", request);
 
-        String traceId = tracer.currentSpan() != null ? tracer.currentSpan().context().traceId() : "unknown";
+        String traceId = tracer.currentSpan() != null
+                ? tracer.currentSpan().context().traceId()
+                : "unknown";
 
         MessageProperties messageProperties = new MessageProperties();
         messageProperties.setHeader(MdcKeys.TRACE_ID, traceId);
@@ -35,6 +37,12 @@ public class GpsLogProducer {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.GPS_LOG_EXCHANGE,
                 RabbitMQConfig.GPS_LOG_ROUTING_KEY,
+                message
+        );
+
+        rabbitTemplate.send(
+                RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE,
+                "",
                 message
         );
     }

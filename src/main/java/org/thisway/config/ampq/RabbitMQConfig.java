@@ -1,5 +1,6 @@
 package org.thisway.config.ampq;
 
+import org.springframework.amqp.core.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Binding;
@@ -25,8 +26,11 @@ public class RabbitMQConfig {
     public static final String GPS_LOG_EXCHANGE = "gps_log.exchange";
     public static final String GPS_LOG_ROUTING_KEY = "gps_log.routingKey";
 
+    public static final String BROADCAST_GPS_LOG_EXCHANGE = "gps_log.broadcast.exchange";
+
     private final RabbitMqGlobalErrorHandler rabbitMqGlobalErrorHandler;
 
+    /* Direct Exchange */
     @Bean
     public Queue gpsLogQueue() {
         return new Queue(GPS_LOG_QUEUE);
@@ -45,6 +49,25 @@ public class RabbitMQConfig {
                 .with(GPS_LOG_ROUTING_KEY);
     }
 
+    /* Fanout Exchange */
+    @Bean
+    public FanoutExchange broadcastExchange() {
+        return new FanoutExchange(BROADCAST_GPS_LOG_EXCHANGE);
+    }
+
+    @Bean
+    public Queue broadcastQueue() {
+        return new AnonymousQueue();
+    }
+
+    @Bean
+    public Binding broadcastBinding() {
+        return BindingBuilder
+                .bind(broadcastQueue())
+                .to(broadcastExchange());
+    }
+
+    /* 공통 */
     @Bean
     public Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
         return new Jackson2JsonMessageConverter();

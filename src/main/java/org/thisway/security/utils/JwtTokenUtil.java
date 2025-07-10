@@ -44,4 +44,23 @@ public class JwtTokenUtil {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
+    public boolean isValid(String token) {
+        if (token == null || token.isBlank()) return false;
+
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = validateTokenAndGetClaims(token);
+        return claims.getSubject();
+    }
 }
