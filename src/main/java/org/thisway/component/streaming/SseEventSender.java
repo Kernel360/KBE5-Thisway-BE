@@ -1,6 +1,7 @@
 package org.thisway.component.streaming;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.thisway.common.CustomException;
@@ -10,6 +11,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SseEventSender {
 
     private final SseConnection sseConnection;
@@ -27,10 +29,18 @@ public class SseEventSender {
 
     public void sendToPrefix(String prefix, String eventName, Object data) {
         Set<String> keys = sseConnection.findKeysByPrefix(prefix);
+        int failCount = 0;
 
         for (String key : keys) {
-            sendLiveDataWithBuffering(key, eventName, data);
+            try {
+                sendLiveDataWithBuffering(key, eventName, data);
+            } catch (Exception e) {
+                failCount++;
+                log.warn("SSE 전송 예외 발생 Key: {}, event: {}, error: {}", key, eventName, e.getMessage());
+            }
         }
+
+        log.info("SSE 전송 완료. 총 {}건 중 {}건 실패", keys.size(), failCount);
     }
 
     public void sendLiveDataWithBuffering(String key, String eventName, Object data) {

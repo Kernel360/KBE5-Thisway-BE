@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @Component
 public class SseConnection {
 
+    private final Long SSE_TIMEOUT = 30 * 60 * 1000L;
+
     public static class SseContext {
         final SseEmitter emitter;
         final LocalDateTime connectionTime;
@@ -33,13 +35,19 @@ public class SseConnection {
     private final Map<String, SseContext> emitters = new ConcurrentHashMap<>();
 
     public SseEmitter createSseEmitter(String key) {
-        SseEmitter sseEmitter = new SseEmitter(0L);
+        SseEmitter sseEmitter = new SseEmitter(SSE_TIMEOUT);
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         emitters.put(key, new SseContext(sseEmitter, now));
 
         sseEmitter.onCompletion(() -> emitters.remove(key));
-        sseEmitter.onTimeout(() -> emitters.remove(key));
-        sseEmitter.onError(e -> emitters.remove(key));
+        sseEmitter.onTimeout(() -> {
+            sseEmitter.complete();
+            emitters.remove(key);
+        });
+        sseEmitter.onError(e -> {
+            sseEmitter.complete();
+            emitters.remove(key);
+        });
 
         return sseEmitter;
     }

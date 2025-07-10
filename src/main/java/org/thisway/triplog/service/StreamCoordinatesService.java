@@ -36,8 +36,11 @@ public class StreamCoordinatesService {
     private final SseConnection sseConnection;
     private final SseEventSender sseEventSender;
 
+    private final Integer CHUNK_SIZE = 60;
+    private final Long SSE_CHUNK_TIMEOUT = 10 * 60 * 1000L;   // 10분으로 설정
+
     public SseEmitter createStreamForTripLog(Long tripId) {
-        SseEmitter emitter = new SseEmitter(0L);
+        SseEmitter emitter = new SseEmitter(SSE_CHUNK_TIMEOUT);
         List<CoordinatesInfo> allGpsLogsInTrip = tripLogService.getGpsLogsInTripLog(tripId);
         sendChunkedTripLog(emitter, allGpsLogsInTrip);
 
@@ -46,7 +49,7 @@ public class StreamCoordinatesService {
 
     @Async
     public void sendChunkedTripLog(SseEmitter emitter, List<CoordinatesInfo> allTripLogs) {
-        List<List<CoordinatesInfo>> chunkedData = chunk(allTripLogs, 60);
+        List<List<CoordinatesInfo>> chunkedData = chunk(allTripLogs, CHUNK_SIZE);
         for (List<CoordinatesInfo> chunk : chunkedData) {
             sseEventSender.send(emitter, "trip_record_chunk_stream", chunk);
         }
@@ -73,7 +76,7 @@ public class StreamCoordinatesService {
 
     @Async
     public void sendPastGpsLogForVehicle(String key, List<GpsLogData> gpsLogs, SseEmitter emitter) {
-        List<List<GpsLogData>> chunkedData = chunk(gpsLogs, 60);
+        List<List<GpsLogData>> chunkedData = chunk(gpsLogs, CHUNK_SIZE);
 
         for (List<GpsLogData> chunk : chunkedData) {
             sseEventSender.send(emitter, "past_gps_chunk_stream", CurrentTripLogResponse.from(chunk));
@@ -94,7 +97,7 @@ public class StreamCoordinatesService {
 
     @Async
     public void sendCurrentGpsLogForCompany(String key, List<VehicleTrackResponse> vehicleTracks, SseEmitter emitter) {
-        List<List<VehicleTrackResponse>> chunkedData = chunk(vehicleTracks, 60);
+        List<List<VehicleTrackResponse>> chunkedData = chunk(vehicleTracks, CHUNK_SIZE);
 
         for (List<VehicleTrackResponse> chunk : chunkedData) {
             sseEventSender.send(emitter, "current_dashboard_chunk_stream", chunk);
@@ -109,7 +112,7 @@ public class StreamCoordinatesService {
         sseEventSender.sendToPrefix(
                 getSseKeyToSend("vehicle", vehicle.id().toString()),
                 "vehicle_detail_gps_stream",
-                CurrentTripLogResponse.fromGPSLogEntry(gpsLogs, vehicle.id())
+                CurrentTripLogResponse.from(gpsLogs, vehicle.id())
         );
 
         sseEventSender.sendToPrefix(
@@ -117,10 +120,10 @@ public class StreamCoordinatesService {
                 "dashboard_gps_stream",
                 gpsLogs.stream()
                         .max(
-                                Comparator.comparing((GpsLogEntry e) -> Integer.parseInt(e.getMin()))
-                                        .thenComparing(e -> Integer.parseInt(e.getSec()))
+                                Comparator.comparing((GpsLogEntry e) -> Integer.parseInt(e.min()))
+                                        .thenComparing(e -> Integer.parseInt(e.sec()))
                         )
-                        .map(entry -> CoordinatesInfo.fromGpsEntry(entry, vehicle.id()))
+                        .map(entry -> CoordinatesInfo.from(entry, vehicle.id()))
                         .orElse(null)
         );
     }

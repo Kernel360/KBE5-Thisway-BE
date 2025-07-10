@@ -18,7 +18,7 @@ public record CoordinatesInfo(
         );
     }
 
-    public static CoordinatesInfo fromGpsEntry (GpsLogEntry gpsLogEntry, Long vehicleId) {
+    public static CoordinatesInfo from (GpsLogEntry gpsLogEntry, Long vehicleId) {
         return new CoordinatesInfo(
                 vehicleId,
                 Double.parseDouble(gpsLogEntry.lat()) / 1_000_000.0,

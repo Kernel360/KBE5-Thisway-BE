@@ -11,11 +11,5 @@ public record GpsLogEntry(
         String sum,
         String bat
 ) {
-    public String getSec() {
-        return sec;
-    }
 
-    public String getMin() {
-        return min;
-    }
 }

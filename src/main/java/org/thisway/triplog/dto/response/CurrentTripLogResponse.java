@@ -28,17 +28,17 @@ public record CurrentTripLogResponse (
         );
     }
 
-    public static CurrentTripLogResponse fromGPSLogEntry (List<GpsLogEntry> gpsLogEntries, Long vehicleId) {
+    public static CurrentTripLogResponse from (List<GpsLogEntry> gpsLogEntries, Long vehicleId) {
         return new CurrentTripLogResponse(
                 Integer.parseInt(gpsLogEntries.getLast().ang()),
                 Integer.parseInt(gpsLogEntries.getLast().spd()),
                 Integer.parseInt(gpsLogEntries.getLast().sum()),
                 gpsLogEntries.stream()
                         .sorted(
-                                Comparator.comparing((GpsLogEntry e) -> Integer.parseInt(e.getMin()))
-                                        .thenComparing(e -> Integer.parseInt(e.getSec()))
+                                Comparator.comparing((GpsLogEntry e) -> Integer.parseInt(e.min()))
+                                        .thenComparing(e -> Integer.parseInt(e.sec()))
                         )
-                        .map(entry -> CoordinatesInfo.fromGpsEntry(entry, vehicleId))
+                        .map(entry -> CoordinatesInfo.from(entry, vehicleId))
                         .collect(Collectors.toList())
         );
     }
