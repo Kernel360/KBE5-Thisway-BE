@@ -79,16 +79,7 @@ public class LogRepository {
 
             sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-            params.add(data.vehicleId());
-            params.add(data.mdn());
-            params.add(data.gpsStatus().getCode());
-            params.add(data.latitude());
-            params.add(data.longitude());
-            params.add(data.angle());
-            params.add(data.speed());
-            params.add(data.totalTripMeter());
-            params.add(data.batteryVoltage());
-            params.add(data.occurredTime());
+            params.addAll(List.of(toGpsLogParams(data)));
         }
 
         jdbcTemplate.update(sqlBuilder.toString(), params.toArray());
