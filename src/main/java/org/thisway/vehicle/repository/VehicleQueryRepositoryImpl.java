@@ -47,4 +47,19 @@ public class VehicleQueryRepositoryImpl implements VehicleQueryRepository {
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
+
+    @Override
+    public List<Vehicle> getAllDrivingVehicles(Long companyId) {
+        QVehicle vehicle = QVehicle.vehicle;
+
+        BooleanBuilder conditions = new BooleanBuilder();
+        conditions.and(vehicle.company.id.eq(companyId));
+        conditions.and(vehicle.active.isTrue());
+        conditions.and(vehicle.powerOn.isTrue());
+
+        return queryFactory
+                .selectFrom(vehicle)
+                .where(conditions)
+                .fetch();
+    }
 }

@@ -31,7 +31,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    open-in-view: true
+    open-in-view: false
 
 custom:
   verification-code-expiration-millis: 100000

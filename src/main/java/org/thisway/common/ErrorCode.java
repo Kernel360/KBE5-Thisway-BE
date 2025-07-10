@@ -20,12 +20,16 @@ public enum ErrorCode {
     /* 서버 에러 */
     SERVER_ERROR("00000", "서버에러 입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
-    // 이메일 에러 x7xxx
-    EMAIL_SEND_ERROR("07000", "이메일 발송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    // 이메일 에러 x2xxx
+    EMAIL_SEND_ERROR("02000", "이메일 발송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
-    // DB 에러 x8xxx
-    REDIS_STORE_ERROR("08000", "데이터를 저장하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    REDIS_RETRIEVE_ERROR("08001", "저장된 데이터를 가져오는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    // DB 에러 x3xxx
+    REDIS_STORE_ERROR("03000", "데이터를 저장하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    REDIS_RETRIEVE_ERROR("03001", "저장된 데이터를 가져오는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // SSE 에러 x4xxx
+    SSE_SEND_ERROR("04000", "SSE로 데이터를 발송하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
 
     /* 비즈니스 에러 */
     INVALID_INPUT_VALUE("10000", "요청 데이터가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
