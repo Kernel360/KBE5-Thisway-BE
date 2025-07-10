@@ -1,6 +1,6 @@
-package org.thisway.emulator.controller.dto.response;
+package org.thisway.emulator.interfaces;
 
-import org.thisway.emulator.service.dto.output.EmulatorOutput;
+import org.thisway.emulator.application.EmulatorOutput;
 
 public record EmulatorDetailResponse(
         Long id,

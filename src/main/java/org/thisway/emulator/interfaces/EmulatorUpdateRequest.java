@@ -1,6 +1,6 @@
-package org.thisway.emulator.controller.dto.request;
+package org.thisway.emulator.interfaces;
 
-import org.thisway.emulator.service.dto.input.EmulatorUpdateInput;
+import org.thisway.emulator.application.EmulatorUpdateInput;
 
 public record EmulatorUpdateRequest(
         String mdn,

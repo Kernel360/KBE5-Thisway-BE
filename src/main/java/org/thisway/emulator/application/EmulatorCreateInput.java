@@ -1,4 +1,4 @@
-package org.thisway.emulator.service.dto.input;
+package org.thisway.emulator.application;
 
 import lombok.Builder;
 

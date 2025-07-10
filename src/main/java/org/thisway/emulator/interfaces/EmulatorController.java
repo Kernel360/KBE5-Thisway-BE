@@ -1,4 +1,4 @@
-package org.thisway.emulator.controller;
+package org.thisway.emulator.interfaces;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +15,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.thisway.emulator.controller.dto.request.EmulatorRegisterRequest;
-import org.thisway.emulator.controller.dto.request.EmulatorUpdateRequest;
-import org.thisway.emulator.controller.dto.response.EmulatorDetailResponse;
-import org.thisway.emulator.controller.dto.response.EmulatorsResponse;
-import org.thisway.emulator.service.EmulatorService;
-import org.thisway.emulator.service.dto.output.EmulatorOutput;
+import org.thisway.emulator.application.EmulatorService;
+import org.thisway.emulator.application.EmulatorOutput;
 
 @Slf4j
 @RestController

@@ -1,8 +1,8 @@
-package org.thisway.emulator.controller.dto.request;
+package org.thisway.emulator.interfaces;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.thisway.emulator.service.dto.input.EmulatorCreateInput;
+import org.thisway.emulator.application.EmulatorCreateInput;
 
 public record EmulatorRegisterRequest(
         @NotBlank

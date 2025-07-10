@@ -1,6 +1,6 @@
-package org.thisway.emulator.service.dto.output;
+package org.thisway.emulator.application;
 
-import org.thisway.emulator.entity.Emulator;
+import org.thisway.emulator.domain.Emulator;
 
 public record EmulatorOutput(
         Long id,

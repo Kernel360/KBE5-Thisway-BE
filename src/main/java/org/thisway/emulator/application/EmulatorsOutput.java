@@ -1,9 +1,10 @@
-package org.thisway.emulator.service.dto.output;
+package org.thisway.emulator.application;
 
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.thisway.common.PageInfo;
-import org.thisway.emulator.entity.Emulator;
+import org.thisway.emulator.domain.Emulator;
+
+import java.util.List;
 
 public record EmulatorsOutput(
         List<EmulatorOutput> emulators,
