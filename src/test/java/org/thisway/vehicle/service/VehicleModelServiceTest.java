@@ -1,14 +1,5 @@
 package org.thisway.vehicle.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.lang.reflect.Field;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,12 +9,18 @@ import org.mockito.MockitoAnnotations;
 import org.thisway.common.BaseEntity;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.member.entity.Member;
-import org.thisway.member.entity.MemberRole;
+import org.thisway.member.domain.Member;
+import org.thisway.member.domain.MemberRole;
 import org.thisway.security.service.SecurityService;
 import org.thisway.vehicle.dto.request.VehicleModelCreateRequest;
 import org.thisway.vehicle.entity.VehicleModel;
 import org.thisway.vehicle.repository.VehicleModelRepository;
+
+import java.lang.reflect.Field;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class VehicleModelServiceTest {
     @Mock
@@ -80,7 +77,7 @@ class VehicleModelServiceTest {
             Field idField = BaseEntity.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(savedVehicleModel, 1L);
-        } catch (Exception ignore){
+        } catch (Exception ignore) {
         }
 
         when(vehicleModelRepository.save(any(VehicleModel.class))).thenReturn(savedVehicleModel);

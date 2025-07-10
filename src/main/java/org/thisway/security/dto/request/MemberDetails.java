@@ -1,14 +1,15 @@
 package org.thisway.security.dto.request;
 
-import java.util.Collection;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.thisway.member.entity.MemberRole;
+import org.thisway.member.domain.MemberRole;
+
+import java.util.Collection;
+import java.util.List;
 
 @Getter
 @Value
