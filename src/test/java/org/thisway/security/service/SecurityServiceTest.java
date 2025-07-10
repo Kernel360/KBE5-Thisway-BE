@@ -1,13 +1,5 @@
 package org.thisway.security.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,10 +8,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.thisway.common.CustomException;
 import org.thisway.common.ErrorCode;
-import org.thisway.member.entity.Member;
-import org.thisway.member.entity.MemberRole;
-import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.domain.Member;
+import org.thisway.member.domain.MemberRole;
+import org.thisway.member.infrastructure.MemberRepository;
 import org.thisway.security.dto.request.MemberDetails;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 class SecurityServiceTest {
 

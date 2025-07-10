@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.member.entity.Member;
-import org.thisway.member.repository.MemberRepository;
+import org.thisway.member.domain.Member;
+import org.thisway.member.infrastructure.MemberRepository;
 import org.thisway.security.dto.request.MemberDetails;
 
 @Service
