@@ -4,8 +4,8 @@ import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 
 @Embeddable
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

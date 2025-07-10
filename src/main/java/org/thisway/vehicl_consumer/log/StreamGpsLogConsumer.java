@@ -7,7 +7,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Component;
 import org.thisway.vehicle.log.interfaces.GpsLogRequest;
-import org.thisway.logging.constant.MdcKeys;
+import org.thisway.support.logging.constant.MdcKeys;
 import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
 
 import java.util.Map;

@@ -13,10 +13,10 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.thisway.common.ApiErrorResponse;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
-import org.thisway.logging.config.LoggingConfig;
+import org.thisway.support.common.ApiErrorResponse;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
+import org.thisway.support.logging.config.LoggingConfig;
 import org.thisway.member.application.PasswordService;
 
 import static org.assertj.core.api.Assertions.assertThat;

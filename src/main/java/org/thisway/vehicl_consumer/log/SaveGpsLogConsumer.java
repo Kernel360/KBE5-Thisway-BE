@@ -7,10 +7,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Component;
-import org.thisway.config.ampq.RabbitMQConfig;
+import org.thisway.support.config.RabbitMQConfig;
 import org.thisway.vehicle.log.interfaces.GpsLogRequest;
 import org.thisway.vehicle.log.application.GpsLogSaveService;
-import org.thisway.logging.constant.MdcKeys;
+import org.thisway.support.logging.constant.MdcKeys;
 
 import java.util.Map;
 

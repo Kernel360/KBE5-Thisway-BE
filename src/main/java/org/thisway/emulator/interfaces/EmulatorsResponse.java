@@ -2,7 +2,7 @@ package org.thisway.emulator.interfaces;
 
 import java.util.List;
 
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.emulator.application.EmulatorsOutput;
 
 public record EmulatorsResponse(

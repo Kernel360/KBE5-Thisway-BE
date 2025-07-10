@@ -2,7 +2,7 @@ package org.thisway.member.interfaces;
 
 import java.util.List;
 
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.member.application.AdminMembersOutput;
 
 public record AdminMembersResponse(

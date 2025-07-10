@@ -3,7 +3,7 @@ package org.thisway.vehicle.interfaces;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 
 public record VehicleTracksResponse(
         List<VehicleTrackResponse> vehicles,

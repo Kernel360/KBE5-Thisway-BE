@@ -9,9 +9,9 @@ import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.stereotype.Component;
-import org.thisway.config.ampq.RabbitMQConfig;
+import org.thisway.support.config.RabbitMQConfig;
 import org.thisway.vehicle.log.interfaces.GpsLogRequest;
-import org.thisway.logging.constant.MdcKeys;
+import org.thisway.support.logging.constant.MdcKeys;
 
 @Component
 @RequiredArgsConstructor

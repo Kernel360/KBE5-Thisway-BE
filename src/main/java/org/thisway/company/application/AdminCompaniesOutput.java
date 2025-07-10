@@ -2,7 +2,7 @@ package org.thisway.company.application;
 
 
 import org.springframework.data.domain.Page;
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.company.domain.Company;
 
 import java.util.List;

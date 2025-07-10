@@ -12,7 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.thisway.logging.filter.LoggingFilter;
+import org.thisway.support.logging.filter.LoggingFilter;
 import org.thisway.security.config.policy.RequestAuthorizationPolicy;
 import org.thisway.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.security.filter.JsonAuthenticationFilter;
@@ -55,8 +55,8 @@ public class SecurityConfig {
                                         req,
                                         res,
                                         accessEx) -> res.sendError(
-                                                HttpStatus.FORBIDDEN.value(),
-                                                "Forbidden")))
+                                        HttpStatus.FORBIDDEN.value(),
+                                        "Forbidden")))
                 .authorizeHttpRequests(
                         registry -> {
                             requestAuthorizationPolicy.getRules()

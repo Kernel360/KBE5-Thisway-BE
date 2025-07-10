@@ -6,7 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.thisway.common.BaseEntity;
+import org.thisway.support.common.BaseEntity;
 
 @Entity
 @Getter
