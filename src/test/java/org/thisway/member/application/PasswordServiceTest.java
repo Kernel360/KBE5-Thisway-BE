@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 import org.thisway.company.domain.Company;
-import org.thisway.company.intrastructure.CompanyRepository;
+import org.thisway.company.infrastructure.CompanyRepository;
 import org.thisway.support.component.EmailComponent;
 import org.thisway.support.component.RedisComponent;
 import org.thisway.member.domain.Member;

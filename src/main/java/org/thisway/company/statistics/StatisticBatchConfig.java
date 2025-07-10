@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.thisway.company.intrastructure.CompanyRepository;
+import org.thisway.company.infrastructure.CompanyRepository;
 import org.thisway.company.statistics.application.StatisticService;
 
 import java.time.LocalDate;
