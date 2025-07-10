@@ -2,8 +2,8 @@ package org.thisway.vehicle.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 import org.thisway.vehicle.domain.Vehicle;
 import org.thisway.vehicle.infrastructure.VehicleRepository;
 import org.thisway.vehicle.interfaces.VehicleUpdateRequest;

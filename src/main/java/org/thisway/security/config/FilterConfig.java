@@ -7,7 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.thisway.security.handler.JsonAuthenticationFailureHandler;
 import org.thisway.security.handler.JsonAuthenticationSuccessHandler;
 import org.thisway.security.utils.JwtTokenUtil;
-import org.thisway.logging.filter.LoggingFilter;
+import org.thisway.support.logging.filter.LoggingFilter;
 import org.thisway.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.security.filter.JsonAuthenticationFilter;
 import org.thisway.security.filter.JwtAuthenticationFilter;

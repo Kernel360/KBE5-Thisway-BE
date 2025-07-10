@@ -24,7 +24,7 @@ import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.company.application.AdminCompaniesOutput;
 import org.thisway.company.application.AdminCompanyDetailOutput;
 import org.thisway.company.application.AdminCompanyService;

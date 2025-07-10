@@ -12,7 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.thisway.company.domain.Company;
 import org.thisway.company.domain.CompanyFixture;
-import org.thisway.config.querydsl.QuerydslConfig;
+import org.thisway.support.config.QuerydslConfig;
 import org.thisway.vehicle.domain.Vehicle;
 import org.thisway.vehicle.interfaces.VehicleSearchRequest;
 import org.thisway.vehicle.domain.VehicleFixture;

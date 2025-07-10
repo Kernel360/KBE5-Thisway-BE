@@ -18,8 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 import org.thisway.vehicle.vehicle_model.interfaces.VehicleModelCreateRequest;
 import org.thisway.vehicle.vehicle_model.application.VehicleModelService;
 

@@ -8,8 +8,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.thisway.common.CustomException;
-import org.thisway.common.ErrorCode;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 
 import java.util.List;
 import java.util.Objects;

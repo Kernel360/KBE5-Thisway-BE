@@ -11,7 +11,7 @@ import org.springframework.test.context.TestConstructor;
 import org.springframework.test.context.TestConstructor.AutowireMode;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.member.application.*;
 import org.thisway.member.domain.MemberRole;
 

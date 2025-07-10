@@ -3,7 +3,7 @@ package org.thisway.company.interfaces;
 
 import java.util.List;
 
-import org.thisway.common.PageInfo;
+import org.thisway.support.common.PageInfo;
 import org.thisway.company.application.AdminCompaniesOutput;
 
 public record AdminCompaniesResponse(
