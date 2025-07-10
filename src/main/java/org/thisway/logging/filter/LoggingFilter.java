@@ -28,8 +28,11 @@ public class LoggingFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        String uri = request.getRequestURI();
+        String qs = request.getQueryString();
+        String fullUrl = uri + (qs != null ? "?" + qs : "");
 
-        log.info("Request [{} {}]", request.getMethod(), request.getRequestURI());
+        log.info("Request [{} {}]", request.getMethod(), fullUrl);
         try {
             filterChain.doFilter(request, response);
         } finally {
