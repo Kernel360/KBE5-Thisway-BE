@@ -36,6 +36,7 @@ public class VehicleQueryRepositoryImpl implements VehicleQueryRepository {
         List<Vehicle> content = queryFactory
                 .selectFrom(vehicle)
                 .where(conditions)
+                .orderBy(vehicle.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
