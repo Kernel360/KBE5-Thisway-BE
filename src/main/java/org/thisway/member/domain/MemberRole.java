@@ -19,6 +19,10 @@ public enum MemberRole {
 
     private final int level;
 
+    public boolean canAccess(MemberRole target) {
+        return getAccessibleRoles().contains(target);
+    }
+
     public Set<MemberRole> getAccessibleRoles() {
         if (this == ADMIN) {
             return Set.of(MemberRole.ADMIN, MemberRole.COMPANY_CHEF);

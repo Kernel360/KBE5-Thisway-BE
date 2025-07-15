@@ -11,8 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.thisway.company.domain.Company;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
 import org.thisway.member.domain.QMember;
@@ -22,6 +22,7 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberQueryRepositoryImpl implements MemberQueryRepository {
 
     private final JPAQueryFactory queryFactory;
@@ -29,13 +30,13 @@ public class MemberQueryRepositoryImpl implements MemberQueryRepository {
     @Override
     public Page<Member> searchMembers(
             Collection<MemberRole> role,
-            Company company,
+            long companyId,
             String memberName,
             Pageable pageable
     ) {
         QMember m = QMember.member;
         BooleanBuilder builder = new BooleanBuilder();
-        builder.and(m.company.eq(company))
+        builder.and(m.companyId.eq(companyId))
                 .and(m.role.in(role));
 
         if (StringUtils.hasText(memberName))

@@ -9,13 +9,15 @@ public interface MemberReader {
 
     Member getMember(long id);
 
+    MemberInfo.MemberWithCompany getMemberWithCompany(long id);
+
     Member getMemberByEmail(String email);
 
-    Page<Member> getMembers(Collection<MemberRole> accessibleRole, Pageable pageable);
+    Page<MemberInfo.MemberWithCompany> getMembersWithCompanyByRoleIn(Collection<MemberRole> accessibleRole, Pageable pageable);
 
-    Page<Member> getMembers(MemberQuery.SearchMember memberQuery, Pageable pageable);
+    Page<MemberInfo.MemberWithCompany> getMembersWithCompany(MemberQuery.SearchMember memberQuery, Pageable pageable);
 
-    long countMember(MemberQuery.SearchMember memberQuery);
+    long countMemberByCompanyIdAndRole(long companyId, MemberRole role);
 
     boolean existByEmail(String email);
 }

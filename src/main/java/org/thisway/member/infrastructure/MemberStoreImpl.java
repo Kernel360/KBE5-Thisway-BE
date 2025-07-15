@@ -1,9 +1,10 @@
-package org.thisway.member.domain;
+package org.thisway.member.infrastructure;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.member.infrastructure.MemberRepository;
+import org.thisway.member.domain.Member;
+import org.thisway.member.domain.MemberStore;
 
 @Component
 @RequiredArgsConstructor

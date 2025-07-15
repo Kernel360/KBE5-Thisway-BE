@@ -1,12 +1,10 @@
 package org.thisway.member.domain;
 
-import org.thisway.company.domain.Company;
-
 public class MemberFixture {
 
-    public static Member createMember(Company company) {
+    public static Member createMember(long companyId) {
         return Member.builder()
-                .company(company)
+                .companyId(companyId)
                 .role(MemberRole.MEMBER)
                 .name("홍길동")
                 .email("hong@example.com")
@@ -16,9 +14,9 @@ public class MemberFixture {
                 .build();
     }
 
-    public static Member createMember(Company company, MemberRole role) {
+    public static Member createMember(long companyId, MemberRole role) {
         return Member.builder()
-                .company(company)
+                .companyId(companyId)
                 .role(role)
                 .name("홍길동")
                 .email("hong@example.com")
@@ -28,9 +26,9 @@ public class MemberFixture {
                 .build();
     }
 
-    public static Member createMemberWithEmail(Company company, String email) {
+    public static Member createMemberWithEmail(long companyId, String email) {
         return Member.builder()
-                .company(company)
+                .companyId(companyId)
                 .role(MemberRole.MEMBER)
                 .name("홍길동")
                 .email(email)
@@ -40,9 +38,9 @@ public class MemberFixture {
                 .build();
     }
 
-    public static Member createMemberWithEmail(Company company, MemberRole role, String email) {
+    public static Member createMemberWithEmail(long companyId, MemberRole role, String email) {
         return Member.builder()
-                .company(company)
+                .companyId(companyId)
                 .role(role)
                 .name("홍길동")
                 .email(email)
@@ -52,8 +50,8 @@ public class MemberFixture {
                 .build();
     }
 
-    public static Member createInactiveMember(Company company) {
-        Member member = createMember(company);
+    public static Member createInactiveMember(long companyId) {
+        Member member = createMember(companyId);
         member.delete();
 
         return member;

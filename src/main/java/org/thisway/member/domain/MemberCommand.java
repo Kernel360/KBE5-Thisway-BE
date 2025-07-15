@@ -2,14 +2,13 @@ package org.thisway.member.domain;
 
 import lombok.Builder;
 import lombok.Value;
-import org.thisway.company.domain.Company;
 
 public class MemberCommand {
 
     @Value
     @Builder
     public static class RegisterMember {
-        Company company;
+        long companyId;
         MemberRole role;
         String name;
         String email;

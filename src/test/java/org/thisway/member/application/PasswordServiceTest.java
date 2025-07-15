@@ -52,7 +52,7 @@ public class PasswordServiceTest {
     @DisplayName("인증코드 요청 시 유효한 이메일을 입력하면 에러가 발생하지 않는다.")
     void 인증코드_발송_성공() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createMember(company));
+        Member member = memberRepository.save(MemberFixture.createMember(company.getId()));
 
         doNothing().when(emailComponent).sendMail(anyString(), anyString(), anyString(), anyMap());
 
@@ -77,7 +77,7 @@ public class PasswordServiceTest {
     @DisplayName("인증코드 요청 시 삭제된 이메일을 입력하면 not_found 에러가 발생한다.")
     void 삭제된_이메일_인증코드_발송_실패() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createInactiveMember(company));
+        Member member = memberRepository.save(MemberFixture.createInactiveMember(company.getId()));
 
         doNothing().when(emailComponent).sendMail(anyString(), anyString(), anyString(), anyMap());
 
@@ -90,7 +90,7 @@ public class PasswordServiceTest {
     @DisplayName("비밀번호 변경 요청 시 올바른 인증코드를 입력하면 비밀번호를 변경한다.")
     void 비밀번호_변경_성공() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createMember(company));
+        Member member = memberRepository.save(MemberFixture.createMember(company.getId()));
 
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 10000);
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
@@ -110,7 +110,7 @@ public class PasswordServiceTest {
     @DisplayName("비밀번호 변경 요청 시 틀린 인증코드를 입력하면 invalid_verification_code 에러가 발생한다.")
     void 틀린_인증코드_비밀번호_변경_실패() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createMember(company));
+        Member member = memberRepository.save(MemberFixture.createMember(company.getId()));
 
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 10000);
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
@@ -124,7 +124,7 @@ public class PasswordServiceTest {
     @DisplayName("비밀번호 변경 요청 시 만료된 인증코드를 입력하면 invalid_verification_code 에러가 발생한다.")
     void 만료된_인증코드_비밀번호_변경_실패() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createMember(company));
+        Member member = memberRepository.save(MemberFixture.createMember(company.getId()));
 
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() - 10000);
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());
@@ -138,7 +138,7 @@ public class PasswordServiceTest {
     @DisplayName("비밀번호 형식이 알파벳, 숫자, 특수문자를 포함하여 8-20자에 해당하지 않으면 member_invalid_password 에러가 발생한다.")
     void 비밀번호_형식_오류시_비밀번호_변경_실패() {
         Company company = companyRepository.save(createCompany());
-        Member member = memberRepository.save(MemberFixture.createMember(company));
+        Member member = memberRepository.save(MemberFixture.createMember(company.getId()));
 
         VerificationPayload entry = new VerificationPayload("123456", System.currentTimeMillis() + 10000);
         doReturn(entry).when(redisComponent).retrieveFromRedis(anyString(), anyString(), any());

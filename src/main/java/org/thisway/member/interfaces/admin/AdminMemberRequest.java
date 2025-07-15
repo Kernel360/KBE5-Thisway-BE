@@ -1,20 +1,17 @@
-package org.thisway.member.interfaces;
+package org.thisway.member.interfaces.admin;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import org.thisway.support.common.PageInfo;
+import org.thisway.member.domain.MemberRole;
 
-import java.util.List;
-
-public class AdminMemberApiContract {
+public class AdminMemberRequest {
 
     public record MemberRegisterRequest(
             @NotNull
             Long companyId,
 
             @NotNull
-            String role,
+            MemberRole role,
 
             @NotBlank
             String name,
@@ -45,25 +42,6 @@ public class AdminMemberApiContract {
 
             @NotNull
             String memo
-    ) {
-    }
-
-    @Builder
-    public record MemberDetailResponse(
-            long id,
-            String companyName,
-            String role,
-            String name,
-            String email,
-            String phone,
-            String memo
-    ) {
-    }
-
-    @Builder
-    public record MembersResponse(
-            List<MemberDetailResponse> members,
-            PageInfo pageInfo
     ) {
     }
 }

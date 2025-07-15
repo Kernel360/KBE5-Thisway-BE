@@ -4,23 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.support.common.BaseEntity;
-import org.thisway.support.common.CustomException;
-import org.thisway.support.common.ErrorCode;
 import org.thisway.company.domain.Company;
 import org.thisway.company.infrastructure.CompanyRepository;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
+import org.thisway.support.common.BaseEntity;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.domain.Vehicle;
-import org.thisway.vehicle.interfaces.*;
 import org.thisway.vehicle.domain.VehicleTrackClient;
+import org.thisway.vehicle.infrastructure.VehicleRepository;
+import org.thisway.vehicle.interfaces.*;
+import org.thisway.vehicle.util.VehicleUpdateValidator;
 import org.thisway.vehicle.vehicle_model.domain.VehicleModel;
 import org.thisway.vehicle.vehicle_model.infrastructure.VehicleModelRepository;
-import org.thisway.vehicle.infrastructure.VehicleRepository;
-import org.thisway.vehicle.interfaces.VehicleTrackResponse;
-import org.thisway.vehicle.interfaces.VehicleTracksResponse;
-import org.thisway.vehicle.util.VehicleUpdateValidator;
 
 import java.util.List;
 
@@ -153,11 +151,9 @@ public class VehicleService {
     }
 
     private Company getMemberCompany(Member member) {
-        Company memberCompany = member.getCompany();
-        if (memberCompany == null) {
-            throw new CustomException(ErrorCode.COMPANY_NOT_FOUND);
-        }
-        return memberCompany;
+        return companyRepository.findById(member.getCompanyId())
+                .filter(BaseEntity::isActive)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
     }
 
     private Company validateMemberCompanyAndPermission(Member member) {
@@ -183,17 +179,16 @@ public class VehicleService {
 
     private Vehicle getAuthorizedVehicle(Long id) {
         Member member = getCurrentMember();
-        Company memberCompany = getMemberCompany(member);
         validateCompanyAdminPermission(member);
         Vehicle vehicle = findActiveVehicle(id);
-        validateVehicleCompanyMatch(vehicle, memberCompany);
+        validateVehicleCompanyMatch(vehicle, member.getCompanyId());
 
         return vehicle;
     }
 
-    private void validateVehicleCompanyMatch(Vehicle vehicle, Company memberCompany) {
+    private void validateVehicleCompanyMatch(Vehicle vehicle, long memberCompanyId) {
         Company vehicleCompany = vehicle.getCompany();
-        if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompany.getId())) {
+        if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompanyId)) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
         }
     }

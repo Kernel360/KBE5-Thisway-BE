@@ -5,14 +5,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thisway.member.domain.Member;
-import org.thisway.member.domain.MemberQuery;
-import org.thisway.member.domain.MemberReader;
-import org.thisway.member.domain.MemberRole;
+import org.thisway.member.domain.*;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 
 import java.util.Collection;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -20,11 +18,21 @@ import java.util.Collection;
 public class MemberReaderImpl implements MemberReader {
 
     private final MemberRepository memberRepository;
+    private final CompanyClient companyClient;
+    private final MemberInfoMapper memberInfoMapper;
 
     @Override
     public Member getMember(long id) {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    @Override
+    public MemberInfo.MemberWithCompany getMemberWithCompany(long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        CompanyInfo companyInfo = companyClient.getById(member.getId());
+        return memberInfoMapper.toMemberInfo(member, companyInfo);
     }
 
     @Override
@@ -34,26 +42,27 @@ public class MemberReaderImpl implements MemberReader {
     }
 
     @Override
-    public Page<Member> getMembers(Collection<MemberRole> accessibleRole, Pageable pageable) {
-        return memberRepository.findAllByRoleIn(accessibleRole, pageable);
+    public Page<MemberInfo.MemberWithCompany> getMembersWithCompanyByRoleIn(Collection<MemberRole> roles, Pageable pageable) {
+        Page<Member> members = memberRepository.findAllByRoleIn(roles, pageable);
+        List<CompanyInfo> companies = companyClient.findAllByMember(members.toList());
+        return memberInfoMapper.toMemberInfos(members, companies);
     }
 
     @Override
-    public Page<Member> getMembers(MemberQuery.SearchMember memberQuery, Pageable pageable) {
-        return memberRepository.searchMembers(
-                memberQuery.getRoles(),
-                memberQuery.getCompany(),
-                memberQuery.getName(),
+    public Page<MemberInfo.MemberWithCompany> getMembersWithCompany(MemberQuery.SearchMember memberQuery, Pageable pageable) {
+        Page<Member> members = memberRepository.searchMembers(
+                memberQuery.roles(),
+                memberQuery.companyId(),
+                memberQuery.name(),
                 pageable
         );
+        List<CompanyInfo> companies = companyClient.findAllByMember(members.toList());
+        return memberInfoMapper.toMemberInfos(members, companies);
     }
 
     @Override
-    public long countMember(MemberQuery.SearchMember memberQuery) {
-        return memberRepository.countMemberByCompanyAndRoleIn(
-                memberQuery.getCompany(),
-                memberQuery.getRoles()
-        );
+    public long countMemberByCompanyIdAndRole(long companyId, MemberRole role) {
+        return memberRepository.countMemberByCompanyIdAndRole(companyId, role);
     }
 
     @Override

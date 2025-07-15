@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-class AdminCompanyServiceTest {
+class AdminCompanyInfoServiceTest {
 
     private final CompanyRepository companyRepository = mock(CompanyRepository.class);
     private final AdminCompanyService adminCompanyService = new AdminCompanyService(companyRepository);

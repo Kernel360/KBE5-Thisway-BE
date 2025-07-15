@@ -33,7 +33,7 @@ import org.thisway.company.application.AdminCompanyService;
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-class AdminCompanyControllerTest {
+class AdminCompanyInfoControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;

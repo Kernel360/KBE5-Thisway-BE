@@ -1,4 +1,4 @@
-package org.thisway.member.interfaces;
+package org.thisway.member.interfaces.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -9,9 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.thisway.member.application.MemberFacade;
-import org.thisway.member.application.MemberDto;
-import org.thisway.member.application.MemberInfo;
+import org.thisway.member.application.MemberService;
+import org.thisway.member.domain.MemberCommand;
+import org.thisway.member.domain.MemberInfo;
 import org.thisway.support.security.dto.request.MemberDetails;
 
 @RestController
@@ -19,39 +19,40 @@ import org.thisway.support.security.dto.request.MemberDetails;
 @RequiredArgsConstructor
 public class AdminMemberController {
 
-    private final MemberFacade memberFacade;
-    private final AdminMemberApiContractMapper adminMemberApiContractMapper;
+    private final MemberService memberService;
+    private final AdminMemberRequestMapper adminMemberRequestMapper;
+    private final AdminMemberResponseMapper adminMemberResponseMapper;
 
     @PostMapping
     public ResponseEntity<Void> registerMember(
-            @RequestBody @Validated AdminMemberApiContract.MemberRegisterRequest request,
+            @RequestBody @Validated AdminMemberRequest.MemberRegisterRequest request,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        MemberDto.RegisterMemberRequest registerRequest = adminMemberApiContractMapper.from(request);
-        memberFacade.registerMember(registerRequest, memberDetails.getUsername());
+        MemberCommand.RegisterMember command = adminMemberRequestMapper.from(request);
+        memberService.registerMember(command, memberDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AdminMemberApiContract.MemberDetailResponse> getMemberDetail(
+    public ResponseEntity<AdminMemberResponse.MemberDetailResponse> getMemberDetail(
             @PathVariable Long id,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        MemberInfo.Member member = memberFacade.retrieveMember(id, memberDetails.getUsername());
-        AdminMemberApiContract.MemberDetailResponse response = adminMemberApiContractMapper.toMemberDetailResponse(member);
+        MemberInfo.MemberWithCompany member = memberService.retrieveMemberWithCompany(id, memberDetails.getUsername());
+        AdminMemberResponse.MemberDetailResponse response = adminMemberResponseMapper.toMemberDetailResponse(member);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
     }
 
     @GetMapping
-    public ResponseEntity<AdminMemberApiContract.MembersResponse> getMembers(
+    public ResponseEntity<AdminMemberResponse.MembersResponse> getMembers(
             @PageableDefault Pageable pageable,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        Page<MemberInfo.Member> members = memberFacade.retrieveMembers(memberDetails.getUsername(), pageable);
-        AdminMemberApiContract.MembersResponse response = adminMemberApiContractMapper.toMembersResponse(members);
+        Page<MemberInfo.MemberWithCompany> members = memberService.retrieveMembersWithCompany(memberDetails.getUsername(), pageable);
+        AdminMemberResponse.MembersResponse response = adminMemberResponseMapper.toMembersResponse(members);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
@@ -60,11 +61,11 @@ public class AdminMemberController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateMember(
             @PathVariable long id,
-            @RequestBody @Validated AdminMemberApiContract.MemberUpdateRequest request,
+            @RequestBody @Validated AdminMemberRequest.MemberUpdateRequest request,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        MemberDto.UpdateMemberRequest updateCommand = adminMemberApiContractMapper.from(request, id);
-        memberFacade.updateMember(updateCommand, memberDetails.getUsername());
+        MemberCommand.UpdateMember updateCommand = adminMemberRequestMapper.from(request, id);
+        memberService.updateMember(updateCommand, memberDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
@@ -75,7 +76,7 @@ public class AdminMemberController {
             @PathVariable Long id,
             @AuthenticationPrincipal MemberDetails memberDetails
     ) {
-        memberFacade.deleteMember(id, memberDetails.getUsername());
+        memberService.deleteMember(id, memberDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();

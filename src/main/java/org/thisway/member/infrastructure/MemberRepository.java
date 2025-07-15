@@ -3,7 +3,6 @@ package org.thisway.member.infrastructure;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.thisway.company.domain.Company;
 import org.thisway.member.domain.Member;
 import org.thisway.member.domain.MemberRole;
 
@@ -20,5 +19,5 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
 
     Page<Member> findAllByRoleIn(Collection<MemberRole> accessRoles, Pageable pageable);
 
-    long countMemberByCompanyAndRoleIn(Company company, Collection<MemberRole> roles);
+    long countMemberByCompanyIdAndRole(long companyId, MemberRole role);
 }

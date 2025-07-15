@@ -7,9 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicUpdate;
 import org.thisway.support.common.BaseEntity;
-import org.thisway.company.domain.Company;
-
-import java.util.Set;
 
 @Entity
 @DynamicUpdate
@@ -17,9 +14,8 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company company;
+    @Column(name = "company_id", nullable = false)
+    private Long companyId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,7 +39,7 @@ public class Member extends BaseEntity {
 
     @Builder
     public Member(
-            Company company,
+            long companyId,
             MemberRole role,
             String name,
             String email,
@@ -51,7 +47,7 @@ public class Member extends BaseEntity {
             String phone,
             String memo
     ) {
-        this.company = company;
+        this.companyId = companyId;
         this.role = role;
         this.name = name;
         this.email = email;
@@ -62,13 +58,6 @@ public class Member extends BaseEntity {
 
     public String getPhoneValue() {
         return phone.getValue();
-    }
-
-    public String getCompanyName() {
-        if (company == null) {
-            return null;
-        }
-        return company.getName();
     }
 
     public void updatePassword(String password) {
@@ -92,18 +81,13 @@ public class Member extends BaseEntity {
     }
 
     public boolean canAccess(Member targetMember) {
-        return this.getAccessibleRoles().contains(targetMember.role);
+        return canAccess(targetMember.role, targetMember.companyId);
     }
 
-    private Set<MemberRole> getAccessibleRoles() {
-        return role.getAccessibleRoles();
-    }
-
-    public boolean isSameCompanyAs(Member other) {
-        if (this.company == null || other.company == null) {
-            return false;
+    public boolean canAccess(MemberRole targetRole, long targetCompanyId) {
+        if (this.role == MemberRole.ADMIN) {
+            return role.canAccess(targetRole);
         }
-
-        return this.company.equals(other.company);
+        return this.companyId == targetCompanyId && role.canAccess(targetRole);
     }
 }

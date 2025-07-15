@@ -7,7 +7,7 @@ public class MemberCommandMapper {
 
     public Member from(MemberCommand.RegisterMember command) {
         return Member.builder()
-                .company(command.getCompany())
+                .companyId(command.getCompanyId())
                 .role(command.getRole())
                 .name(command.getName())
                 .email(command.getEmail())

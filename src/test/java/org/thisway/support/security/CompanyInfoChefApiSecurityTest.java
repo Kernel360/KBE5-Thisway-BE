@@ -18,7 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @RequiredArgsConstructor
 @TestConstructor(autowireMode = AutowireMode.ALL)
-public class CompanyChefApiSecurityTest {
+public class CompanyInfoChefApiSecurityTest {
 
     private final MockMvc mockMvc;
 

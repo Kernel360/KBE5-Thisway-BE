@@ -5,8 +5,9 @@ import org.springframework.stereotype.Component;
 import org.thisway.company.domain.Company;
 import org.thisway.company.domain.CompanyReader;
 import org.thisway.support.common.BaseEntity;
-import org.thisway.support.common.CustomException;
-import org.thisway.support.common.ErrorCode;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -15,9 +16,18 @@ public class CompanyReaderImpl implements CompanyReader {
     private final CompanyRepository companyRepository;
 
     @Override
-    public Company getById(long id) {
+    public Optional<Company> findById(long id) {
         return companyRepository.findById(id)
-                .filter(BaseEntity::isActive)
-                .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
+                .filter(BaseEntity::isActive);
+    }
+
+    @Override
+    public List<Company> findAllById(Iterable<Long> ids) {
+        return companyRepository.findAllById(ids);
+    }
+
+    @Override
+    public boolean existById(long companyId) {
+        return companyRepository.existsById(companyId);
     }
 }

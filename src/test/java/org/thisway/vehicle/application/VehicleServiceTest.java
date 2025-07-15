@@ -93,7 +93,7 @@ class VehicleServiceTest {
         when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         VehicleModel existingVehicleModel = VehicleModel.builder()
@@ -113,7 +113,7 @@ class VehicleServiceTest {
 
         // then
         verify(vehicleModelRepository).findByIdAndActiveTrue(vehicleModelId);
-        verify(companyRepository).findById(1L);
+        verify(companyRepository, atLeastOnce()).findById(1L);
         verify(vehicleRepository).save(vehicleCaptor.capture());
 
         Vehicle capturedVehicle = vehicleCaptor.getValue();
@@ -134,15 +134,8 @@ class VehicleServiceTest {
                 "검정"
         );
 
-        Company mockCompany = mock(Company.class);
-        when(mockCompany.getId()).thenReturn(1L);
-
-        MemberRole mockRole = mock(MemberRole.class);
-        when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
-
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
-        when(mockMember.getRole()).thenReturn(mockRole);
+        when(mockMember.getCompanyId()).thenReturn(1L);
 
         mockSecurityContext(mockMember);
 
@@ -178,7 +171,7 @@ class VehicleServiceTest {
         when(mockRole.getLevel()).thenReturn(MemberRole.COMPANY_ADMIN.getLevel());
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         mockSecurityContext(mockMember);
@@ -190,7 +183,7 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.registerVehicle(request));
 
-        verify(companyRepository).findById(1L);
+        verify(companyRepository, atLeast(1)).findById(1L);
         verify(vehicleModelRepository).findByIdAndActiveTrue(vehicleModelId);
         verify(vehicleRepository, never()).save(any(Vehicle.class));
 
@@ -210,7 +203,8 @@ class VehicleServiceTest {
         when(mockRole.getAccessibleRoles()).thenReturn(roles);
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(company);
+        when(mockMember.getCompanyId()).thenReturn(1L);
+        when(company.getId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         mockSecurityContext(mockMember);
@@ -253,7 +247,7 @@ class VehicleServiceTest {
         Company mockCompany = mock(Company.class);
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
 
         mockSecurityContext(mockMember);
 
@@ -265,6 +259,8 @@ class VehicleServiceTest {
 
         VehicleSearchRequest searchRequest = new VehicleSearchRequest(null);
 
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(mockCompany));
+        when(mockCompany.isActive()).thenReturn(true);
         when(vehicleRepository.searchActiveVehicles(eq(mockCompany), eq(searchRequest), eq(pageRequest))).thenReturn(mockPage);
 
         // when
@@ -300,7 +296,7 @@ class VehicleServiceTest {
         when(mockRole.getAccessibleRoles()).thenReturn(roles);
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         mockSecurityContext(mockMember);
@@ -365,7 +361,7 @@ class VehicleServiceTest {
         when(mockRole.getAccessibleRoles()).thenReturn(roles);
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         mockSecurityContext(mockMember);
@@ -419,7 +415,7 @@ class VehicleServiceTest {
         when(mockRole.getAccessibleRoles()).thenReturn(roles);
 
         Member mockMember = mock(Member.class);
-        when(mockMember.getCompany()).thenReturn(mockCompany);
+        when(mockMember.getCompanyId()).thenReturn(1L);
         when(mockMember.getRole()).thenReturn(mockRole);
 
         mockSecurityContext(mockMember);
