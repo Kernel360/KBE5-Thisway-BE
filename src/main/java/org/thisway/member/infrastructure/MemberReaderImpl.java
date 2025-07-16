@@ -29,9 +29,8 @@ public class MemberReaderImpl implements MemberReader {
 
     @Override
     public MemberInfo.MemberWithCompany getMemberWithCompany(long id) {
-        Member member = memberRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        CompanyInfo companyInfo = companyClient.getById(member.getId());
+        Member member = getMember(id);
+        CompanyInfo companyInfo = companyClient.getById(member.getCompanyId());
         return memberInfoMapper.toMemberInfo(member, companyInfo);
     }
 
