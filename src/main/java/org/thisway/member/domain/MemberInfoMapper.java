@@ -28,6 +28,13 @@ public class MemberInfoMapper {
 
         return members.map(member -> {
             CompanyInfo companyInfo = companyInfoMap.get(member.getCompanyId());
+            if (companyInfo == null) {
+                throw new IllegalArgumentException(
+                        "회사와 멤버의 조합을 실패했습니다: Member ID: %d, Company ID: %d".formatted(
+                                member.getId(), member.getCompanyId()
+                        )
+                );
+            }
             return toMemberInfo(member, companyInfo);
         });
     }
