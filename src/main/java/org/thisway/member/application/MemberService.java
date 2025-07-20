@@ -30,7 +30,7 @@ public class MemberService {
             throw new CustomException(ErrorCode.COMPANY_NOT_FOUND);
         }
         if (!actor.canAccess(member)) {
-            throw new CustomException(ErrorCode.MEMBER_ACCESS_DENIED);
+            throw new CustomException(ErrorCode.MEMBER_REGISTER_DENIED);
         }
         assertDuplicateEmail(member.getEmail());
         memberStore.store(member);
