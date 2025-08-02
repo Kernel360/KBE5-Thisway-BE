@@ -6,6 +6,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,15 +17,22 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.thisway.member.domain.MemberRole;
 import org.thisway.support.security.dto.request.MemberDetails;
-import org.thisway.support.security.utils.JwtTokenUtil;
+import org.thisway.support.security.utils.JwtTokenProvider;
 
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenUtil jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return "/api/auth/login".equals(path);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -86,11 +95,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    // 이렇게 사용할지 아직 미정
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        // 로그인이나 회원가입 같이 JWT 검증이 필요 없는 요청은 필터를 건너뛴다.
-        String path = request.getServletPath();
-        return "/api/auth/login".equals(path);
-    }
 }

@@ -1,7 +1,7 @@
 package org.thisway.vehicle.triplog.interfaces;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -9,16 +9,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 import org.thisway.support.security.dto.request.MemberDetails;
-import org.thisway.support.security.utils.JwtTokenUtil;
+import org.thisway.support.security.utils.JwtTokenProvider;
 import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
 import org.thisway.vehicle.triplog.application.TripLogService;
 
-import java.time.LocalDateTime;
+import io.jsonwebtoken.Claims;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +35,7 @@ public class TripLogController {
     private final TripLogService tripLogService;
     private final StreamCoordinatesService streamCoordinatesService;
 
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/{id}")
     public ResponseEntity<VehicleDetailResponse> getVehicleDetailTripLogs(@PathVariable Long id) {
@@ -48,10 +54,8 @@ public class TripLogController {
 
     @GetMapping(value = "/current/stream/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter getVehicleCurrentGpsLogsSseEmitter(@PathVariable Long id, @RequestParam("token") String token) {
-        if (!jwtTokenUtil.isValid(token)) {
-            throw new CustomException(ErrorCode.AUTH_UNAUTHENTICATED);
-        }
-        return streamCoordinatesService.createStreamForVehicle(id, jwtTokenUtil.getUsernameFromToken(token));
+        Claims claims = jwtTokenProvider.validateTokenAndGetClaims(token);
+        return streamCoordinatesService.createStreamForVehicle(id, claims.getSubject());
     }
 
     @GetMapping
@@ -71,8 +75,9 @@ public class TripLogController {
 
     @GetMapping(value = "/detail/stream/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter getTripLogsStream(@PathVariable Long id, @RequestParam("token") String token) {
-
-        if (!jwtTokenUtil.isValid(token)) {
+        try {
+            jwtTokenProvider.validateTokenAndGetClaims(token);
+        } catch (Exception e) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHENTICATED);
         }
         return streamCoordinatesService.createStreamForTripLog(id);

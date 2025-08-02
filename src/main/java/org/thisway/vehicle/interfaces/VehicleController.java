@@ -1,21 +1,31 @@
 package org.thisway.vehicle.interfaces;
 
-import io.jsonwebtoken.Claims;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
 import org.thisway.support.security.dto.request.MemberDetails;
-import org.thisway.support.security.utils.JwtTokenUtil;
-import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
+import org.thisway.support.security.utils.JwtTokenProvider;
 import org.thisway.vehicle.application.VehicleService;
+import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
+
+import io.jsonwebtoken.Claims;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,7 +34,7 @@ public class VehicleController {
 
     private final VehicleService vehicleService;
     private final StreamCoordinatesService streamCoordinatesService;
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
     public ResponseEntity<Void> registerVehicle(@RequestBody @Validated VehicleCreateRequest request) {
@@ -81,10 +91,13 @@ public class VehicleController {
 
     @GetMapping("/stream/track")
     public SseEmitter getVehicleTracksStream(@RequestParam("token") String token) {
-        if (!jwtTokenUtil.isValid(token)) {
+        Claims claims;
+        try {
+            claims = jwtTokenProvider.validateTokenAndGetClaims(token);
+        } catch (Exception e) {
             throw new CustomException(ErrorCode.AUTH_UNAUTHENTICATED);
         }
-        Claims claims = jwtTokenUtil.validateTokenAndGetClaims(token);
-        return streamCoordinatesService.createStreamForCompany(claims.get("companyId", Long.class), claims.getSubject());
+        return streamCoordinatesService.createStreamForCompany(claims.get("companyId", Long.class),
+                claims.getSubject());
     }
 }

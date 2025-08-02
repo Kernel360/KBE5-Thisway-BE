@@ -1,29 +1,30 @@
 package org.thisway.support.security.utils;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 
 public class JwtTokenUtilTest {
 
-    private JwtTokenUtil provider;
+    private JwtTokenProvider provider;
 
     private final String secretKey = "this-is-test-string-secret-key-that-is-32-bytes-long";
     private final long VALIDITY_MS = 60 * 60 * 1000;
 
     @BeforeEach
     void setUp() {
-        provider = new JwtTokenUtil(secretKey, VALIDITY_MS);
+        provider = new JwtTokenProvider(secretKey, VALIDITY_MS);
     }
 
     @Test
@@ -34,7 +35,7 @@ public class JwtTokenUtilTest {
         Map<String, Object> claimsMap = Map.of("roles", roles);
 
         // when
-        String token = provider.createAccessToken(username, claimsMap);
+        String token = provider.generateAccessToken(username, claimsMap);
 
         // then
         Claims claims = provider.validateTokenAndGetClaims(token);
@@ -50,8 +51,8 @@ public class JwtTokenUtilTest {
     @Test
     void 만료된_JWT_AccessToken에_대한_검증_실패() {
         // given: 만료 시간을 0으로 설정한 Provider
-        JwtTokenUtil shortLived = new JwtTokenUtil(secretKey, 0L);
-        String shortToken = shortLived.createAccessToken("user", Map.of());
+        JwtTokenProvider shortLived = new JwtTokenProvider(secretKey, 0L);
+        String shortToken = shortLived.generateAccessToken("user", Map.of());
 
         // when: 생성되자 말자 token 만료됨.
 
@@ -65,7 +66,7 @@ public class JwtTokenUtilTest {
     void 토큰이_발급한_시점과_만료_시점_사이의_간격이_설정한_유효기간과_일치확인() {
         // given
         Instant before = Instant.now();
-        String token = provider.createAccessToken("u", Map.of());
+        String token = provider.generateAccessToken("u", Map.of());
         Claims c = provider.validateTokenAndGetClaims(token);
 
         // when
@@ -88,7 +89,7 @@ public class JwtTokenUtilTest {
     @Test
     void 서명이_변조된_토큰_검증시_JwtException_발생() {
         // given: 정상 토큰 생성
-        String token = provider.createAccessToken("user", Map.of("foo", "bar"));
+        String token = provider.generateAccessToken("user", Map.of("foo", "bar"));
 
         // 토큰은 헤더.페이로드.서명 3파트로 구성되어 있음
         String[] parts = token.split("\\.");
@@ -108,11 +109,11 @@ public class JwtTokenUtilTest {
     @Test
     void 서로_다른_서명키로_발급된_토큰_검증시_JwtException_발생() {
         // given: 두 개의 프로바이더, 서로 다른 시크릿
-        JwtTokenUtil p1 = new JwtTokenUtil("A".repeat(32), VALIDITY_MS);
+        JwtTokenProvider p1 = new JwtTokenProvider("A".repeat(32), VALIDITY_MS);
 
-        JwtTokenUtil p2 = new JwtTokenUtil("B".repeat(32), VALIDITY_MS);
+        JwtTokenProvider p2 = new JwtTokenProvider("B".repeat(32), VALIDITY_MS);
 
-        String token = p1.createAccessToken("alice", Map.of("foo", "bar"));
+        String token = p1.generateAccessToken("alice", Map.of("foo", "bar"));
 
         // then: p2로 파싱 시 서명 불일치
         assertThrows(JwtException.class,

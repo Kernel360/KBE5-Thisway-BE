@@ -15,7 +15,6 @@ import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.thisway.support.logging.filter.LoggingFilter;
 import org.thisway.support.security.config.policy.RequestAuthorizationPolicy;
 import org.thisway.support.security.filter.GlobalExceptionHandlerFilter;
-import org.thisway.support.security.filter.JsonAuthenticationFilter;
 import org.thisway.support.security.filter.JwtAuthenticationFilter;
 
 @Configuration
@@ -25,11 +24,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(
             HttpSecurity http,
             GlobalExceptionHandlerFilter globalExceptionHandlerFilter,
-            JsonAuthenticationFilter jsonAuthenticationFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RequestAuthorizationPolicy requestAuthorizationPolicy,
-            LoggingFilter loggingFilter
-    ) throws Exception {
+            LoggingFilter loggingFilter) throws Exception {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -43,11 +40,8 @@ public class SecurityConfig {
                         SecurityContextHolderFilter.class)
                 .addFilterBefore(globalExceptionHandlerFilter,
                         SecurityContextHolderFilter.class)
-                .addFilterAt(jsonAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
-                // TODO: 공통 에러 응답 형태로 리팩토링 필요
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                         .accessDeniedHandler(
@@ -55,8 +49,8 @@ public class SecurityConfig {
                                         req,
                                         res,
                                         accessEx) -> res.sendError(
-                                        HttpStatus.FORBIDDEN.value(),
-                                        "Forbidden")))
+                                                HttpStatus.FORBIDDEN.value(),
+                                                "Forbidden")))
                 .authorizeHttpRequests(
                         registry -> {
                             requestAuthorizationPolicy.getRules()

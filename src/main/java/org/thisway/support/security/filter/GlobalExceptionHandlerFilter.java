@@ -39,7 +39,6 @@ public class GlobalExceptionHandlerFilter extends OncePerRequestFilter {
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED",
                     ex.getMessage());
-
         } catch (AuthenticationServiceException ex) {
             log.error("Authentication service error", ex);
             sendError(
@@ -69,9 +68,9 @@ public class GlobalExceptionHandlerFilter extends OncePerRequestFilter {
 
     // TODO:: 이 부분은 공통 응답과 맞출 수 있게 수정해야 함
     private void sendError(HttpServletResponse response,
-                           HttpStatus status,
-                           String code,
-                           String message)
+            HttpStatus status,
+            String code,
+            String message)
             throws IOException {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

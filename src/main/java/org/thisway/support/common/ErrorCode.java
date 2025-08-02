@@ -30,7 +30,6 @@ public enum ErrorCode {
     // SSE 에러 x4xxx
     SSE_SEND_ERROR("04000", "SSE로 데이터를 발송하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
-
     /* 비즈니스 에러 */
     INVALID_INPUT_VALUE("10000", "요청 데이터가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
 
@@ -54,6 +53,8 @@ public enum ErrorCode {
     AUTH_UNAUTHENTICATED("13001", "인증된 사용자가 아닙니다.", HttpStatus.UNAUTHORIZED),
     AUTH_INVALID_AUTHENTICATION("13002", "잘못된 인증정보입니다.", HttpStatus.UNAUTHORIZED),
     AUTH_UNAUTHORIZED("13003", "접근 권한이 없습니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_MEMBER_NOT_FOUND("13004", "사용자 정보를 찾을 수 없습니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_PASSWORD_NOT_MATCH("13005", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
     // 차량 x4xxx
     VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),

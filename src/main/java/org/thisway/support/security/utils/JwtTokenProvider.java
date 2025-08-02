@@ -15,19 +15,20 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @Component
-public class JwtTokenUtil {
-    // TODO : DTO 변경 생각하기.
+public class JwtTokenProvider {
+
     private final SecretKey secretKey;
     private final Long accessTokenValidityMs;
 
-    public JwtTokenUtil(
+    public JwtTokenProvider(
             @Value("${security.jwt.secret-key}") String secretKey,
-            @Value("${security.jwt.access-token-validity-ms}") Long accessTokenValidityMs) {
+            @Value("${security.jwt.access-token-validity-ms}") Long accessTokenValidityMs
+    ) {
         this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.accessTokenValidityMs = accessTokenValidityMs;
     }
 
-    public String createAccessToken(String subject, Map<String, Object> claims) {
+    public String generateAccessToken(String subject, Map<String, Object> claims) {
         return Jwts.builder()
                 .claims(claims) // 커스텀 클레임
                 .subject(subject)
@@ -43,24 +44,6 @@ public class JwtTokenUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
 
-    public boolean isValid(String token) {
-        if (token == null || token.isBlank()) return false;
-
-        try {
-            Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public String getUsernameFromToken(String token) {
-        Claims claims = validateTokenAndGetClaims(token);
-        return claims.getSubject();
     }
 }
