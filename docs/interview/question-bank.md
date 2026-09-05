@@ -112,6 +112,7 @@
 - URL, access log, browser history에 token이 남는 비용
 - 짧은 수명의 one-time stream ticket 또는 cookie/BFF 등 대안
 - stream ticket도 tenant/resource binding과 재사용 방지 필요
+- CHANGE-011에서 FE fetch stream으로 전환해 Bearer header를 기존 JWT filter로 검증했다. URL token만으로 접근하면 401이고 cross-tenant SSE는 연결 생성 전 404다. 자동 reconnect/replay는 아직 없으며, token 만료 후 기존 연결 종료와 다중 instance 검증도 남아 있다.
 
 ### 7. Actuator는 어떻게 안전하게 노출하는가?
 

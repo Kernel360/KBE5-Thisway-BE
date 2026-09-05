@@ -130,6 +130,8 @@
 
 ## 자기 점검 기준
 
+SSE 인증 실습은 [CHANGE-011](../portfolio/work-logs/2026-09-05-sse-header-auth.md)을 따른다. JWT 헤더 → role matcher → company/resource query → GPS 조회 → emitter 생성 순서를 설명하고, FE에서는 byte 경계와 event 경계를 구분한다. 구현의 전체 회귀 통과와 실제 browser/proxy 검증은 서로 다른 증거다.
+
 한 주제는 다음을 보지 않고 말할 수 있을 때 완료다.
 
 - 현재 코드가 어떤 실패를 만드는지

@@ -115,7 +115,8 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public List<CoordinatesInfo> getGpsLogsInTripLog(Long tripId) {
-        TripLog tripLog = tripLogRepository.findById(tripId)
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
+        TripLog tripLog = tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         return logService.findGpsLogs(
                 tripLog.getVehicle().getId(),

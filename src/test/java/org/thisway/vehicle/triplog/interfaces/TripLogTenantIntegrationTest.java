@@ -13,6 +13,10 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.thisway.support.component.streaming.SseConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -71,6 +75,93 @@ class TripLogTenantIntegrationTest {
     private Vehicle companyBVehicle;
     private TripLog companyBTrip;
     private String companyAToken;
+
+    @Autowired
+    private SseConnection connections;
+
+    @AfterEach
+    void closeStreams() {
+        for (String key : List.copyOf(connections.getAllKeys())) {
+            connections.get(key).ifPresent(emitter -> emitter.complete());
+            connections.remove(key);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/trip-log/current/stream/1", "/api/trip-log/detail/stream/1", "/api/vehicles/stream/track"})
+    void query_token만으로_SSE에_접근할_수_없다(String path) throws Exception {
+        mockMvc.perform(get(path).param("token", companyAToken))
+                .andExpect(status().isUnauthorized());
+        assertThat(connections.getAllKeys()).isEmpty();
+        verifyNoInteractions(logService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/trip-log/current/stream/1", "/api/trip-log/detail/stream/1", "/api/vehicles/stream/track"})
+    void 변조된_헤더_토큰은_SSE에서_401이다(String path) throws Exception {
+        mockMvc.perform(get(path).header(AUTHORIZATION, "Bearer invalid.token.signature"))
+                .andExpect(status().isUnauthorized());
+        assertThat(connections.getAllKeys()).isEmpty();
+        verifyNoInteractions(logService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/api/trip-log/current/stream/1", "/api/trip-log/detail/stream/1", "/api/vehicles/stream/track"})
+    void 허용되지_않은_ADMIN_role은_SSE에서_403이다(String path) throws Exception {
+        String token = jwtTokenProvider.generateAccessToken("admin@example.com", Map.of(
+                "roles", List.of("ADMIN"), "companyId", companyA.getId()));
+        mockMvc.perform(get(path).header(AUTHORIZATION, bearer(token)))
+                .andExpect(status().isForbidden());
+        assertThat(connections.getAllKeys()).isEmpty();
+    }
+
+    @Test
+    void 다른_회사_차량_SSE는_연결_생성_전에_404이다() throws Exception {
+        mockMvc.perform(get("/api/trip-log/current/stream/{id}", companyBVehicle.getId())
+                        .header(AUTHORIZATION, bearer(companyAToken)))
+                .andExpect(status().isNotFound());
+        assertThat(connections.getAllKeys()).isEmpty();
+        verifyNoInteractions(logService);
+    }
+
+    @Test
+    void 다른_회사_운행_SSE는_GPS조회_전에_404이다() throws Exception {
+        mockMvc.perform(get("/api/trip-log/detail/stream/{id}", companyBTrip.getId())
+                        .header(AUTHORIZATION, bearer(companyAToken)))
+                .andExpect(status().isNotFound());
+        verifyNoInteractions(logService);
+    }
+
+    @Test
+    void MEMBER는_자기_회사_차량_SSE를_구독한다() throws Exception {
+        Vehicle owned = vehicleRepository.save(vehicle(companyA,
+                vehicleModelRepository.findAll().getFirst(), "11가1111", false));
+        String token = jwtTokenProvider.generateAccessToken("member@example.com", Map.of(
+                "roles", List.of("MEMBER"), "companyId", companyA.getId()));
+        mockMvc.perform(get("/api/trip-log/current/stream/{id}", owned.getId())
+                        .header(AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk());
+        assertThat(connections.getAllKeys()).containsExactly("vehicle:" + owned.getId() + ":member@example.com");
+    }
+
+    @Test
+    void 자기_회사_운행_SSE는_헤더_인증으로_성공한다() throws Exception {
+        Vehicle owned = vehicleRepository.save(vehicle(companyA,
+                vehicleModelRepository.findAll().getFirst(), "11가1111", false));
+        TripLog ownedTrip = tripLogRepository.save(trip(owned));
+        mockMvc.perform(get("/api/trip-log/detail/stream/{id}", ownedTrip.getId())
+                        .header(AUTHORIZATION, bearer(companyAToken)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void 회사_SSE는_요청_companyId가_아닌_principal_회사를_구독한다() throws Exception {
+        mockMvc.perform(get("/api/vehicles/stream/track")
+                        .param("companyId", companyB.getId().toString())
+                        .header(AUTHORIZATION, bearer(companyAToken)))
+                .andExpect(status().isOk());
+        assertThat(connections.getAllKeys()).containsExactly("company:" + companyA.getId() + ":admin-a@example.com");
+    }
 
     @BeforeEach
     void setUp() {

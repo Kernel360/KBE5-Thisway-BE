@@ -68,7 +68,8 @@ Acceptance criteria:
   - [x] Emulator: 목록·CRUD와 등록/재연결 Vehicle을 principal 회사로 제한했다. device MDN 조회는 P0-04 범위다.
 - [ ] P0-02D: SSE token 전달, 정확한 subscription key, tenant ownership을 재설계한다.
   - [x] P0-02D-1: resource ID 구분자 일치와 이전 연결 callback의 새 연결 삭제 방지. CHANGE-010.
-  - [ ] P0-02D-2: FE와 인증 전달 계약, resource ownership, bounded buffering, 다중 instance 전달 검증.
+  - [x] P0-02D-2: FE fetch SSE 헤더 인증, 세 SSE 경로 role 검사와 resource ownership. CHANGE-011.
+  - [ ] P0-02D-3: bounded buffering, event name/순서 보존, 다중 instance 전달과 실제 브라우저 재연결 검증.
 
 ### P0-03 versioned database
 
