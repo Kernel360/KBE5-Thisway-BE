@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -145,7 +146,7 @@ public class StreamCoordinatesService {
     }
 
     private String generateSseKey(String category, String id, String uniqueId) {
-        return category + ":" + id + ":" + uniqueId;
+        return category + ":" + id + ":" + uniqueId + ":" + UUID.randomUUID();
     }
 
     private String getSseKeyToSend(String category, String id) {

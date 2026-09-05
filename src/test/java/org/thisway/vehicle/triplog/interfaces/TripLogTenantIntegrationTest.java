@@ -141,7 +141,11 @@ class TripLogTenantIntegrationTest {
         mockMvc.perform(get("/api/trip-log/current/stream/{id}", owned.getId())
                         .header(AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk());
-        assertThat(connections.getAllKeys()).containsExactly("vehicle:" + owned.getId() + ":member@example.com");
+        mockMvc.perform(get("/api/trip-log/current/stream/{id}", owned.getId())
+                        .header(AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk());
+        assertThat(connections.getAllKeys()).hasSize(2).allSatisfy(key ->
+                assertThat(key).startsWith("vehicle:" + owned.getId() + ":member@example.com:"));
     }
 
     @Test
@@ -160,7 +164,8 @@ class TripLogTenantIntegrationTest {
                         .param("companyId", companyB.getId().toString())
                         .header(AUTHORIZATION, bearer(companyAToken)))
                 .andExpect(status().isOk());
-        assertThat(connections.getAllKeys()).containsExactly("company:" + companyA.getId() + ":admin-a@example.com");
+        assertThat(connections.getAllKeys()).hasSize(1).allSatisfy(key ->
+                assertThat(key).startsWith("company:" + companyA.getId() + ":admin-a@example.com:"));
     }
 
     @BeforeEach
