@@ -106,6 +106,7 @@ Acceptance criteria:
 - [x] P1-01A: GPS 입력 검증, 유한 packet count, consumer 저장 경계 재검증, Emulator min 생략 null 버그 교정. CHANGE-019.
 - [ ] P1-01B: event identity 확정 및 실제 MySQL 중복·동시 요청의 멱등 저장.
   - [x] CHANGE-020: 신규 normalized GPS 관측값 SHA-256 unique key, exact duplicate no-op, 4-thread overlap, FK rollback·재시도, V3 기존 row 보존. 전체 277/277. device ID/sequence와 broker ack 장애는 후속 범위.
+  - [x] CHANGE-021: 실제 RabbitMQ·MySQL manual-ack harness에서 저장 전/저장 후 ack 전 연결 종료와 재전달 시 최종 1행 검증. 전체 279/279. Spring listener retry/DLQ 및 JVM kill 검증은 미포함. 기록: [broker redelivery](work-logs/2026-09-05-gps-broker-redelivery.md).
 - [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
 
 설계 질문:

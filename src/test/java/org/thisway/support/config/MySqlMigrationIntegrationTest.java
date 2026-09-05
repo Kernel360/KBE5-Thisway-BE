@@ -6,6 +6,17 @@ import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.GetResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.thisway.emulator.domain.Emulator;
+import org.thisway.emulator.infrastructure.EmulatorRepository;
+import org.thisway.vehicle.log.application.GpsLogSaveService;
+import org.thisway.vehicle.log.interfaces.GpsLogRequest;
+import org.thisway.vehicle.log.interfaces.GpsLogEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -43,6 +54,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         "spring.batch.jdbc.initialize-schema=never", "spring.flyway.baseline-on-migrate=false"})
 class MySqlMigrationIntegrationTest {
     @Container
+    static final GenericContainer<?> RABBIT = new GenericContainer<>("rabbitmq:3.13.7-alpine")
+            .withEnv("RABBITMQ_DEFAULT_USER", "test")
+            .withEnv("RABBITMQ_DEFAULT_PASS", "test")
+            .withExposedPorts(5672)
+            .waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1));
+
+    @Container
     static final GenericContainer<?> MYSQL = new GenericContainer<>("mysql:8.0.40")
             .withEnv("MYSQL_DATABASE", "thisway_test")
             .withEnv("MYSQL_USER", "test")
@@ -73,6 +91,68 @@ class MySqlMigrationIntegrationTest {
     @Autowired LogRepository logs;
     @Autowired JobRepository jobs;
     @Autowired EntityManagerFactory entityManagerFactory;
+    @Autowired EmulatorRepository emulators;
+    @Autowired GpsLogSaveService gpsSaveService;
+    @Autowired ObjectMapper objectMapper;
+
+    @ParameterizedTest(name = "DB commit before disconnect = {0}")
+    @ValueSource(booleans = {false, true})
+    void ack_전_연결종료로_재전달되어도_관측값은_한번만_저장된다(boolean commitBeforeDisconnect) throws Exception {
+        String mdn = "redelivery-" + commitBeforeDisconnect;
+        var vehicle = gpsVehicle(mdn);
+        emulators.save(Emulator.builder().mdn(mdn).vehicle(vehicle).terminalId("fixture")
+                .manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        var request = new GpsLogRequest(mdn, "fixture", "1", "1", "1", "20260905100000", "1",
+                List.of(new GpsLogEntry(null, "0", "A", "37000000", "127000000", "90", "20", "100", "12")));
+        var factory = new ConnectionFactory();
+        factory.setHost(RABBIT.getHost());
+        factory.setPort(RABBIT.getMappedPort(5672));
+        factory.setUsername("test");
+        factory.setPassword("test");
+        factory.setAutomaticRecoveryEnabled(false);
+        String queue = RabbitMQConfig.GPS_LOG_QUEUE;
+
+        // Manual-ack harness: deliberately separates the real DB commit from broker ack.
+        // This does not test Spring listener retry advice or automatic recovery.
+        try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+            channel.exchangeDeclare(RabbitMQConfig.GPS_LOG_EXCHANGE, "direct", true);
+            channel.queueDeclare(queue, true, false, false, null);
+            channel.queueBind(queue, RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY);
+            channel.confirmSelect();
+            channel.basicPublish(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY,
+                    null, objectMapper.writeValueAsBytes(request));
+            channel.waitForConfirmsOrDie(5000);
+            var first = delivery(channel, queue);
+            assertThat(first.getEnvelope().isRedeliver()).isFalse();
+            if (commitBeforeDisconnect) {
+                gpsSaveService.saveGpsLog(objectMapper.readValue(first.getBody(), GpsLogRequest.class));
+            }
+            assertThat(count(mdn)).isEqualTo(commitBeforeDisconnect ? 1 : 0);
+            // No basicAck: closing the channel returns its unacked delivery to the broker.
+        }
+        try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+            var redelivered = delivery(channel, queue);
+            assertThat(redelivered.getEnvelope().isRedeliver()).isTrue();
+            assertThat(objectMapper.readValue(redelivered.getBody(), GpsLogRequest.class)).isEqualTo(request);
+            gpsSaveService.saveGpsLog(objectMapper.readValue(redelivered.getBody(), GpsLogRequest.class));
+            assertThat(count(mdn)).isEqualTo(1);
+            channel.basicAck(redelivered.getEnvelope().getDeliveryTag(), false);
+            channel.queueDeclarePassive(queue); // Synchronous round trip after ack on the same channel.
+        }
+        try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+            assertThat(channel.basicGet(queue, false)).isNull();
+            assertThat(count(mdn)).isEqualTo(1);
+        }
+    }
+
+    private GetResponse delivery(Channel channel, String queue) {
+        var received = new java.util.concurrent.atomic.AtomicReference<GetResponse>();
+        org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(5)).until(() -> {
+            received.set(channel.basicGet(queue, false));
+            return received.get() != null;
+        });
+        return received.get();
+    }
 
     @Test
     void 엔티티_컬럼과_DB가_다르면_Hibernate_validate가_실패한다() {
