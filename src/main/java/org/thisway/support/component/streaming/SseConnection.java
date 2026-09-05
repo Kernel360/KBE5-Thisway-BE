@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 @Component
 public class SseConnection {
@@ -33,21 +34,35 @@ public class SseConnection {
     }
 
     private final Map<String, SseContext> emitters = new ConcurrentHashMap<>();
+    private final Supplier<SseEmitter> emitterFactory;
+
+    public SseConnection() {
+        this.emitterFactory = () -> new SseEmitter(SSE_TIMEOUT);
+    }
+
+    SseConnection(Supplier<SseEmitter> emitterFactory) {
+        this.emitterFactory = emitterFactory;
+    }
 
     public SseEmitter createSseEmitter(String key) {
-        SseEmitter sseEmitter = new SseEmitter(SSE_TIMEOUT);
+        SseEmitter sseEmitter = emitterFactory.get();
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
-        emitters.put(key, new SseContext(sseEmitter, now));
+        SseContext context = new SseContext(sseEmitter, now);
 
-        sseEmitter.onCompletion(() -> emitters.remove(key));
+        sseEmitter.onCompletion(() -> emitters.remove(key, context));
         sseEmitter.onTimeout(() -> {
+            emitters.remove(key, context);
             sseEmitter.complete();
-            emitters.remove(key);
         });
         sseEmitter.onError(e -> {
+            emitters.remove(key, context);
             sseEmitter.complete();
-            emitters.remove(key);
         });
+
+        SseContext previous = emitters.put(key, context);
+        if (previous != null) {
+            previous.emitter.complete();
+        }
 
         return sseEmitter;
     }
@@ -71,7 +86,7 @@ public class SseConnection {
 
     public Set<String> findKeysByPrefix(String prefix) {
         return emitters.keySet().stream()
-                .filter(key -> key.startsWith(prefix))
+                .filter(key -> key.startsWith(prefix.endsWith(":") ? prefix : prefix + ":"))
                 .collect(Collectors.toSet());
     }
 

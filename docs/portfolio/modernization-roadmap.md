@@ -67,6 +67,8 @@ Acceptance criteria:
   - [x] TripLog: 일반 HTTP의 차량 운행 요약·현재 GPS·운행 상세를 tenant-scoped Vehicle/TripLog 조회로 제한했다. query-token SSE는 P0-02D 범위다.
   - [x] Emulator: 목록·CRUD와 등록/재연결 Vehicle을 principal 회사로 제한했다. device MDN 조회는 P0-04 범위다.
 - [ ] P0-02D: SSE token 전달, 정확한 subscription key, tenant ownership을 재설계한다.
+  - [x] P0-02D-1: resource ID 구분자 일치와 이전 연결 callback의 새 연결 삭제 방지. CHANGE-010.
+  - [ ] P0-02D-2: FE와 인증 전달 계약, resource ownership, bounded buffering, 다중 instance 전달 검증.
 
 ### P0-03 versioned database
 
