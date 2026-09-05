@@ -69,7 +69,8 @@ Acceptance criteria:
 - [ ] P0-02D: SSE token 전달, 정확한 subscription key, tenant ownership을 재설계한다.
   - [x] P0-02D-1: resource ID 구분자 일치와 이전 연결 callback의 새 연결 삭제 방지. CHANGE-010.
   - [x] P0-02D-2: FE fetch SSE 헤더 인증, 세 SSE 경로 role 검사와 resource ownership. CHANGE-011.
-  - [ ] P0-02D-3: bounded buffering, event name/순서 보존, 다중 instance 전달과 실제 브라우저 재연결 검증.
+  - [x] P0-02D-3A: 초기/live 경계의 256건 bounded buffering, event name/FIFO 보존, flush 경쟁 조건 제거와 RabbitMQ fan-out topology 특성 테스트. CHANGE-012.
+  - [ ] P0-02D-3B: 실제 RabbitMQ에서 2개 application instance 전달, 브라우저·proxy disconnect/reconnect, 여러 탭 subscription identity를 검증한다.
 
 ### P0-03 versioned database
 

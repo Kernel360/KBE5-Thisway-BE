@@ -32,24 +32,18 @@ public class SseEventSender {
         int failCount = 0;
 
         for (String key : keys) {
-            try {
-                sendLiveDataWithBuffering(key, eventName, data);
-            } catch (Exception e) {
+            SseConnection.DeliveryResult result = sendLiveDataWithBuffering(key, eventName, data);
+            if (result == SseConnection.DeliveryResult.FAILED
+                    || result == SseConnection.DeliveryResult.OVERFLOW) {
                 failCount++;
-                log.warn("SSE 전송 예외 발생 Key: {}, event: {}, error: {}", key, eventName, e.getMessage());
+                log.warn("SSE 전송 실패. event: {}, result: {}", eventName, result);
             }
         }
 
         log.info("SSE 전송 완료. 총 {}건 중 {}건 실패", keys.size(), failCount);
     }
 
-    public void sendLiveDataWithBuffering(String key, String eventName, Object data) {
-        sseConnection.getContext(key).ifPresent(context -> {
-            if (context.initialChunkCompleted.get()) {
-                send(context.emitter, eventName, data);
-            } else {
-                context.bufferedLiveData.add(data);
-            }
-        });
+    public SseConnection.DeliveryResult sendLiveDataWithBuffering(String key, String eventName, Object data) {
+        return sseConnection.sendLiveEvent(key, eventName, data);
     }
 }
