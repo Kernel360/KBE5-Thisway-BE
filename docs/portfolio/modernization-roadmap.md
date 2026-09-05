@@ -108,6 +108,7 @@ Acceptance criteria:
   - [x] CHANGE-020: 신규 normalized GPS 관측값 SHA-256 unique key, exact duplicate no-op, 4-thread overlap, FK rollback·재시도, V3 기존 row 보존. 전체 277/277. device ID/sequence와 broker ack 장애는 후속 범위.
   - [x] CHANGE-021: 실제 RabbitMQ·MySQL manual-ack harness에서 저장 전/저장 후 ack 전 연결 종료와 재전달 시 최종 1행 검증. 전체 279/279. Spring listener retry/DLQ 및 JVM kill 검증은 미포함. 기록: [broker redelivery](work-logs/2026-09-05-gps-broker-redelivery.md).
 - [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
+  - [x] CHANGE-022: 저장 전용 retry allowlist·backoff, policy 기반 DLQ topology, rejection counter, 실제 Spring container/RabbitMQ/MySQL에서 실패 분류와 제한적 replay 검증. 전체 287/287. [작업 기록](work-logs/2026-09-05-gps-retry-dlq.md), [운영 gate](../runbooks/gps-dlq-replay.md). 운영 policy 적용·replay 도구·device 인증·producer dual-publish/confirm/return·자동 alert는 미완료.
 
 설계 질문:
 

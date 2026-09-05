@@ -95,6 +95,162 @@ class MySqlMigrationIntegrationTest {
     @Autowired GpsLogSaveService gpsSaveService;
     @Autowired ObjectMapper objectMapper;
 
+    @ParameterizedTest
+    @ValueSource(strings = {"invalid", "json", "unknown", "integrity", "transient-success", "transient-exhausted"})
+    void managed_consumer의_오류분류_DLQ_및_성공을_검증한다(String scenario) throws Exception {
+        String mdn = "dlq-" + scenario;
+        // Keep fixture MDNs inside the protocol's 20-character boundary.
+        mdn = mdn.substring(0, Math.min(mdn.length(), 20));
+        var vehicle = gpsVehicle(mdn);
+        emulators.save(Emulator.builder().mdn(mdn).vehicle(vehicle).terminalId("fixture")
+                .manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        var request = new GpsLogRequest(mdn, "fixture", "1", "1", "1", "20260905100000",
+                scenario.equals("invalid") ? "2" : "1",
+                List.of(new GpsLogEntry(null, "0", "A", "37000000", "127000000", "90", "20", "100", "12")));
+        try (var harness = new GpsFailureHarness(scenario)) {
+            var message = harness.converter.toMessage(request, new org.springframework.amqp.core.MessageProperties());
+            if (scenario.equals("json")) {
+                message = new org.springframework.amqp.core.Message("{invalid".getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        message.getMessageProperties());
+            }
+            harness.template.send(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY, message);
+            if (scenario.equals("transient-success")) {
+                String fixtureMdn = mdn;
+                org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10))
+                        .untilAsserted(() -> assertThat(count(fixtureMdn)).isEqualTo(1));
+                harness.container.stop(); // Wait for listener completion/ack before queue assertions.
+                assertThat(harness.attempts.get()).isEqualTo(3);
+                assertThat(harness.template.receive(RabbitMQConfig.GPS_LOG_DLQ)).isNull();
+                assertThat(harness.meters.counter("gps.consumer.rejected").count()).isZero();
+            } else {
+                var dead = harness.template.receive(RabbitMQConfig.GPS_LOG_DLQ, 10000);
+                assertThat(dead).isNotNull();
+                assertThat(dead.getBody()).isEqualTo(message.getBody());
+                var deaths = dead.getMessageProperties().getXDeathHeader();
+                assertThat(deaths).hasSize(1);
+                assertThat(deaths.getFirst().get("reason").toString()).isEqualTo("rejected");
+                assertThat(deaths.getFirst().get("queue").toString()).isEqualTo(RabbitMQConfig.GPS_LOG_QUEUE);
+                assertThat(count(mdn)).isZero();
+                assertThat(harness.attempts.get()).isEqualTo(scenario.equals("transient-exhausted") ? 3 : 1);
+                assertThat(harness.meters.counter("gps.consumer.rejected").count()).isEqualTo(1);
+            }
+            assertThat(harness.template.receive(RabbitMQConfig.GPS_LOG_QUEUE)).isNull();
+        }
+    }
+
+    @Test
+    void DLQ_replay중_publish후_ack누락으로_두번_재처리되어도_DB는_한행이다() throws Exception {
+        String mdn = "dlq-replay";
+        var vehicle = gpsVehicle(mdn);
+        emulators.save(Emulator.builder().mdn(mdn).vehicle(vehicle).terminalId("fixture")
+                .manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        var request = new GpsLogRequest(mdn, "fixture", "1", "1", "1", "20260905100000", "1",
+                List.of(new GpsLogEntry(null, "0", "A", "37000000", "127000000", "90", "20", "100", "12")));
+        try (var harness = new GpsFailureHarness("transient-exhausted")) {
+            harness.template.convertAndSend(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY, request);
+            var factory = new ConnectionFactory();
+            factory.setHost(RABBIT.getHost());
+            factory.setPort(RABBIT.getMappedPort(5672));
+            factory.setUsername("test");
+            factory.setPassword("test");
+            factory.setAutomaticRecoveryEnabled(false);
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                var dead = delivery(channel, RabbitMQConfig.GPS_LOG_DLQ);
+                assertThatThrownBy(() -> replayConfirmed(channel, dead, "fixture-unroutable"))
+                        .isInstanceOf(IllegalStateException.class).hasMessage("Replay unroutable");
+                // Failed publication must leave the original DLQ delivery unacked.
+            }
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                var dead = delivery(channel, RabbitMQConfig.GPS_LOG_DLQ);
+                assertThat(dead.getEnvelope().isRedeliver()).isTrue();
+                assertThat(count(mdn)).isZero();
+                assertThat(harness.attempts.get()).isEqualTo(3);
+                harness.repaired.set(true);
+                replayConfirmed(channel, dead, RabbitMQConfig.GPS_LOG_ROUTING_KEY);
+                org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(5))
+                        .untilAsserted(() -> assertThat(count(mdn)).isEqualTo(1));
+                // Deliberately omit DLQ ack after successful publish, like a replay process failure.
+            }
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                var dead = delivery(channel, RabbitMQConfig.GPS_LOG_DLQ);
+                assertThat(dead.getEnvelope().isRedeliver()).isTrue();
+                replayConfirmed(channel, dead, RabbitMQConfig.GPS_LOG_ROUTING_KEY);
+                channel.basicAck(dead.getEnvelope().getDeliveryTag(), false);
+                channel.queueDeclarePassive(RabbitMQConfig.GPS_LOG_DLQ);
+            }
+            org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(5))
+                    .untilAsserted(() -> assertThat(harness.attempts.get()).isEqualTo(5));
+            harness.container.stop();
+            assertThat(count(mdn)).isEqualTo(1);
+            assertThat(harness.template.receive(RabbitMQConfig.GPS_LOG_DLQ)).isNull();
+            assertThat(harness.template.receive(RabbitMQConfig.GPS_LOG_QUEUE)).isNull();
+        }
+    }
+
+    private void replayConfirmed(Channel channel, GetResponse dead, String routingKey) throws Exception {
+        var returned = new java.util.concurrent.atomic.AtomicBoolean();
+        channel.addReturnListener((com.rabbitmq.client.ReturnCallback) value -> returned.set(true));
+        channel.confirmSelect();
+        channel.basicPublish(RabbitMQConfig.GPS_LOG_EXCHANGE, routingKey, true, dead.getProps(), dead.getBody());
+        channel.waitForConfirmsOrDie(5000);
+        if (returned.get()) throw new IllegalStateException("Replay unroutable");
+    }
+
+    private class GpsFailureHarness implements AutoCloseable {
+        final java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger();
+        final java.util.concurrent.atomic.AtomicBoolean repaired = new java.util.concurrent.atomic.AtomicBoolean();
+        final io.micrometer.core.instrument.simple.SimpleMeterRegistry meters = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        final org.springframework.amqp.rabbit.connection.CachingConnectionFactory connection;
+        final org.springframework.amqp.support.converter.Jackson2JsonMessageConverter converter;
+        final org.springframework.amqp.rabbit.core.RabbitTemplate template;
+        final org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer container;
+
+        GpsFailureHarness(String scenario) throws Exception {
+            connection = new org.springframework.amqp.rabbit.connection.CachingConnectionFactory(RABBIT.getHost(), RABBIT.getMappedPort(5672));
+            connection.setUsername("test");
+            connection.setPassword("test");
+            var config = new RabbitMQConfig(null);
+            var admin = new org.springframework.amqp.rabbit.core.RabbitAdmin(connection);
+            admin.declareExchange(config.gpsLogExchange());
+            admin.declareQueue(config.gpsLogQueue());
+            admin.declareBinding(config.gpsLogBinding());
+            admin.declareExchange(config.gpsDeadExchange());
+            admin.declareQueue(config.gpsDeadQueue());
+            admin.declareBinding(config.gpsDeadBinding());
+            var policy = RABBIT.execInContainer("rabbitmqctl", "set_policy", "--vhost", "/",
+                    "--apply-to", "queues", "--priority", "50", "gps-save-dlx", "^gps_log\\.queue$",
+                    "{\"dead-letter-exchange\":\"gps_log.dead.exchange\",\"dead-letter-routing-key\":\"gps_log.dead\"}");
+            assertThat(policy.getExitCode()).as("fixture DLX policy").isZero();
+            converter = config.jackson2JsonMessageConverter();
+            template = config.rabbitTemplate(connection, converter);
+            var endpoint = new org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint();
+            endpoint.setId("gps-failure-fixture");
+            endpoint.setQueueNames(RabbitMQConfig.GPS_LOG_QUEUE);
+            endpoint.setMessageListener(message -> {
+                int attempt = attempts.incrementAndGet();
+                if (!repaired.get()) {
+                    if (scenario.equals("unknown")) throw new IllegalStateException("fixture");
+                    if (scenario.equals("integrity")) throw new org.springframework.dao.DataIntegrityViolationException("fixture");
+                    if (scenario.equals("transient-exhausted") || (scenario.equals("transient-success") && attempt < 3)) {
+                        throw new org.springframework.amqp.rabbit.support.ListenerExecutionFailedException("fixture wrapper",
+                                new org.springframework.dao.CannotAcquireLockException("fixture"), message);
+                    }
+                }
+                gpsSaveService.saveGpsLog((GpsLogRequest) converter.fromMessage(message));
+            });
+            container = config.gpsSaveListenerContainerFactory(connection, converter, meters).createListenerContainer(endpoint);
+            container.start();
+        }
+
+        @Override
+        public void close() {
+            container.stop();
+            container.destroy();
+            connection.destroy();
+            meters.close();
+        }
+    }
+
     @ParameterizedTest(name = "DB commit before disconnect = {0}")
     @ValueSource(booleans = {false, true})
     void ack_전_연결종료로_재전달되어도_관측값은_한번만_저장된다(boolean commitBeforeDisconnect) throws Exception {
