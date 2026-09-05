@@ -24,3 +24,7 @@
 - 운영 replay 도구, 접근 감사, 보관 기간, 경고 자동화는 후속이며 이번에는 테스트 harness와 운영 조건을 확정했다.
 
 검증·학습 기록: [CHANGE-022](../portfolio/work-logs/2026-09-05-gps-retry-dlq.md). 적용 순서·중단 조건: [runbook](../runbooks/gps-dlq-replay.md).
+
+## 후속 결정: 제한적 도구 (2026-09-06)
+
+CHANGE-023에서 별도 Java replay source set을 추가했다. 웹 관리 API·대량 자동 loop 대신 로컬/승인된 터널용 한 건 CLI를 선택했다. 승인 ID는 조직 승인 기록 참조이고 hash·marker·입력 확인, 신규 0600 audit와 confirm 전후 기록을 수행한다. 중앙 승인·감사·전역 rate limit을 구현했다고 표현하지 않는다. 웹 jar에 운영 main을 섞지 않으며 구체적 실패 경계는 [CHANGE-023](../portfolio/work-logs/2026-09-06-gps-replay-tool-and-pitch.md)에 기록한다.

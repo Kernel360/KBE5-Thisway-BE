@@ -196,6 +196,59 @@ class MySqlMigrationIntegrationTest {
         if (returned.get()) throw new IllegalStateException("Replay unroutable");
     }
 
+    @Test
+    void 실제_replay도구의_preview_return_audit실패와_중복복구를_검증한다() throws Exception {
+        String mdn = "replay-tool";
+        var vehicle = gpsVehicle(mdn);
+        emulators.save(Emulator.builder().mdn(mdn).vehicle(vehicle).terminalId("fixture")
+                .manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        var request = new GpsLogRequest(mdn, "fixture", "1", "1", "1", "20260906000000", "1",
+                List.of(new GpsLogEntry(null, "0", "A", "37000000", "127000000", "90", "20", "100", "12")));
+        try (var harness = new GpsFailureHarness("transient-exhausted")) {
+            var message = harness.converter.toMessage(request, new org.springframework.amqp.core.MessageProperties());
+            var approval = new org.thisway.ops.GpsDlqReplay.Approval("TICKET-23", GpsDlqReplayTest.digest(message.getBody()));
+            harness.template.send(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY, message);
+            var factory = new ConnectionFactory();
+            factory.setHost(RABBIT.getHost());
+            factory.setPort(RABBIT.getMappedPort(5672));
+            factory.setUsername("test");
+            factory.setPassword("test");
+            factory.setAutomaticRecoveryEnabled(false);
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10))
+                        .until(() -> channel.queueDeclarePassive(RabbitMQConfig.GPS_LOG_DLQ).getMessageCount() == 1);
+                assertThat(org.thisway.ops.GpsDlqReplay.processOne(channel, null, (e, d) -> {}))
+                        .startsWith("PREVIEW sha256=");
+            }
+            var admin = new org.springframework.amqp.rabbit.core.RabbitAdmin(harness.connection);
+            var binding = new RabbitMQConfig(null).gpsLogBinding();
+            admin.removeBinding(binding);
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                assertThatThrownBy(() -> org.thisway.ops.GpsDlqReplay.processOne(channel, approval, (e, d) -> {}))
+                        .hasMessage("Replay unroutable");
+            } finally {
+                admin.declareBinding(binding);
+            }
+            harness.repaired.set(true);
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                assertThatThrownBy(() -> org.thisway.ops.GpsDlqReplay.processOne(channel, approval, (e, d) -> {
+                    if (e.equals("PUBLISH_CONFIRMED")) throw new java.io.IOException("fixture audit failure");
+                })).isInstanceOf(java.io.IOException.class);
+            }
+            var events = new java.util.ArrayList<String>();
+            try (var connection = factory.newConnection(); var channel = connection.createChannel()) {
+                assertThat(org.thisway.ops.GpsDlqReplay.processOne(channel, approval, (e, d) -> events.add(e)))
+                        .startsWith("REPLAYED sha256=");
+            }
+            org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(5))
+                    .untilAsserted(() -> assertThat(harness.attempts.get()).isEqualTo(5));
+            harness.container.stop();
+            assertThat(count(mdn)).isEqualTo(1);
+            assertThat(events).containsExactly("INTENT", "PUBLISH_CONFIRMED", "ACK_COMPLETED");
+            assertThat(harness.template.receive(RabbitMQConfig.GPS_LOG_DLQ)).isNull();
+        }
+    }
+
     private class GpsFailureHarness implements AutoCloseable {
         final java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger();
         final java.util.concurrent.atomic.AtomicBoolean repaired = new java.util.concurrent.atomic.AtomicBoolean();

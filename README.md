@@ -166,7 +166,7 @@ DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한�
 
 실제 MySQL migration 계약은 `./gradlew test --tests '*MySqlMigrationIntegrationTest' --console=plain`으로 재현한다. Docker가 필요하며 MySQL 8.0.40 컨테이너를 격리 실행한다. H2 테스트와 별도로 Flyway 적용, JPA validate, GPS/지오펜스, 통계, Batch metadata를 검증한다.
 
-**RabbitMQ 저장 모드 배포 전:** GPS 최종 소비 실패의 DLQ 보관에는 broker policy가 필요하다. 앱은 DLX/DLQ/binding을 선언하지만 기존 source queue의 arguments는 변경하지 않는다. policy가 없으면 reject된 메시지가 폐기될 수 있으므로 [DLQ 적용·재처리 runbook](docs/runbooks/gps-dlq-replay.md)의 선행 topology/policy/routing 검증을 완료해야 한다. 기존 queue/volume을 삭제하지 않는다. 위 integration test는 RabbitMQ 3.13.7 컨테이너도 실행하여 오류 분류·DLQ·제한적 replay를 검증한다. 운영 replay CLI/API 및 무유실 보장은 아직 제공하지 않는다.
+**RabbitMQ 저장 모드 배포 전:** GPS 최종 소비 실패의 DLQ 보관에는 broker policy가 필요하다. 앱은 DLX/DLQ/binding을 선언하지만 기존 source queue의 arguments는 변경하지 않는다. policy가 없으면 reject된 메시지가 폐기될 수 있으므로 [DLQ 적용·재처리 runbook](docs/runbooks/gps-dlq-replay.md)의 선행 topology/policy/routing 검증을 완료해야 한다. 기존 queue/volume을 삭제하지 않는다. 위 integration test는 RabbitMQ 3.13.7 컨테이너도 실행하여 오류 분류·DLQ·제한적 replay를 검증한다. 한 건씩 처리하는 로컬/승인된 터널용 CLI는 `./gradlew gpsDlqReplay --args=--help`로 확인한다. 운영 적용·조직 승인 시스템·무유실 보장은 아직 제공하지 않는다.
 
 ### 사전 조건
 

@@ -130,11 +130,25 @@ tasks.register('sseBrowserTest', Test) {
 }
 
 sourceSets {
+    replay {
+        compileClasspath += sourceSets.main.output + configurations.runtimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    test {
+        compileClasspath += sourceSets.replay.output
+        runtimeClasspath += sourceSets.replay.output
+    }
     main {
         java {
             srcDir("$buildDir/generated/sources/annotationProcessor/java/main")
         }
     }
+}
+
+tasks.register('gpsDlqReplay', JavaExec) {
+    description = 'One-message GPS DLQ preview/replay; see docs/runbooks/gps-dlq-replay.md.'
+    classpath = sourceSets.replay.runtimeClasspath
+    mainClass = 'org.thisway.ops.GpsDlqReplay'
 }
 
 def localGradle = file('build.local.gradle')

@@ -109,6 +109,7 @@ Acceptance criteria:
   - [x] CHANGE-021: 실제 RabbitMQ·MySQL manual-ack harness에서 저장 전/저장 후 ack 전 연결 종료와 재전달 시 최종 1행 검증. 전체 279/279. Spring listener retry/DLQ 및 JVM kill 검증은 미포함. 기록: [broker redelivery](work-logs/2026-09-05-gps-broker-redelivery.md).
 - [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
   - [x] CHANGE-022: 저장 전용 retry allowlist·backoff, policy 기반 DLQ topology, rejection counter, 실제 Spring container/RabbitMQ/MySQL에서 실패 분류와 제한적 replay 검증. 전체 287/287. [작업 기록](work-logs/2026-09-05-gps-retry-dlq.md), [운영 gate](../runbooks/gps-dlq-replay.md). 운영 policy 적용·replay 도구·device 인증·producer dual-publish/confirm/return·자동 alert는 미완료.
+  - [x] CHANGE-023: 한 건 제한 replay CLI, 승인 참조/hash·marker 검사, 신규 0600 audit, mandatory/confirm·audit 실패 후 원본 보존과 DB 중복 복구. 전체 294/294. [작업 기록](work-logs/2026-09-06-gps-replay-tool-and-pitch.md), [포트폴리오 설명](project-pitch.md). 조직 승인 검증·전역 rate limit·중앙 감사·운영 적용은 미완료.
 
 설계 질문:
 

@@ -62,7 +62,7 @@ rollback 때 source/DLQ를 삭제하거나 policy를 무조건 제거하지 않�
 
 ## Replay 절차와 중단 조건
 
-운영용 replay CLI/API는 아직 제공하지 않는다. 아래는 테스트로 검증한 protocol과 향후 도구의 필수 조건이며, 승인 없이 수동 메시지 삭제·대량 replay를 해서는 안 된다.
+CHANGE-023에서 제한적 CLI를 추가했다. 아래 절차와 다음 CLI 제약을 함께 따른다. 웹 API·조직 승인 시스템·중앙 감사 저장소는 제공하지 않으며 승인 없이 메시지 삭제·대량 replay를 해서는 안 된다.
 
 1. 오류를 먼저 수정하고 재처리 대상·건수·담당자·사유를 기록한다. 장치의 현재 MDN→vehicle 매핑과 원래 소유권이 달라졌으면 자동 replay하지 않는다.
 2. DLQ에서 `autoAck=false`, 한 건씩 가져온다. Management UI의 ack-and-remove로 조회하지 않는다.
@@ -72,7 +72,41 @@ rollback 때 source/DLQ를 삭제하거나 policy를 무조건 제거하지 않�
 6. publish 성공 후 DLQ ack 전 장애는 중복 publish를 만들 수 있다. CHANGE-020의 신규 exact observation unique key가 DB 중복 효과를 제한한다. legacy NULL key나 장치 재할당까지 보장하는 것은 아니다.
 7. 동일 메시지가 다시 DLQ에 들어오면 자동 반복하지 말고 중단·조사한다. 자동 DLQ→source loop는 구성하지 않는다.
 
-검증한 replay는 RabbitMQ 3.13.7 fixture에서 원본 properties를 보존하는 테스트 harness다. 운영 권한·audit UI·rate limit·새 broker 버전까지 검증된 범용 도구가 아니다.
+CHANGE-022의 harness는 원본 properties를 보존했다. 새 CLI는 원본 body만 그대로 유지하고 properties는 `application/json`, UTF-8, persistent 및 고정 DTO type으로 재구성한다. 임의 expiry/user/type header와 broker x-death 이력은 복사하지 않는다. 대신 `thisway-replay-count=1`, 승인 ID를 추가한다. 이미 replay marker가 있으면 값과 무관하게 거부한다. RabbitMQ 3.13.7 fixture 검증이며 새 버전까지 검증된 범용 도구가 아니다.
+
+## 제한적 CLI 사용법
+
+별도 `src/replay` source set이며 웹 애플리케이션 jar에 포함되지 않는다. Java 21·Gradle 환경에서 실행한다. 운영 배포나 실제 메시지 replay는 이번 개발 작업에서 수행하지 않았다.
+
+사전 조건:
+
+- 승인된 관리자 계정과 로컬 broker 또는 승인된 SSH/port-forward tunnel을 준비한다. 직접 원격 host는 CLI가 거부한다. tunnel이 어느 broker/vhost인지 별도 승인 기록에 남긴다.
+- `GPS_REPLAY_URI` 환경 변수에 AMQP 연결 정보를 안전하게 주입한다. URI/password를 인자·Git·로그·터미널 출력으로 남기지 않는다. 환경 변수도 같은 사용자/프로세스 권한 관점에서 완전한 비밀 저장소가 아니다.
+- DLQ와 source topology/policy를 확인하고 장치 소유권·MDN mapping을 사람이 확인한다. 도구는 DB나 조직 승인 시스템에 접근하지 않는다.
+- 다른 replay 작업과 동시에 실행하지 않는다. 이 도구에 전역 lock/승인 검증/중앙 rate limit은 없다.
+
+```bash
+./gradlew gpsDlqReplay --args=--help --console=plain
+./gradlew gpsDlqReplay --args=preview --console=plain
+```
+
+preview는 큐 선두 한 건을 manual get하고 hash/byte 수만 보여 준 뒤 연결을 닫는다. 원본 body를 출력하거나 publish/ack하지 않는다. **완전한 read-only peek가 아니며**, 일시적인 unacked 상태와 redelivery·순서 변화가 생길 수 있다.
+
+확인한 hash와 승인 번호, 신뢰할 수 있는 운영자 전용 디렉터리의 **새 절대 파일 경로**를 지정한다. 다음 값들은 반드시 실제 승인 값으로 바꾼다.
+
+```bash
+./gradlew gpsDlqReplay --args='execute APPROVAL_ID SHA256 ABSOLUTE_NEW_AUDIT_FILE' --console=plain
+```
+
+- 한 호출은 한 건만 처리한다. 선두 메시지 hash가 달라지면 중단하고 다시 확인한다. payload 편집·검색·대량 drain 기능은 없다.
+- 256KiB 이하의 유효한 GPS request만 재발행한다. 잘못된 JSON/입력은 이 도구로 수정·강제 replay할 수 없다.
+- 신규 audit 파일은 POSIX 0600 + CREATE_NEW로 만들며 기존 파일을 덮어쓰지 않는다. 각 이벤트는 `force(true)` 후 다음 단계로 넘어간다. 로컬 파일이므로 변조 방지·중앙 보존은 별도다.
+- `RUN_STARTED → INTENT → PUBLISH_CONFIRMED → ACK_COMPLETED`를 기록한다. 실패하면 가능한 경우 `FAILED_OR_UNCERTAIN`을 기록한다. 위치·MDN·credential·임의 stacktrace는 기록하지 않는다.
+- audit 실패가 publish 전이면 전송하지 않는다. confirm 기록 실패면 원본 ack를 하지 않는다. ack 이후 최종 audit 실패면 이미 원본이 제거됐을 수도 있으므로 무조건 재실행하지 말고 확인한다.
+- marker는 정상 도구 경로의 반복을 제한할 뿐 인증 장치가 아니다. 원본 DLQ ack 누락 시 원본에는 marker가 없어 다시 replay될 수 있다. 이 경우 DB 멱등성과 audit 확인이 필요하다.
+- `REPLAYED`는 routing/confirm과 DLQ ack 절차 완료를 뜻하며 DB 저장 성공을 뜻하지 않는다. source 소비 결과·DLQ 재유입을 따로 확인한다.
+
+검증: CLI help·컴파일, audit 파일 권한/기존 파일 보존, 실제 처리 엔진을 RabbitMQ/MySQL에 연결한 preview·unroutable·audit 실패 후 중복 복구. 프로세스 kill/조직 권한/운영 터널·실제 URI 연결 전체는 미검증이다.
 
 ## 참고 자료
 
