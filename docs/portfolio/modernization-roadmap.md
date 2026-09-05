@@ -149,6 +149,14 @@ Acceptance criteria:
 
 ### P1-03 재시작 가능한 Statistics Batch
 
+진행 상태:
+
+- [x] P1-03A / CHANGE-024: identifying targetDate, Asia/Seoul scheduler, fail-fast 및 전체 tasklet rollback/restart, 완료·진행 중 동일 날짜 launch 거부를 실제 MySQL에서 검증. [기록](work-logs/2026-09-06-statistics-job-identity.md).
+- [ ] P1-03B: 회사별 transaction/checkpoint, 성공 회사 생략, DB company/date unique 및 직접 저장 경로의 동시성.
+- [ ] P1-03C: 비영 원천 fixture 통계 공식·late event/correction/backfill·다중 JVM 장애 복구.
+
+현재 작업 우선순위와 Git/운영 미완료 범위는 [남은 작업](remaining-work.md)에 정리한다.
+
 이 단계는 기존 개인 기여 [#172](https://github.com/Kernel360/KBE5-Thisway-BE/pull/172), [#213](https://github.com/Kernel360/KBE5-Thisway-BE/pull/213)의 현대화다.
 
 범위:
