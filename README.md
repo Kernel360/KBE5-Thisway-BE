@@ -160,7 +160,7 @@
 
 ## 6. 테스트
 
-DB schema는 `src/main/resources/db/migration`의 Flyway V1/V2가 관리한다. dev/prod는 `ddl-auto=validate`이며 새 DB에만 자동 초기 적용한다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한다. V1/V2는 기본 schema, V3는 신규 GPS 관측값 중복 방지 key다. dev/prod는 `ddl-auto=validate`이며 이력이 관리되는 DB에는 후속 migration이 적용된다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
 
 기존 schema의 알려진 차이를 조회하는 읽기 전용 SQL과 결과 해석은 [preflight runbook](docs/runbooks/legacy-schema-preflight.md)에 있다. 점검 통과가 자동 baseline 승인이나 전체 schema 일치를 뜻하지 않는다.
 

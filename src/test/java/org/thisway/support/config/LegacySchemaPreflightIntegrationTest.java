@@ -74,6 +74,25 @@ class LegacySchemaPreflightIntegrationTest {
         return new DriverManagerDataSource(server + name + options, "root", "test-root");
     }
 
+    @Test
+    void V3는_기존_중복_row를_삭제하지_않고_NULL_key로_보존한다() {
+        var source = database("v2_upgrade_fixture");
+        Flyway.configure().dataSource(source).target("2").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',0,0,1,1)");
+        jdbc.update("INSERT INTO gps_log(vehicle_id,mdn,occurred_time) VALUES "
+                + "(1,'legacy','2026-09-05 00:00:00'),(1,'legacy','2026-09-05 00:00:00')");
+        var before = jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id");
+        assertThat(Flyway.configure().dataSource(source).load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM gps_log WHERE event_key IS NULL", Integer.class)).isEqualTo(2);
+    }
+
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {
         String sql = new ClassPathResource("db/preflight/schema-readiness.sql")
                 .getContentAsString(StandardCharsets.UTF_8);

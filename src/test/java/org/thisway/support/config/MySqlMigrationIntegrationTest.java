@@ -89,7 +89,7 @@ class MySqlMigrationIntegrationTest {
 
     @Test
     void 빈_MySQL_migration과_JPA_validate_기동후_재실행은_noop이다() {
-        assertThat(flyway.info().applied()).hasSize(2);
+        assertThat(flyway.info().applied()).hasSize(3);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.statistics "
                 + "WHERE table_schema=DATABASE() AND table_name='trip_log' "
@@ -153,5 +153,70 @@ class MySqlMigrationIntegrationTest {
         return companies.save(Company.builder().name("fixture " + suffix).crn("fixture-" + suffix)
                 .contact("000").addrRoad("fixture").addrDetail("fixture").memo("fixture")
                 .gpsCycle(60).build());
+    }
+
+    @Test
+    void 동일_관측값은_packet내_중복과_재전송에도_한번만_저장한다() {
+        Vehicle vehicle = gpsVehicle("repeat");
+        var first = observation(vehicle.getId(), "repeat", 20);
+        logs.saveGpsLogs(List.of(first, first));
+        logs.saveGpsLogs(List.of(first));
+        assertThat(count("repeat")).isEqualTo(1);
+        logs.saveGpsLogs(List.of(observation(vehicle.getId(), "repeat", 21)));
+        assertThat(count("repeat")).isEqualTo(2); // Same timestamp, different measurement is preserved.
+    }
+
+    @Test
+    void 겹치는_packet이_역순으로_동시도착해도_관측값은_각각_한번이다() throws Exception {
+        Vehicle vehicle = gpsVehicle("concurrent");
+        var first = observation(vehicle.getId(), "concurrent", 20);
+        var second = observation(vehicle.getId(), "concurrent", 21);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            var tasks = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (int i = 0; i < 4; i++) {
+                var packet = i % 2 == 0 ? List.of(first, second) : List.of(second, first);
+                tasks.add(executor.submit(() -> {
+                    if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
+                    logs.saveGpsLogs(packet);
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (var task : tasks) task.get(10, java.util.concurrent.TimeUnit.SECONDS);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+        assertThat(count("concurrent")).isEqualTo(2);
+    }
+
+    @Test
+    void FK_실패는_무시하지_않고_packet을_rollback하여_재시도할_수_있다() {
+        Vehicle vehicle = gpsVehicle("rollback");
+        var valid = observation(vehicle.getId(), "rollback", 20);
+        var invalid = observation(Long.MAX_VALUE, "rollback", 21);
+        assertThatThrownBy(() -> logs.saveGpsLogs(List.of(valid, invalid)))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(count("rollback")).isZero();
+        logs.saveGpsLogs(List.of(valid));
+        logs.saveGpsLogs(List.of(valid));
+        assertThat(count("rollback")).isEqualTo(1);
+    }
+
+    private int count(String mdn) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM gps_log WHERE mdn=?", Integer.class, mdn);
+    }
+
+    private Vehicle gpsVehicle(String suffix) {
+        var model = models.save(VehicleModel.builder().name("fixture").manufacturer("fixture").modelYear(2026).build());
+        return vehicles.save(Vehicle.builder().company(company(suffix)).vehicleModel(model)
+                .carNumber(suffix).color("white").mileage(0).powerOn(false).build());
+    }
+
+    private GpsLogData observation(Long vehicleId, String mdn, int speed) {
+        return new GpsLogData(vehicleId, mdn, GpsStatus.NORMAL, 37.0, 127.0, 90, speed, 100, 12,
+                LocalDateTime.of(2026, 9, 5, 10, 0));
     }
 }

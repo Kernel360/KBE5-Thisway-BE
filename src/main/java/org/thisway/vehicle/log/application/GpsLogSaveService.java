@@ -72,7 +72,7 @@ public class GpsLogSaveService {
 
         logRepository.saveGpsLogs(gpsLogDataList);
 
-        log.info("주기 정보 로그 저장 완료: 항목 수={}", gpsLogDataList.size());
+        log.info("주기 정보 로그 저장 요청 처리 완료: 입력 항목 수={}", gpsLogDataList.size());
     }
 
     private Long getVehicleIdByMdn(String mdn) {

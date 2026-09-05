@@ -105,6 +105,7 @@ Acceptance criteria:
 
 - [x] P1-01A: GPS 입력 검증, 유한 packet count, consumer 저장 경계 재검증, Emulator min 생략 null 버그 교정. CHANGE-019.
 - [ ] P1-01B: event identity 확정 및 실제 MySQL 중복·동시 요청의 멱등 저장.
+  - [x] CHANGE-020: 신규 normalized GPS 관측값 SHA-256 unique key, exact duplicate no-op, 4-thread overlap, FK rollback·재시도, V3 기존 row 보존. 전체 277/277. device ID/sequence와 broker ack 장애는 후속 범위.
 - [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
 
 설계 질문:
