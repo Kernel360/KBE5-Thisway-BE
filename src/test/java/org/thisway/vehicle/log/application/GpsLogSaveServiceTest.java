@@ -24,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +51,16 @@ class GpsLogSaveServiceTest {
         when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));
         when(emulator.getVehicle()).thenReturn(vehicle);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
+    }
+
+    @Test
+    void Emulator가_min을_생략하면_기준_시각의_분을_유지한다() {
+        setupMocks();
+        var request = new GpsLogRequest(VALID_MDN, "A001", "6", "5", "1", "202609051220", "1",
+                List.of(new GpsLogEntry(null, "33", "A", "37000000", "127000000", "90", "20", "100", "12")));
+        new GpsLogSaveService(emulatorRepository, logRepository, new LogDataConverter()).saveGpsLog(request);
+        verify(logRepository).saveGpsLogs(argThat(rows -> rows.size() == 1
+                && rows.getFirst().occurredTime().equals(LocalDateTime.of(2026, 9, 5, 12, 20, 33))));
     }
 
     private GpsLogRequest createValidGpsLogRequest(String mdn, int entryCount) {

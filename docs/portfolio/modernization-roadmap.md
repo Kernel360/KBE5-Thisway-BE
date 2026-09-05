@@ -101,6 +101,12 @@ Acceptance criteria:
 
 ### P1-01 신뢰 가능한 telemetry ingestion
 
+진행 상태:
+
+- [x] P1-01A: GPS 입력 검증, 유한 packet count, consumer 저장 경계 재검증, Emulator min 생략 null 버그 교정. CHANGE-019.
+- [ ] P1-01B: event identity 확정 및 실제 MySQL 중복·동시 요청의 멱등 저장.
+- [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
+
 설계 질문:
 
 - event identity는 device가 제공하는가, `(mdn, occurredAt, sequence)`로 합성하는가?

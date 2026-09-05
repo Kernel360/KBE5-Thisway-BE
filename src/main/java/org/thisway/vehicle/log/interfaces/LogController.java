@@ -22,6 +22,7 @@ public class LogController {
 
     @PostMapping("/gps")
     public ResponseEntity<LogResponse> receiveGpsLog(@RequestBody GpsLogRequest request) {
+        GpsLogRequestValidator.validate(request);
         gpsLogService.saveGpsLog(request);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new LogResponse("000", "Success", request.mdn()));
