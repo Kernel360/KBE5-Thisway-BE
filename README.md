@@ -160,6 +160,10 @@
 
 ## 6. 테스트
 
+DB schema는 `src/main/resources/db/migration`의 Flyway V1/V2가 관리한다. dev/prod는 `ddl-auto=validate`이며 새 DB에만 자동 초기 적용한다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+
+실제 MySQL migration 계약은 `./gradlew test --tests '*MySqlMigrationIntegrationTest' --console=plain`으로 재현한다. Docker가 필요하며 MySQL 8.0.40 컨테이너를 격리 실행한다. H2 테스트와 별도로 Flyway 적용, JPA validate, GPS/지오펜스, 통계, Batch metadata를 검증한다.
+
 ### 사전 조건
 
 - JDK 21

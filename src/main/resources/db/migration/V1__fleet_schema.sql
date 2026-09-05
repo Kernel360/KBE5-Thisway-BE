@@ -1,5 +1,3 @@
--- Historical team schema, retained for provenance only. Not mounted or executed by compose.
--- Fresh databases are owned by src/main/resources/db/migration (Flyway).
 create table company
 (
     id          bigint auto_increment
@@ -92,7 +90,7 @@ create table geofence_log
         primary key,
     vehicle_id        bigint                              not null,
     mdn               varchar(20)                         not null,
-    occured_time      datetime                            not null,
+    occurred_time      datetime                            not null,
     geofence_group_id bigint                              null,
     geofence_id       bigint                              null,
     event_val         tinyint                             null,
@@ -111,8 +109,8 @@ create index idx_geofence_log_geofence_id
 create index idx_geofence_log_mdn
     on geofence_log (mdn);
 
-create index idx_geofence_log_occured_time
-    on geofence_log (occured_time);
+create index idx_geofence_log_occurred_time
+    on geofence_log (occurred_time);
 
 create index idx_geofence_log_vehicle_id
     on geofence_log (vehicle_id);
@@ -195,4 +193,45 @@ create table trip_log
 );
 
 create index idx_trip_log_vehicle_id
-    on power_log (vehicle_id);
+    on trip_log (vehicle_id);
+
+
+create table statistics (
+    id bigint auto_increment primary key,
+    active bit not null,
+    created_at datetime(6) not null,
+    updated_at datetime(6),
+    company_id bigint not null,
+    date datetime(6) not null,
+    power_on_count int not null,
+    average_daily_power_count double,
+    total_driving_time int,
+    peak_hour int,
+    low_hour int,
+    average_operation_rate double,
+    hour00 double not null,
+    hour01 double not null,
+    hour02 double not null,
+    hour03 double not null,
+    hour04 double not null,
+    hour05 double not null,
+    hour06 double not null,
+    hour07 double not null,
+    hour08 double not null,
+    hour09 double not null,
+    hour10 double not null,
+    hour11 double not null,
+    hour12 double not null,
+    hour13 double not null,
+    hour14 double not null,
+    hour15 double not null,
+    hour16 double not null,
+    hour17 double not null,
+    hour18 double not null,
+    hour19 double not null,
+    hour20 double not null,
+    hour21 double not null,
+    hour22 double not null,
+    hour23 double not null,
+    constraint fk_statistics_company foreign key (company_id) references company(id)
+);
