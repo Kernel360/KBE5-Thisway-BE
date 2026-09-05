@@ -172,3 +172,5 @@ Redis를 수동으로 `localhost:6379`에 실행할 필요는 없다. Redis inte
 ```
 
 Docker가 준비되지 않았다면 실제 Redis 직렬화와 TTL 계약을 검증할 수 없으므로 해당 통합 테스트를 자동으로 건너뛰지 않고 실패시킨다.
+
+실제 Boot·nginx·Chromium SSE 검증은 별도 `./gradlew sseBrowserTest --console=plain`으로 실행한다. 인접 `../KBE5-Thisway-FE` checkout에서 `npm ci`와 `npx playwright install chromium`을 먼저 실행하고 Node가 PATH에 있어야 한다. 기본 `test`에는 이 브라우저 시나리오가 포함되지 않는다. 정확한 검증 범위와 재현 조건은 [CHANGE-015](docs/portfolio/work-logs/2026-09-05-sse-boot-nginx-browser.md)를 참고한다.

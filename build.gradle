@@ -111,11 +111,20 @@ jib {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform { excludeTags 'sse-browser' }
     // Forked SSE subscribers need the same test/runtime classes as this worker.
     doFirst {
         systemProperty 'sse.test.classpath', sourceSets.test.runtimeClasspath.asPath
     }
+}
+
+tasks.register('sseBrowserTest', Test) {
+    description = 'Real Boot + nginx + Chromium SSE test; requires sibling FE npm dependencies and Chromium.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'sse-browser' }
+    systemProperty 'sse.fe.path', file('../KBE5-Thisway-FE').absolutePath
+    shouldRunAfter tasks.test
 }
 
 sourceSets {
