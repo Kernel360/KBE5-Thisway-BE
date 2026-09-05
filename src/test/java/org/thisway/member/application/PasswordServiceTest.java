@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.support.common.CustomException;
@@ -37,7 +38,7 @@ public class PasswordServiceTest {
     private final CompanyRepository companyRepository;
     private final MemberRepository memberRepository;
 
-    @MockitoSpyBean
+    @MockitoBean
     private final RedisComponent redisComponent;
     @MockitoSpyBean
     private final EmailComponent emailComponent;

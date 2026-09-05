@@ -10,12 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -39,5 +33,5 @@ jobs:
       - name: 실행 권한 부여
         run: chmod +x ./gradlew
 
-      - name: 단위 및 통합 테스트 실행
-        run: ./gradlew --no-daemon --parallel --info test
+      - name: 단위 및 Testcontainers 통합 테스트 실행
+        run: ./gradlew test --console=plain

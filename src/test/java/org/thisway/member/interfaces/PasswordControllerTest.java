@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.support.common.ApiErrorResponse;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
-import org.thisway.support.logging.config.LoggingConfig;
 import org.thisway.member.application.PasswordService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(PasswordController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@Import(LoggingConfig.class)
 @RequiredArgsConstructor
 public class PasswordControllerTest {
 

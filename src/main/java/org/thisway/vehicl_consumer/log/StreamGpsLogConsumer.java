@@ -24,7 +24,7 @@ public class StreamGpsLogConsumer {
         String traceId = (String) headers.get(MdcKeys.TRACE_ID);
         MDC.put(MdcKeys.TRACE_ID, traceId);
 
-        log.info("Receive Broadcast GPS log: {}", request);
+        log.debug("GPS 방송 메시지 수신: 항목 수={}", request.cCnt());
         streamCoordinatesService.sendCurrentCoordinates(request.mdn(), request.cList());
     }
 }

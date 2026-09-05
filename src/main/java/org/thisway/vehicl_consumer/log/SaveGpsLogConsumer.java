@@ -27,7 +27,7 @@ public class SaveGpsLogConsumer {
         String traceId = (String) headers.get(MdcKeys.TRACE_ID);
         MDC.put(MdcKeys.TRACE_ID, traceId);
 
-        log.debug("Received GPS log: {}", request);
+        log.debug("GPS 저장 메시지 수신: 항목 수={}", request.cCnt());
         gpsLogSaveService.saveGpsLog(request);
     }
 }

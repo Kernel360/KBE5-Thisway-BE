@@ -38,8 +38,7 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public void savePowerLog(PowerLogRequest request) {
-        log.info("시동 정보 로그 수신: MDN={}, onTime={}, offTime={}",
-                request.mdn(), request.onTime(), request.offTime());
+        log.info("시동 정보 로그 수신: onTime={}, offTime={}", request.onTime(), request.offTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
@@ -55,7 +54,7 @@ public class LogServiceImpl implements LogService {
             vehicle.updatePowerOn(true);
             vehicleService.saveVehicle(vehicle);
 
-            log.info("시동 ON 정보 로그 저장: MDN={}, onTime={}", request.mdn(), request.onTime());
+            log.info("시동 ON 정보 로그 저장: onTime={}", request.onTime());
         }
 
         if (request.offTime() != null && !request.offTime().isEmpty()) {
@@ -71,23 +70,20 @@ public class LogServiceImpl implements LogService {
                     converter.convertCoordinate(request.lon())
             );
             vehicleService.saveVehicle(vehicle);
-            log.info("시동 OFF 정보 로그 저장: MDN={}, offTime={}, totalTripMeter={}",
-                    request.mdn(), request.offTime(), request.sum());
+            log.info("시동 OFF 정보 로그 저장: offTime={}", request.offTime());
         }
 
         tripLogService.saveTripLog(
                 TripLogSaveInput.from(vehicle, request, converter)
         );
-        log.info("운행 기록 저장 : MDN={}, onTime={}, offTime={}",
-                request.mdn(), request.onTime(), request.offTime());
+        log.info("운행 기록 저장: onTime={}, offTime={}", request.onTime(), request.offTime());
 
-        log.info("시동 정보 로그 저장 완료: MDN={}", request.mdn());
+        log.info("시동 정보 로그 저장 완료");
     }
 
     @Override
     public void saveGeofenceLog(GeofenceLogRequest request) {
-        log.info("지오펜스 정보 로그 수신: MDN={}, geoGrpId={}, geoPId={}",
-                request.mdn(), request.geoGrpId(), request.geoPId());
+        log.info("지오펜스 정보 로그 수신");
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
@@ -95,7 +91,7 @@ public class LogServiceImpl implements LogService {
         GeofenceLogData geofenceLogData = GeofenceLogData.from(request, vehicleId, converter);
         logRepository.saveGeofenceLog(geofenceLogData);
 
-        log.info("지오펜스 정보 로그 저장 완료: MDN={}", request.mdn());
+        log.info("지오펜스 정보 로그 저장 완료");
     }
 
     private Long getVehicleIdByMdn(String mdn) {

@@ -27,7 +27,7 @@ public class GpsLogSaveService {
     private final LogDataConverter converter;
 
     public void saveGpsLog(GpsLogRequest request) {
-        log.info("주기 정보 로그 수신: MDN={}, 항목 수={}, 시간={}", request.mdn(), request.cCnt(), request.oTime());
+        log.info("주기 정보 로그 수신: 항목 수={}, 시간={}", request.cCnt(), request.oTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
@@ -70,12 +70,12 @@ public class GpsLogSaveService {
 
         logRepository.saveGpsLogs(gpsLogDataList);
 
-        log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogDataList.size());
+        log.info("주기 정보 로그 저장 완료: 항목 수={}", gpsLogDataList.size());
     }
 
     private Long getVehicleIdByMdn(String mdn) {
         Emulator emulator = emulatorRepository.findByMdn(mdn)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND, "mdn: %s".formatted(mdn)));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
         return emulator.getVehicle().getId();
     }
 }

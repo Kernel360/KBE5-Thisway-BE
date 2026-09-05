@@ -6,8 +6,6 @@ import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ErrorHandler;
 
-import java.nio.charset.StandardCharsets;
-
 @Component
 @Log4j2
 public class RabbitMqGlobalErrorHandler implements ErrorHandler {
@@ -16,13 +14,13 @@ public class RabbitMqGlobalErrorHandler implements ErrorHandler {
     public void handleError(Throwable t) {
         if (t instanceof ListenerExecutionFailedException lefe) {
             Message message = lefe.getFailedMessage();
-            String messageString = new String(message.getBody(), StandardCharsets.UTF_8);
+            int payloadSize = message.getBody().length;
             Throwable cause = lefe.getCause();
 
             if (cause instanceof CustomException customEx) {
-                log.warn("클라이언트 메시지 예외: {}, payload: {}", customEx.getMessage(), messageString);
+                log.warn("클라이언트 메시지 예외: {}, payloadSize={}", customEx.getMessage(), payloadSize);
             } else {
-                log.error("메시지 소비 중 서버 오류. payload: {}, exception: {}", messageString, cause.toString(), cause);
+                log.error("메시지 소비 중 서버 오류. payloadSize={}", payloadSize, cause);
             }
         } else {
             log.error("알 수 없는 RabbitMQ 예외 발생", t);

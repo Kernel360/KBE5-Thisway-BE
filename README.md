@@ -106,7 +106,7 @@
 | Category          | Technology | Description                          |
 |-------------------|------------|--------------------------------------|
 | **RDBMS**         | MySQL      | 핵심 데이터 저장                     |
-| **In-Memory DB**  | Redis      | 캐싱                                 |
+| **In-Memory DB**  | Redis      | 비밀번호 변경 인증 코드 임시 저장    |
 | **Message Queue** | RabbitMQ   | 비동기 메시지 처리 (운행 기록 수신)  |
 
 ### DevOps & Monitoring
@@ -157,3 +157,18 @@
 ├── build.gradle        # 프로젝트 빌드 및 의존성 관리
 └── README.md           # 프로젝트 소개
 ```
+
+## 6. 테스트
+
+### 사전 조건
+
+- JDK 21
+- 실행 중인 Docker daemon
+
+Redis를 수동으로 `localhost:6379`에 실행할 필요는 없다. Redis integration test는 Testcontainers가 격리된 `redis:7.4.2-alpine` container를 자동으로 생성하고 제거한다. 최초 실행에는 image pull 시간이 추가될 수 있다.
+
+```bash
+./gradlew test --console=plain
+```
+
+Docker가 준비되지 않았다면 실제 Redis 직렬화와 TTL 계약을 검증할 수 없으므로 해당 통합 테스트를 자동으로 건너뛰지 않고 실패시킨다.

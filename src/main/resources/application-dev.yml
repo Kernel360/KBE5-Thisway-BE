@@ -44,7 +44,12 @@ spring:
       enabled: always
 
   security:
-    debug: true
+    debug: false
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.web: INFO
 
 custom:
   verification-code-expiration-millis: 600000
@@ -63,11 +68,16 @@ kakao:
 management:
   endpoints:
     web:
-      exclude: "env,beans,metrics,threaddump"
       exposure:
-        include: "*"
+        include: "health,prometheus"
 
   endpoint:
     health:
-      show-details: always
+      show-details: never
+    prometheus:
+      enabled: true
 
+  prometheus:
+    metrics:
+      export:
+        enabled: true
