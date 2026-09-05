@@ -34,7 +34,8 @@ public class VehicleAuthorizationPolicy {
                         List.of(
                                 "/api/vehicles",
                                 "/api/vehicles/{id}",
-                                "/api/vehicles/dashboard"),
+                                "/api/vehicles/dashboard",
+                                "/api/vehicles/stream/track"),
                         "MEMBER", "COMPANY_ADMIN", "COMPANY_CHEF"));
     }
 }

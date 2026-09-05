@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.vehicle.log.domain.GeofenceLogData;
 import org.thisway.vehicle.log.domain.GpsLogData;
+import org.thisway.vehicle.log.domain.GpsEventFingerprint;
 import org.thisway.vehicle.log.domain.GpsStatus;
 import org.thisway.vehicle.log.domain.PowerLogData;
 
@@ -65,24 +66,32 @@ public class LogRepository {
                         + "speed, "
                         + "total_trip_meter, "
                         + "battery_voltage, "
-                        + "occurred_time"
+                        + "occurred_time, event_key"
                         + ") VALUES "
         );
 
         List<Object> params = new ArrayList<>();
 
-        for (int i = 0; i < gpsLogDataList.size(); i++) {
-            GpsLogData data = gpsLogDataList.get(i);
+        record PreparedGps(GpsLogData data, byte[] key) {}
+        var ordered = gpsLogDataList.stream()
+                .map(data -> new PreparedGps(data, GpsEventFingerprint.of(data)))
+                .sorted((left, right) -> java.util.Arrays.compareUnsigned(left.key(), right.key()))
+                .toList();
+        for (int i = 0; i < ordered.size(); i++) {
+            GpsLogData data = ordered.get(i).data();
 
             if (i > 0) {
                 sqlBuilder.append(", ");
             }
 
-            sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             params.addAll(List.of(toGpsLogParams(data)));
+            params.add(ordered.get(i).key());
         }
 
+        // Do not suppress FK/type failures; only the unique-key collision becomes a no-op.
+        sqlBuilder.append(" ON DUPLICATE KEY UPDATE event_key = event_key");
         jdbcTemplate.update(sqlBuilder.toString(), params.toArray());
     }
 
@@ -97,7 +106,7 @@ public class LogRepository {
                 gpsLogData.speed(),
                 gpsLogData.totalTripMeter(),
                 gpsLogData.batteryVoltage(),
-                gpsLogData.occurredTime()
+                gpsLogData.occurredTime().withNano(0)
         };
     }
 

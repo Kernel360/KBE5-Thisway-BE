@@ -106,7 +106,7 @@
 | Category          | Technology | Description                          |
 |-------------------|------------|--------------------------------------|
 | **RDBMS**         | MySQL      | 핵심 데이터 저장                     |
-| **In-Memory DB**  | Redis      | 캐싱                                 |
+| **In-Memory DB**  | Redis      | 비밀번호 변경 인증 코드 임시 저장    |
 | **Message Queue** | RabbitMQ   | 비동기 메시지 처리 (운행 기록 수신)  |
 
 ### DevOps & Monitoring
@@ -157,3 +157,28 @@
 ├── build.gradle        # 프로젝트 빌드 및 의존성 관리
 └── README.md           # 프로젝트 소개
 ```
+
+## 6. 테스트
+
+DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한다. V1/V2는 기본 schema, V3는 신규 GPS 관측값 중복 방지 key다. dev/prod는 `ddl-auto=validate`이며 이력이 관리되는 DB에는 후속 migration이 적용된다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+
+기존 schema의 알려진 차이를 조회하는 읽기 전용 SQL과 결과 해석은 [preflight runbook](docs/runbooks/legacy-schema-preflight.md)에 있다. 점검 통과가 자동 baseline 승인이나 전체 schema 일치를 뜻하지 않는다.
+
+실제 MySQL migration 계약은 `./gradlew test --tests '*MySqlMigrationIntegrationTest' --console=plain`으로 재현한다. Docker가 필요하며 MySQL 8.0.40 컨테이너를 격리 실행한다. H2 테스트와 별도로 Flyway 적용, JPA validate, GPS/지오펜스, 통계, Batch metadata를 검증한다.
+
+**RabbitMQ 저장 모드 배포 전:** GPS 최종 소비 실패의 DLQ 보관에는 broker policy가 필요하다. 앱은 DLX/DLQ/binding을 선언하지만 기존 source queue의 arguments는 변경하지 않는다. policy가 없으면 reject된 메시지가 폐기될 수 있으므로 [DLQ 적용·재처리 runbook](docs/runbooks/gps-dlq-replay.md)의 선행 topology/policy/routing 검증을 완료해야 한다. 기존 queue/volume을 삭제하지 않는다. 위 integration test는 RabbitMQ 3.13.7 컨테이너도 실행하여 오류 분류·DLQ·제한적 replay를 검증한다. 한 건씩 처리하는 로컬/승인된 터널용 CLI는 `./gradlew gpsDlqReplay --args=--help`로 확인한다. 운영 적용·조직 승인 시스템·무유실 보장은 아직 제공하지 않는다.
+
+### 사전 조건
+
+- JDK 21
+- 실행 중인 Docker daemon
+
+Redis를 수동으로 `localhost:6379`에 실행할 필요는 없다. Redis integration test는 Testcontainers가 격리된 `redis:7.4.2-alpine` container를 자동으로 생성하고 제거한다. 최초 실행에는 image pull 시간이 추가될 수 있다.
+
+```bash
+./gradlew test --console=plain
+```
+
+Docker가 준비되지 않았다면 실제 Redis 직렬화와 TTL 계약을 검증할 수 없으므로 해당 통합 테스트를 자동으로 건너뛰지 않고 실패시킨다.
+
+실제 Boot·nginx·Chromium SSE 검증은 별도 `./gradlew sseBrowserTest --console=plain`으로 실행한다. 인접 `../KBE5-Thisway-FE` checkout에서 `npm ci`와 `npx playwright install chromium`을 먼저 실행하고 Node가 PATH에 있어야 한다. 기본 `test`에는 이 브라우저 시나리오가 포함되지 않는다. 정확한 검증 범위와 재현 조건은 [CHANGE-015](docs/portfolio/work-logs/2026-09-05-sse-boot-nginx-browser.md)를 참고한다.

@@ -10,6 +10,7 @@ import org.thisway.vehicle.triplog.domain.TripLog;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
@@ -37,6 +38,10 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
     Page<TripLog> findAllByCompanyAndActiveTrueOrderByStartTimeDesc(@Param("companyId") Long companyId, Pageable pageable);
 
     List<TripLog> findTop6ByVehicleIdOrderByStartTimeDesc(Long vehicleId);
+
+    List<TripLog> findTop6ByVehicleIdAndVehicleCompanyIdOrderByStartTimeDesc(Long vehicleId, Long companyId);
+
+    Optional<TripLog> findByIdAndVehicleCompanyIdAndActiveTrue(Long id, Long companyId);
 
     TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
 

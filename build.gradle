@@ -36,6 +36,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -78,6 +80,9 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.awaitility:awaitility'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -108,15 +113,42 @@ jib {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform { excludeTags 'sse-browser' }
+    // Forked SSE subscribers need the same test/runtime classes as this worker.
+    doFirst {
+        systemProperty 'sse.test.classpath', sourceSets.test.runtimeClasspath.asPath
+    }
+}
+
+tasks.register('sseBrowserTest', Test) {
+    description = 'Real Boot + nginx + Chromium SSE test; requires sibling FE npm dependencies and Chromium.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'sse-browser' }
+    systemProperty 'sse.fe.path', file('../KBE5-Thisway-FE').absolutePath
+    shouldRunAfter tasks.test
 }
 
 sourceSets {
+    replay {
+        compileClasspath += sourceSets.main.output + configurations.runtimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    test {
+        compileClasspath += sourceSets.replay.output
+        runtimeClasspath += sourceSets.replay.output
+    }
     main {
         java {
             srcDir("$buildDir/generated/sources/annotationProcessor/java/main")
         }
     }
+}
+
+tasks.register('gpsDlqReplay', JavaExec) {
+    description = 'One-message GPS DLQ preview/replay; see docs/runbooks/gps-dlq-replay.md.'
+    classpath = sourceSets.replay.runtimeClasspath
+    mainClass = 'org.thisway.ops.GpsDlqReplay'
 }
 
 def localGradle = file('build.local.gradle')

@@ -16,6 +16,13 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thisway.support.common.RabbitMqGlobalErrorHandler;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.dao.RecoverableDataAccessException;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,6 +32,9 @@ public class RabbitMQConfig {
     public static final String GPS_LOG_QUEUE = "gps_log.queue";
     public static final String GPS_LOG_EXCHANGE = "gps_log.exchange";
     public static final String GPS_LOG_ROUTING_KEY = "gps_log.routingKey";
+    public static final String GPS_LOG_DLX = "gps_log.dead.exchange";
+    public static final String GPS_LOG_DLQ = "gps_log.dead.queue";
+    public static final String GPS_LOG_DEAD_KEY = "gps_log.dead";
 
     public static final String BROADCAST_GPS_LOG_EXCHANGE = "gps_log.broadcast.exchange";
 
@@ -47,6 +57,50 @@ public class RabbitMQConfig {
                 .bind(gpsLogQueue())
                 .to(gpsLogExchange())
                 .with(GPS_LOG_ROUTING_KEY);
+    }
+
+    // Source queue DLX is attached by broker policy; do not change its immutable arguments.
+    // See docs/runbooks/gps-dlq-replay.md before deploying this consumer policy.
+    @Bean
+    public DirectExchange gpsDeadExchange() {
+        return new DirectExchange(GPS_LOG_DLX);
+    }
+
+    @Bean
+    public Queue gpsDeadQueue() {
+        return new Queue(GPS_LOG_DLQ);
+    }
+
+    @Bean
+    public Binding gpsDeadBinding() {
+        return BindingBuilder.bind(gpsDeadQueue()).to(gpsDeadExchange()).with(GPS_LOG_DEAD_KEY);
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory gpsSaveListenerContainerFactory(
+            ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter, MeterRegistry meters) {
+        var factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(converter);
+        factory.setDefaultRequeueRejected(false);
+        factory.setPrefetchCount(1);
+        factory.setErrorHandler(error -> {
+            // Exception/message bodies can contain raw GPS data. Never log the throwable here.
+            log.warn("GPS consumer rejected a delivery; inspect restricted DLQ and rejection metric");
+            throw new AmqpRejectAndDontRequeueException("GPS consumer rejected delivery");
+        });
+        factory.setAdviceChain(RetryInterceptorBuilder.stateless()
+                .retryPolicy(new SimpleRetryPolicy(3, Map.of(
+                        TransientDataAccessException.class, true,
+                        RecoverableDataAccessException.class, true,
+                        CannotCreateTransactionException.class, true), true, false))
+                .backOffOptions(200, 2.0, 1000)
+                .recoverer((message, cause) -> {
+                    meters.counter("gps.consumer.rejected").increment();
+                    // No cause: the default exception rendering may expose message content.
+                    throw new AmqpRejectAndDontRequeueException("GPS consumer retry policy exhausted");
+                }).build());
+        return factory;
     }
 
     /* Fanout Exchange */

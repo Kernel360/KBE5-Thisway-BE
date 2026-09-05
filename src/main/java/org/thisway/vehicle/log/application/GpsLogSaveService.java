@@ -11,6 +11,7 @@ import org.thisway.vehicle.log.util.LogDataConverter;
 import org.thisway.vehicle.log.domain.GpsLogData;
 import org.thisway.vehicle.log.interfaces.GpsLogEntry;
 import org.thisway.vehicle.log.interfaces.GpsLogRequest;
+import org.thisway.vehicle.log.interfaces.GpsLogRequestValidator;
 import org.thisway.vehicle.log.infrastructure.LogRepository;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,8 @@ public class GpsLogSaveService {
     private final LogDataConverter converter;
 
     public void saveGpsLog(GpsLogRequest request) {
-        log.info("주기 정보 로그 수신: MDN={}, 항목 수={}, 시간={}", request.mdn(), request.cCnt(), request.oTime());
+        GpsLogRequestValidator.validate(request);
+        log.info("주기 정보 로그 수신: 항목 수={}, 시간={}", request.cCnt(), request.oTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
@@ -51,7 +53,7 @@ public class GpsLogSaveService {
         for (GpsLogEntry entry : request.cList()) {
             LocalDateTime timeWithMinutes = baseTime;
 
-            if (entry.min() != null & !entry.min().isEmpty()) {
+            if (entry.min() != null && !entry.min().isEmpty()) {
                 int minutes = converter.convertToInteger(entry.min());
                 timeWithMinutes = timeWithMinutes.withMinute(minutes);
             }
@@ -70,12 +72,12 @@ public class GpsLogSaveService {
 
         logRepository.saveGpsLogs(gpsLogDataList);
 
-        log.info("주기 정보 로그 저장 완료: MDN={}, 항목 수={}", request.mdn(), gpsLogDataList.size());
+        log.info("주기 정보 로그 저장 요청 처리 완료: 입력 항목 수={}", gpsLogDataList.size());
     }
 
     private Long getVehicleIdByMdn(String mdn) {
         Emulator emulator = emulatorRepository.findByMdn(mdn)
-                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND, "mdn: %s".formatted(mdn)));
+                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
         return emulator.getVehicle().getId();
     }
 }

@@ -23,7 +23,7 @@ public class GpsLogProducer {
     private final Tracer tracer;
 
     public void sendGpsLog(GpsLogRequest request) {
-        log.debug("Sending GPS log to RabbitMQ: {}", request);
+        log.debug("GPS 로그 RabbitMQ 전송: 항목 수={}", request.cCnt());
 
         String traceId = tracer.currentSpan() != null
                 ? tracer.currentSpan().context().traceId()

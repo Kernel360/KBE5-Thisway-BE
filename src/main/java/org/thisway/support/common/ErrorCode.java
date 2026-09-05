@@ -38,7 +38,7 @@ public enum ErrorCode {
     COMPANY_ALREADY_EXIST("11001", "이미 존재하는 회사입니다.", HttpStatus.BAD_REQUEST),
 
     // 멤버 에러 x2xxx
-    MEMBER_NOT_FOUND("12000", "사용자 정보를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+    MEMBER_NOT_FOUND("12000", "사용자 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     MEMBER_ALREADY_EXIST_BY_EMAIL("12001", "이미 등록된 이메일입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_INVALID_PHONE_NUMBER("12003", "유효하지 않은 핸드폰 번호입니다.", HttpStatus.BAD_REQUEST),
     MEMBER_INVALID_EMAIL("12004", "이메일 주소의 형식이 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
@@ -57,7 +57,7 @@ public enum ErrorCode {
     AUTH_PASSWORD_NOT_MATCH("13005", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
 
     // 차량 x4xxx
-    VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.NOT_FOUND),
     VEHICLE_ALREADY_DELETED("14001", "이미 삭제된 차량입니다.", HttpStatus.BAD_REQUEST),
     VEHICLE_DUPLICATE_CAR_NUMBER("14002", "이미 등록된 차량 번호입니다", HttpStatus.BAD_REQUEST),
     VEHICLE_EMPTY_UPDATE_REQUEST("14003", "업데이트할 정보가 없습니다.", HttpStatus.BAD_REQUEST),
@@ -70,7 +70,7 @@ public enum ErrorCode {
     VEHICLE_POWER_OFF("14010", "현재 운행 중인 차량이 아닙니다.", HttpStatus.BAD_REQUEST),
 
     // 에뮬레이터 x5xxx
-    EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.BAD_REQUEST),
+    EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.NOT_FOUND),
     EMULATOR_ALREADY_EXIST("15001", "이미 존재하는 MDN입니다.", HttpStatus.BAD_REQUEST),
     EMULATOR_EMPTY_UPDATE_REQUEST("15002", "업데이트할 정보가 없습니다.", HttpStatus.BAD_REQUEST),
 
@@ -79,7 +79,7 @@ public enum ErrorCode {
     PAGE_INVALID_SORT_PROPERTY("16001", "유효하지 않은 정렬 기준입니다.", HttpStatus.BAD_REQUEST),
 
     // 운행 로그 x7xxx
-    TRIP_LOG_NOT_FOUND("17000", "해당하는 로그가 존재하지 않습니다.", HttpStatus.BAD_REQUEST),
+    TRIP_LOG_NOT_FOUND("17000", "해당하는 로그가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     TRIP_LOG_ADDRESS_NOT_FOUND("17001", "주소를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // 통계 로그 x8xxx

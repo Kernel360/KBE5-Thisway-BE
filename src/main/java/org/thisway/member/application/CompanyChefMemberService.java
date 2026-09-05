@@ -114,13 +114,11 @@ public class CompanyChefMemberService {
     }
 
     private Member getActiveMember(long id) {
-        Member member = memberRepository.findByIdAndActiveTrue(id)
+        long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
+        Member member = memberRepository.findByIdAndCompanyIdAndActiveTrue(id, authenticatedMemberCompanyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        long authenticatedMemberCompanyId = securityService.getCurrentMemberDetails().getCompanyId();
-        if (!COMPANY_CHEF_ACCESS_AUTHORITIES.contains(member.getRole())
-                || authenticatedMemberCompanyId != member.getCompany().getId()
-        ) {
+        if (!COMPANY_CHEF_ACCESS_AUTHORITIES.contains(member.getRole())) {
             throw new CustomException(ErrorCode.MEMBER_ACCESS_DENIED);
         }
 

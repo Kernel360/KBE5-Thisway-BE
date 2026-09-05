@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
+import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.application.VehicleService;
 import org.thisway.vehicle.interfaces.VehicleResponse;
 import org.thisway.vehicle.log.application.LogService;
@@ -30,23 +31,28 @@ public class TripLogServiceImpl implements TripLogService {
     private final LogService logService;
     private final TripLogRepository tripLogRepository;
     private final ReverseGeocodingConverter reverseGeocodingConverter;
+    private final SecurityService securityService;
 
     public TripLogServiceImpl(
             VehicleService vehicleService,
             @Lazy LogService logService,
             TripLogRepository tripLogRepository,
-            ReverseGeocodingConverter reverseGeocodingConverter
+            ReverseGeocodingConverter reverseGeocodingConverter,
+            SecurityService securityService
     ) {
         this.vehicleService = vehicleService;
         this.logService = logService;
         this.tripLogRepository = tripLogRepository;
         this.reverseGeocodingConverter = reverseGeocodingConverter;
+        this.securityService = securityService;
     }
 
     @Override
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
         VehicleResponse vehicleResponse = vehicleService.getVehicleDetail(vehicleId);
-        List<TripLog> tripLogs = tripLogRepository.findTop6ByVehicleIdOrderByStartTimeDesc(vehicleId);
+        List<TripLog> tripLogs = tripLogRepository
+                .findTop6ByVehicleIdAndVehicleCompanyIdOrderByStartTimeDesc(vehicleId, companyId);
         CurrentDrivingInfo currentDrivingInfo = null;
 
         if (!tripLogs.isEmpty() && vehicleResponse.powerOn()) {
@@ -59,7 +65,7 @@ public class TripLogServiceImpl implements TripLogService {
         }
 
         return VehicleDetailResponse.from(
-                vehicleService.getVehicleDetail(vehicleId),
+                vehicleResponse,
                 currentDrivingInfo,
                 tripLogs
         );
@@ -67,7 +73,8 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
-        if (vehicleService.getVehiclePowerState(vehicleId)) {
+        VehicleResponse vehicleResponse = vehicleService.getVehicleDetail(vehicleId);
+        if (vehicleResponse.powerOn()) {
             List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
 
             if (!gpsLogs.isEmpty()) {
@@ -89,7 +96,9 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public TripLogDetailResponse getTripLogDetails(Long tripId) {
-        TripLog tripLog = tripLogRepository.findById(tripId).orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
+        TripLog tripLog = tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, companyId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         List<GpsLogData> gpsLogs = logService.findGpsLogs(tripLog.getVehicle().getId(), tripLog.getStartTime(), tripLog.getEndTime());
 
         return TripLogDetailResponse.from(
@@ -106,7 +115,8 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public List<CoordinatesInfo> getGpsLogsInTripLog(Long tripId) {
-        TripLog tripLog = tripLogRepository.findById(tripId)
+        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
+        TripLog tripLog = tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         return logService.findGpsLogs(
                 tripLog.getVehicle().getId(),
