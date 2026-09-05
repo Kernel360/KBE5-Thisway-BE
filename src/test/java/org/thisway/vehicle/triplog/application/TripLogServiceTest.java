@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
+import org.thisway.support.security.dto.request.MemberDetails;
+import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.application.VehicleService;
 import org.thisway.vehicle.domain.Vehicle;
 import org.thisway.vehicle.interfaces.VehicleResponse;
@@ -63,6 +65,8 @@ class TripLogServiceTest {
     @Mock
     private ReverseGeocodingConverter reverseGeocodingConverter;
     @Mock
+    private SecurityService securityService;
+    @Mock
     private Vehicle vehicle;
 
     @InjectMocks
@@ -77,7 +81,9 @@ class TripLogServiceTest {
         GpsLogData latestGps = gpsLog(ON_TIME.plusMinutes(10), 1_120, 45);
 
         when(vehicleService.getVehicleDetail(VEHICLE_ID)).thenReturn(vehicleResponse);
-        when(tripLogRepository.findTop6ByVehicleIdOrderByStartTimeDesc(VEHICLE_ID))
+        when(securityService.getCurrentMemberDetails()).thenReturn(memberDetails());
+        when(tripLogRepository.findTop6ByVehicleIdAndVehicleCompanyIdOrderByStartTimeDesc(
+                VEHICLE_ID, COMPANY_ID))
                 .thenReturn(new ArrayList<>(List.of(currentTrip, completedTrip)));
         when(logService.getCurrentGpsLog(VEHICLE_ID, ON_TIME)).thenReturn(latestGps);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
@@ -104,7 +110,7 @@ class TripLogServiceTest {
     void 시동ON_차량의_GPS로그가_있으면_실시간정보를_반환한다() {
         GpsLogData first = gpsLog(ON_TIME.plusMinutes(1), 1_010, 30);
         GpsLogData last = gpsLog(ON_TIME.plusMinutes(2), 1_025, 40);
-        when(vehicleService.getVehiclePowerState(VEHICLE_ID)).thenReturn(true);
+        when(vehicleService.getVehicleDetail(VEHICLE_ID)).thenReturn(vehicleResponse(true));
         when(logService.findGpsLogs(eq(VEHICLE_ID), eq(ON_TIME), any(LocalDateTime.class)))
                 .thenReturn(List.of(first, last));
 
@@ -120,7 +126,7 @@ class TripLogServiceTest {
     @Test
     @DisplayName("시동 OFF 차량의 실시간 정보 요청은 VEHICLE_POWER_OFF를 발생시킨다")
     void 시동OFF_차량의_실시간정보_요청은_실패한다() {
-        when(vehicleService.getVehiclePowerState(VEHICLE_ID)).thenReturn(false);
+        when(vehicleService.getVehicleDetail(VEHICLE_ID)).thenReturn(vehicleResponse(false));
 
         assertThatThrownBy(() -> tripLogService.getCurrentGpsLogs(VEHICLE_ID, ON_TIME))
                 .isInstanceOf(CustomException.class)
@@ -132,7 +138,7 @@ class TripLogServiceTest {
     @Test
     @DisplayName("시동 ON 차량이라도 조회 구간의 GPS 로그가 없으면 null을 반환한다")
     void 시동ON_차량의_GPS로그가_없으면_null을_반환한다() {
-        when(vehicleService.getVehiclePowerState(VEHICLE_ID)).thenReturn(true);
+        when(vehicleService.getVehicleDetail(VEHICLE_ID)).thenReturn(vehicleResponse(true));
         when(logService.findGpsLogs(eq(VEHICLE_ID), eq(ON_TIME), any(LocalDateTime.class)))
                 .thenReturn(List.of());
 
@@ -180,7 +186,9 @@ class TripLogServiceTest {
                 .build();
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
         when(vehicle.getCarNumber()).thenReturn("12가3456");
-        when(tripLogRepository.findById(tripId)).thenReturn(Optional.of(completedTrip));
+        when(securityService.getCurrentMemberDetails()).thenReturn(memberDetails());
+        when(tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, COMPANY_ID))
+                .thenReturn(Optional.of(completedTrip));
         when(logService.findGpsLogs(VEHICLE_ID, ON_TIME, OFF_TIME)).thenReturn(List.of(
                 gpsLog(ON_TIME.plusMinutes(10), 1_200, 40),
                 gpsLog(ON_TIME.plusMinutes(20), 1_300, 61)
@@ -198,7 +206,9 @@ class TripLogServiceTest {
     @DisplayName("존재하지 않는 운행 상세 조회는 TRIP_LOG_NOT_FOUND를 발생시킨다")
     void 존재하지_않는_운행상세_조회는_실패한다() {
         Long tripId = 404L;
-        when(tripLogRepository.findById(tripId)).thenReturn(Optional.empty());
+        when(securityService.getCurrentMemberDetails()).thenReturn(memberDetails());
+        when(tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, COMPANY_ID))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tripLogService.getTripLogDetails(tripId))
                 .isInstanceOf(CustomException.class)
@@ -284,6 +294,12 @@ class TripLogServiceTest {
                 LATITUDE,
                 LONGITUDE
         );
+    }
+
+    private MemberDetails memberDetails() {
+        return MemberDetails.builder()
+                .companyId(COMPANY_ID)
+                .build();
     }
 
     private TripLog tripLog(LocalDateTime startTime, LocalDateTime endTime, int totalTripMeter, boolean active) {

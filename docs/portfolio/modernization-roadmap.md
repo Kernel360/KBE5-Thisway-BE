@@ -61,7 +61,11 @@ Acceptance criteria:
 
 - [x] P0-02A: 실제 route 기반 role test를 만들고 회사 회원 DELETE pattern과 통계 저장 role 누락을 교정했다.
 - [x] P0-02B: HTTP body/query와 telemetry 원본 logging을 최소화하고 Actuator를 health/prometheus exact allowlist로 제한했다. 전체 결과는 194/194/0/0이다.
-- [ ] P0-02C: Member·Vehicle·TripLog·Emulator의 repository tenant predicate와 cross-tenant negative test를 구현한다.
+- [x] P0-02C: Member·Vehicle·TripLog·Emulator의 repository tenant predicate와 cross-tenant negative test를 구현했다. 관련 76/76, 전체 218/218/0/0.
+  - [x] Member: 상세 조회·수정·삭제를 `memberId + companyId + active` query로 제한하고 repository/service/API negative test를 추가했다. 전체 201/201/0/0.
+  - [x] Vehicle: 사용자 CRUD 상세 경로를 `vehicleId + companyId + active` query로 제한하고 실제 JWT GET/PATCH/DELETE negative test를 추가했다.
+  - [x] TripLog: 일반 HTTP의 차량 운행 요약·현재 GPS·운행 상세를 tenant-scoped Vehicle/TripLog 조회로 제한했다. query-token SSE는 P0-02D 범위다.
+  - [x] Emulator: 목록·CRUD와 등록/재연결 Vehicle을 principal 회사로 제한했다. device MDN 조회는 P0-04 범위다.
 - [ ] P0-02D: SSE token 전달, 정확한 subscription key, tenant ownership을 재설계한다.
 
 ### P0-03 versioned database

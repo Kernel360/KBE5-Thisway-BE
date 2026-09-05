@@ -14,6 +14,8 @@ public interface MemberRepository
 
     Optional<Member> findByIdAndActiveTrue(Long id);
 
+    Optional<Member> findByIdAndCompanyIdAndActiveTrue(Long id, Long companyId);
+
     Optional<Member> findByEmailAndActiveTrue(String email);
 
     boolean existsByEmail(String email);

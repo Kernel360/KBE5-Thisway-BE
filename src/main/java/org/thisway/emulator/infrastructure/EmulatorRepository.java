@@ -1,5 +1,7 @@
 package org.thisway.emulator.infrastructure;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,10 @@ public interface EmulatorRepository extends JpaRepository<Emulator, Long> {
     Optional<Emulator> findByMdn(String mdn);
 
     Optional<Emulator> findByVehicleId(Long vehicleId);
+
+    Optional<Emulator> findByIdAndVehicleCompanyId(Long id, Long companyId);
+
+    Page<Emulator> findAllByVehicleCompanyId(Long companyId, Pageable pageable);
 
     @Query(""" 
                 SELECT new org.thisway.vehicle.domain.VehicleReference(e.vehicle.id, e.vehicle.company.id)

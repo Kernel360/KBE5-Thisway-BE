@@ -81,6 +81,10 @@ class CompanyChefMemberServiceTest {
     void 멤버_조회_테스트_없는_사용자() {
         // given
         long invalidMemberId = 1L;
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(1L)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.getMemberDetail(invalidMemberId));
@@ -132,7 +136,7 @@ class CompanyChefMemberServiceTest {
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
     }
 
     @Test
@@ -293,6 +297,10 @@ class CompanyChefMemberServiceTest {
     void 멤버_수정_테스트_없는_멤버() {
         //given
         long invalidMemberId = 1L;
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(1L)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
         CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
                 .id(invalidMemberId)
                 .name("name")
@@ -350,6 +358,38 @@ class CompanyChefMemberServiceTest {
         Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+    }
+
+    @Test
+    @DisplayName("다른 업체 멤버는 수정할 수 없다.")
+    void 다른_업체_멤버_수정_차단() {
+        // given
+        Company targetCompany = companyRepository.save(CompanyFixture.createCompany());
+        Member targetMember = memberRepository.save(MemberFixture.createMember(targetCompany, MemberRole.MEMBER));
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(targetCompany.getId() + 1)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+
+        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
+                .id(targetMember.getId())
+                .name("attacker-updated-name")
+                .email("attacker-updated@example.com")
+                .phone("01099999999")
+                .memo("attacker-updated-memo")
+                .build();
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.updateMember(request));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException exception = (CustomException) thrown;
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+
+        Member unchangedMember = memberRepository.findById(targetMember.getId()).orElseThrow();
+        assertThat(unchangedMember.getName()).isEqualTo(targetMember.getName());
+        assertThat(unchangedMember.getEmail()).isEqualTo(targetMember.getEmail());
     }
 
     @Test
@@ -418,6 +458,10 @@ class CompanyChefMemberServiceTest {
     void 멤버_삭제_테스트_없는_멤버() {
         //given
         long invalidMemberId = 1L;
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(1L)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(invalidMemberId));
@@ -458,6 +502,27 @@ class CompanyChefMemberServiceTest {
         Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
+    }
+
+    @Test
+    @DisplayName("다른 업체 멤버는 삭제할 수 없다.")
+    void 다른_업체_멤버_삭제_차단() {
+        // given
+        Company targetCompany = companyRepository.save(CompanyFixture.createCompany());
+        Member targetMember = memberRepository.save(MemberFixture.createMember(targetCompany, MemberRole.MEMBER));
+        MemberDetails authenticatedMember = MemberDetails.builder()
+                .companyId(targetCompany.getId() + 1)
+                .build();
+        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
+
+        // when
+        Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(targetMember.getId()));
+
+        // then
+        assertThat(thrown).isInstanceOf(CustomException.class);
+        CustomException exception = (CustomException) thrown;
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+        assertThat(memberRepository.findById(targetMember.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test

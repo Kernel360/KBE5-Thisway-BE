@@ -126,8 +126,8 @@ public class VehicleService {
         return vehicleTrackClient.trackVehicles(companyId);
     }
 
-    private Vehicle findActiveVehicle(Long id) {
-        return vehicleRepository.findByIdAndActiveTrue(id)
+    private Vehicle findActiveVehicle(Long id, Long companyId) {
+        return vehicleRepository.findByIdAndCompanyIdAndActiveTrue(id, companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
     }
 
@@ -185,17 +185,7 @@ public class VehicleService {
         Member member = getCurrentMember();
         Company memberCompany = getMemberCompany(member);
         validateCompanyAdminPermission(member);
-        Vehicle vehicle = findActiveVehicle(id);
-        validateVehicleCompanyMatch(vehicle, memberCompany);
-
-        return vehicle;
-    }
-
-    private void validateVehicleCompanyMatch(Vehicle vehicle, Company memberCompany) {
-        Company vehicleCompany = vehicle.getCompany();
-        if (vehicleCompany == null || !vehicleCompany.getId().equals(memberCompany.getId())) {
-            throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
-        }
+        return findActiveVehicle(id, memberCompany.getId());
     }
 
     private void isCarNumberDuplicate(String carNumber) {

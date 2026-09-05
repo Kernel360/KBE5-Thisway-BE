@@ -59,6 +59,51 @@
 - 실제 method/path에서 허용 role은 service 호출, 비허용 role은 403과 service 미호출을 함께 검증
 - Thisway에서는 회사 회원 DELETE pattern 불일치를 이 방식으로 발견하고 회귀 테스트로 고정
 
+### 5-2. 다른 tenant 자원을 403이 아니라 404로 응답한 이유는?
+
+답변 핵심:
+
+- `memberId + companyId` query 결과만 현재 tenant의 자원으로 취급
+- 실제 존재 여부와 소유 회사를 응답 차이로 노출하지 않음
+- 없는 ID와 다른 tenant ID에 동일한 `MEMBER_NOT_FOUND` 계약 적용
+- 같은 tenant지만 허용되지 않은 `ADMIN` role은 별도 403으로 ownership과 role 실패를 구분
+
+### 5-3. cross-tenant 테스트에서 status만 확인하면 부족한 이유는?
+
+답변 핵심:
+
+- filter나 validation에서 우연히 4xx가 나도 실제 ownership 검사가 동작했다는 증거가 아님
+- 유효한 COMPANY_CHEF JWT와 실제 두 회사 row를 사용해 전체 호출 흐름을 통과
+- GET 응답 차단뿐 아니라 PUT 이후 name/email, DELETE 이후 active가 그대로인지 확인
+- repository 직접 test로 동일 ID라도 companyId가 다르면 empty인지 고정
+
+### 5-4. 왜 Vehicle의 모든 ID 조회를 principal 기반 tenant query로 바꾸지 않았는가?
+
+답변 핵심:
+
+- HTTP 사용자 CRUD와 RabbitMQ/device/background 처리는 인증 주체가 다름
+- internal telemetry 조회에 웹 principal을 강제하면 정상 consumer가 동작하지 않음
+- 이번 단위는 `getAuthorizedVehicle`을 공유하는 사용자 GET/PATCH/DELETE만 제한
+- 장기적으로 authorized reader와 internal device-authenticated reader를 분리하고 각각의 신뢰 경계를 테스트
+
+### 5-5. TripLog나 Emulator에 companyId column이 없으면 tenant를 어떻게 검증하는가?
+
+답변 핵심:
+
+- 소유 관계인 `resource.vehicle.company.id`를 query predicate에 포함
+- TripLog 상세은 `tripId + vehicle.companyId + active`, Emulator는 `emulatorId + vehicle.companyId`
+- Emulator 생성·재연결은 대상 Vehicle도 동일 company인지 재검증
+- 장기적으로 FK/index와 실제 MySQL 실행 계획을 함께 확인
+
+### 5-6. P0-02C가 끝났는데 SSE와 telemetry까지 tenant-safe하다고 말할 수 있는가?
+
+답변 핵심:
+
+- 아니다. P0-02C는 JWT principal을 사용하는 일반 HTTP 자원 접근 범위
+- query token SSE는 token 전달·resource binding·subscription key를 P0-02D에서 함께 변경
+- MDN device 경로는 사용자 principal이 아니라 device credential/replay 방지가 필요한 P0-04 범위
+- 완료 주장을 신뢰 경계별 테스트 증거로 제한
+
 ### 6. SSE에서 query token을 쓴 이유와 개선 방법은?
 
 답변 핵심:

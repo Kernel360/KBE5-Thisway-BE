@@ -141,7 +141,7 @@ class VehicleControllerTest {
                         get("/api/vehicles/{id}", vehicleId)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
@@ -172,7 +172,7 @@ class VehicleControllerTest {
         MvcResult mvcResult = mockMvc.perform(
                         delete("/api/vehicles/1"))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();
@@ -337,7 +337,7 @@ class VehicleControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andReturn();
 
         String responseBody = mvcResult.getResponse().getContentAsString();

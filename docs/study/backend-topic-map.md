@@ -57,6 +57,42 @@
 
 실습에서는 `company A` token으로 `company B`의 ID를 요청하는 negative test를 먼저 작성한다. Service에서 조회 후 비교하는 방법과 repository에서 `companyId + id`로 제한하는 방법의 정보 노출·query 비용·실수 가능성을 비교한다.
 
+### Member tenant predicate 복습
+
+`CHANGE-006`의 Member 첫 단위에서는 `findByIdAndActiveTrue(id)`로 전역 row를 가져온 뒤 company를 비교하던 흐름을 `findByIdAndCompanyIdAndActiveTrue(id, companyId)`로 바꿨다.
+
+직접 설명하고 실행할 것:
+
+1. JWT의 `companyId`가 `MemberDetails`를 거쳐 repository predicate가 되는 호출 순서를 그린다.
+2. 다른 회사 ID와 실제로 없는 ID가 모두 같은 `404 MEMBER_NOT_FOUND`가 되는 이유를 설명한다.
+3. 같은 회사의 `ADMIN`은 row가 tenant query를 통과한 뒤 role 검사에서 `403 MEMBER_ACCESS_DENIED`가 되는 차이를 설명한다.
+4. company A token으로 company B member의 GET·PUT·DELETE를 실행하고, status뿐 아니라 name/email/active가 불변인지 확인한다.
+5. H2 통합 테스트가 query derivation과 application 흐름은 확인하지만 MySQL 실행 계획·index 효율은 보증하지 못하는 이유를 정리한다.
+
+### Vehicle 사용자 경로와 내부 경로 구분
+
+`CHANGE-007`에서는 사용자 HTTP CRUD가 공유하는 `getAuthorizedVehicle`만 tenant scoped query로 바꿨다. telemetry consumer가 사용하는 `getVehicleById`, SSE 내부 상태 확인이 사용하는 `getVehiclePowerState`까지 무조건 principal 기반으로 바꾸면 인증 주체가 없는 background 처리 흐름을 깨뜨린다.
+
+직접 해볼 것:
+
+1. HTTP 사용자 use case와 device/background use case의 인증 주체 차이를 표로 만든다.
+2. 두 use case가 같은 `VehicleService`에 섞인 구조의 장단점을 설명한다.
+3. 향후 `AuthorizedVehicleReader`와 internal `VehicleReader` port로 나눌 때 호출자를 분류한다.
+
+### TripLog와 Emulator의 연쇄 ownership
+
+`CHANGE-008`, `CHANGE-009`에서는 직접 company column이 없는 자원의 tenant를 연관 entity로 판정한다.
+
+- TripLog tenant: `trip_log -> vehicle -> company`
+- Emulator tenant: `emulator -> vehicle -> company`
+
+직접 해볼 것:
+
+1. Spring Data derived query의 `findByIdAndVehicleCompanyId...`를 실제 join 조건으로 풀어 쓴다.
+2. Emulator 수정에서 Emulator 자체가 company A여도 새 `vehicleId`가 company B라면 왜 다시 ownership을 검사해야 하는지 설명한다.
+3. TripLog 일반 HTTP와 query-token SSE가 같은 service를 공유하지만 이번 완료 범위가 다른 이유를 설명한다.
+4. `404 status`뿐 아니라 list 결과, 수정 필드, soft/hard delete 상태를 각각 확인해야 하는 이유를 말한다.
+
 ### 실제 경로 기반 role 인가 복습
 
 `CHANGE-004`에서는 없는 `/test` URL의 404 대신 실제 DELETE/POST 경로와 mocked service 호출을 사용했다. 다음 세 층을 구분해 설명한다.
