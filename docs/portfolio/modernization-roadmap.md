@@ -74,6 +74,7 @@ Acceptance criteria:
     - CHANGE-013: 서버 UUID로 탭별 구독 분리, 실제 broker의 독립 connection 두 개로 fan-out·종료·재구독 검증 완료. 두 JVM 및 브라우저·proxy 검증은 남아 있다.
     - CHANGE-014: 별도 JVM worker 두 개의 실제 broker 수신 및 Chromium 차량 화면 단절/수동 재연결 검증 완료. 전체 Boot 서버와 proxy를 연결한 E2E는 남아 있다.
     - CHANGE-015: 실제 Boot 한 개 + H2 + nginx + Chromium adapter 경로의 401/tenant 404/live 수신/명시적 close 후 재구독 검증 완료. proxy 강제 중단·idle timeout·silent half-open은 미검증.
+    - CHANGE-016: 실제 nginx idle timeout 로그, Chromium 단절 감지와 재구독 검증 완료. process crash·silent half-open·heartbeat와 replay 정책은 후속 운영 항목이다.
 
 ### P0-03 versioned database
 

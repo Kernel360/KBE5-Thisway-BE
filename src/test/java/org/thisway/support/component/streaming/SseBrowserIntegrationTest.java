@@ -1,7 +1,8 @@
 package org.thisway.support.component.streaming;
 
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -22,6 +23,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,15 +43,16 @@ class SseBrowserIntegrationTest {
     @Autowired SseConnection connections;
     @Autowired SseEventSender sender;
 
-    @Test
-    void 브라우저가_nginx를_통해_인증된_실시간_데이터를_받고_재구독한다() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void 브라우저가_nginx를_통해_인증된_실시간_데이터를_받고_재구독한다(boolean idleTimeout) throws Exception {
         Path frontend = Path.of(System.getProperty("sse.fe.path"));
-        Company company = companies.save(Company.builder().name("sse fixture").crn("sse-test")
+        Company company = companies.save(Company.builder().name("sse fixture").crn("sse-test-" + idleTimeout)
                 .contact("000").addrRoad("fixture").addrDetail("fixture").memo("fixture").gpsCycle(60).build());
         VehicleModel model = models.save(VehicleModel.builder().manufacturer("fixture")
                 .name("fixture").modelYear(2026).build());
         Vehicle vehicle = vehicles.save(Vehicle.builder().company(company).vehicleModel(model)
-                .carNumber("SSE-TEST").color("white").mileage(0).powerOn(false).build());
+                .carNumber("SSE-TEST-" + idleTimeout).color("white").mileage(0).powerOn(false).build());
         String token = tokens.generateAccessToken("fixture@example.com",
                 Map.of("roles", List.of("MEMBER"), "companyId", company.getId()));
         String foreignToken = tokens.generateAccessToken("foreign@example.com",
@@ -68,7 +72,7 @@ class SseBrowserIntegrationTest {
                       proxy_set_header Connection "";
                       proxy_buffering off;
                       proxy_cache off;
-                      proxy_read_timeout 10s;
+                      proxy_read_timeout 2s;
                     }
                   }
                 }
@@ -88,14 +92,24 @@ class SseBrowserIntegrationTest {
             builder.environment().put("SSE_TEST_TOKEN", token);
             builder.environment().put("SSE_TEST_FOREIGN_TOKEN", foreignToken);
             builder.environment().put("SSE_TEST_VEHICLE", vehicle.getId().toString());
+            builder.environment().put("SSE_TEST_IDLE_TIMEOUT", Boolean.toString(idleTimeout));
             Process browser = builder.start();
             try {
-                // Deliver repeatedly until both initial and reconnected subscriptions have received data.
+                // One event per subscription, then silence so nginx can time out the upstream.
+                Set<String> delivered = new HashSet<>();
                 await().atMost(Duration.ofSeconds(45)).pollInterval(Duration.ofMillis(100)).until(() -> {
-                    sender.sendToPrefix("vehicle:" + vehicle.getId(), "vehicle_detail_gps_stream", "fixture");
+                    for (String key : connections.findKeysByPrefix("vehicle:" + vehicle.getId())) {
+                        if (delivered.add(key)) {
+                            sender.sendLiveDataWithBuffering(key, "vehicle_detail_gps_stream", "fixture");
+                        }
+                    }
                     return !browser.isAlive();
                 });
                 assertThat(browser.exitValue()).isZero();
+                assertThat(delivered).hasSize(2);
+                if (idleTimeout) {
+                    assertThat(proxy.getLogs()).contains("upstream timed out");
+                }
             } finally {
                 if (browser.isAlive()) {
                     browser.destroyForcibly();
