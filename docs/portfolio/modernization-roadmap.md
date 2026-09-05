@@ -72,6 +72,7 @@ Acceptance criteria:
   - [x] P0-02D-3A: 초기/live 경계의 256건 bounded buffering, event name/FIFO 보존, flush 경쟁 조건 제거와 RabbitMQ fan-out topology 특성 테스트. CHANGE-012.
   - [ ] P0-02D-3B: 실제 RabbitMQ에서 2개 application instance 전달, 브라우저·proxy disconnect/reconnect, 여러 탭 subscription identity를 검증한다.
     - CHANGE-013: 서버 UUID로 탭별 구독 분리, 실제 broker의 독립 connection 두 개로 fan-out·종료·재구독 검증 완료. 두 JVM 및 브라우저·proxy 검증은 남아 있다.
+    - CHANGE-014: 별도 JVM worker 두 개의 실제 broker 수신 및 Chromium 차량 화면 단절/수동 재연결 검증 완료. 전체 Boot 서버와 proxy를 연결한 E2E는 남아 있다.
 
 ### P0-03 versioned database
 

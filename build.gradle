@@ -112,6 +112,10 @@ jib {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // Forked SSE subscribers need the same test/runtime classes as this worker.
+    doFirst {
+        systemProperty 'sse.test.classpath', sourceSets.test.runtimeClasspath.asPath
+    }
 }
 
 sourceSets {
