@@ -37,7 +37,8 @@ public class StatisticPersistenceService {
         log.info("=== saveStatistics 호출 ===");
 
         // 1. 회사 정보 조회
-        Company company = companyRepository.findById(companyId)
+        // Serialize both batch and direct correction before taking any aggregate snapshot.
+        Company company = companyRepository.lockById(companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
         // 2. 해당 날짜의 시작과 끝 시간 설정 (한국 시간대 기준)

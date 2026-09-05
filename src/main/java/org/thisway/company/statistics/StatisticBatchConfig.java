@@ -20,7 +20,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.thisway.company.infrastructure.CompanyRepository;
-import org.thisway.company.statistics.application.StatisticService;
+import org.thisway.company.statistics.application.StatisticsCompanyWorker;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -35,7 +35,7 @@ public class StatisticBatchConfig {
     public static final String TARGET_DATE = "targetDate";
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
 
-    private final StatisticService statisticService;
+    private final StatisticsCompanyWorker companyWorker;
     private final CompanyRepository companyRepository;
     private final JobLauncher jobLauncher;
     private final JobRepository jobRepository;
@@ -58,10 +58,11 @@ public class StatisticBatchConfig {
                     List<Long> companyIds = companyRepository.findAllActiveCompanyIds();
                     for (Long companyId : companyIds) {
                         try {
-                            statisticService.saveStatistics(companyId, targetDate);
-                            log.info("회사 ID {}의 통계 처리 완료 (Step commit 대기)", companyId);
+                            companyWorker.process(contribution.getStepExecution().getJobExecution()
+                                    .getJobInstance().getInstanceId(), companyId, targetDate);
+                            log.info("회사 ID {}의 통계 확정 또는 checkpoint 확인 완료", companyId);
                         } catch (Exception e) {
-                            // One transaction currently covers the whole tasklet. Do not swallow a failure.
+                            // Earlier company commits survive; the failed company has no checkpoint.
                             throw new IllegalStateException("Statistics failed: companyId=" + companyId
                                     + ", targetDate=" + targetDate, e);
                         }

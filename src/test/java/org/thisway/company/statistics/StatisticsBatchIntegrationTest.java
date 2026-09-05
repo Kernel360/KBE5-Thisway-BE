@@ -19,6 +19,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.thisway.company.domain.Company;
 import org.thisway.company.infrastructure.CompanyRepository;
 import org.thisway.company.statistics.application.StatisticService;
+import org.thisway.company.statistics.application.StatisticsCompanyWorker;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -52,11 +53,12 @@ class StatisticsBatchIntegrationTest {
     @Autowired JobLauncher launcher;
     @Autowired Job statisticsJob;
     @Autowired JdbcTemplate jdbc;
+    @Autowired StatisticsCompanyWorker worker;
     @MockitoSpyBean CompanyRepository companies;
     @MockitoSpyBean StatisticService service;
 
     @Test
-    void 부분_실패는_전체_rollback하고_같은_날짜를_같은_instance로_재시작한다() throws Exception {
+    void 부분_실패는_성공회사를_보존하고_같은_instance에서_실패회사만_재시작한다() throws Exception {
         LocalDate date = LocalDate.of(2020, 1, 2);
         Long first = company("first").getId();
         Long second = company("second").getId();
@@ -73,7 +75,9 @@ class StatisticsBatchIntegrationTest {
             assertThat(step.getStatus()).isEqualTo(BatchStatus.FAILED);
             assertThat(step.getExitStatus().getExitDescription()).contains("companyId=" + second, "targetDate=" + date);
         });
-        assertThat(count(date)).isZero();
+        assertThat(count(date)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM statistics_checkpoint WHERE job_instance_id=?",
+                Integer.class, failed.getJobInstance().getInstanceId())).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT STATUS FROM BATCH_JOB_EXECUTION WHERE JOB_EXECUTION_ID=?",
                 String.class, failed.getId())).isEqualTo("FAILED");
         verify(service).saveStatistics(first, date);
@@ -86,7 +90,7 @@ class StatisticsBatchIntegrationTest {
         assertThat(count(date)).isEqualTo(2);
         assertThat(jdbc.queryForObject("SELECT SUM(power_on_count) FROM statistics WHERE date=?",
                 Integer.class, date.atStartOfDay())).isZero();
-        verify(service, times(2)).saveStatistics(first, date); // Whole tasklet restarts, not company checkpointing.
+        verify(service, times(1)).saveStatistics(first, date);
         assertThatThrownBy(() -> batch.runForDate(date)).isInstanceOf(JobInstanceAlreadyCompleteException.class);
         assertThat(count(date)).isEqualTo(2);
     }
@@ -132,6 +136,50 @@ class StatisticsBatchIntegrationTest {
                     .isInstanceOf(JobParametersInvalidException.class);
         }
         verify(companies, never()).findAllActiveCompanyIds();
+    }
+
+    @Test
+    void checkpoint_저장이_실패하면_회사통계도_rollback한다() {
+        var date = LocalDate.of(2020, 1, 4);
+        long id = company("checkpoint-failure").getId();
+        // Invalid JobInstance FK fails after real calculation and statistics save.
+        assertThatThrownBy(() -> worker.process(-1, id, date))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThat(count(date)).isZero();
+    }
+
+    @Test
+    void 직접_저장_동시요청도_회사별로_직렬화하고_달력날짜_unique를_지킨다() throws Exception {
+        var date = LocalDate.of(2020, 1, 5);
+        long id = company("direct-race").getId();
+        var executor = Executors.newFixedThreadPool(4);
+        var ready = new CountDownLatch(4);
+        var start = new CountDownLatch(1);
+        try {
+            var tasks = new java.util.ArrayList<Future<?>>();
+            for (int i = 0; i < 4; i++) tasks.add(executor.submit(() -> {
+                ready.countDown();
+                if (!start.await(5, TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
+                service.saveStatistics(id, date);
+                return null;
+            }));
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var task : tasks) task.get(15, TimeUnit.SECONDS);
+            assertThat(count(date)).isEqualTo(1);
+            // Even a bypass writer using a non-midnight timestamp cannot create a second daily row.
+            jdbc.update("UPDATE statistics SET date=? WHERE company_id=?", date.atTime(12, 0), id);
+            assertThatThrownBy(() -> jdbc.update("""
+                    INSERT INTO statistics(active,created_at,company_id,date,power_on_count,
+                    hour00,hour01,hour02,hour03,hour04,hour05,hour06,hour07,hour08,hour09,hour10,hour11,
+                    hour12,hour13,hour14,hour15,hour16,hour17,hour18,hour19,hour20,hour21,hour22,hour23)
+                    VALUES(1,NOW(),?,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+                    """, id, date.atStartOfDay()))
+                    .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
     }
 
     private int count(LocalDate date) {

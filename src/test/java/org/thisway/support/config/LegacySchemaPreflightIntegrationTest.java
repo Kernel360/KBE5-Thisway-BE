@@ -88,9 +88,30 @@ class LegacySchemaPreflightIntegrationTest {
         jdbc.update("INSERT INTO gps_log(vehicle_id,mdn,occurred_time) VALUES "
                 + "(1,'legacy','2026-09-05 00:00:00'),(1,'legacy','2026-09-05 00:00:00')");
         var before = jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id");
-        assertThat(Flyway.configure().dataSource(source).load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(Flyway.configure().dataSource(source).target("3").load().migrate().migrationsExecuted).isEqualTo(1);
         assertThat(jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id")).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM gps_log WHERE event_key IS NULL", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void V4는_과거_동일회사_동일일자_중복이_있으면_삭제없이_중단한다() {
+        var source = database("v4_duplicate_fixture");
+        Flyway.configure().dataSource(source).target("3").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        for (String time : java.util.List.of("2020-01-01 00:00:00", "2020-01-01 12:00:00")) {
+            jdbc.update("""
+                    INSERT INTO statistics(active,created_at,company_id,date,power_on_count,
+                    hour00,hour01,hour02,hour03,hour04,hour05,hour06,hour07,hour08,hour09,hour10,hour11,
+                    hour12,hour13,hour14,hour15,hour16,hour17,hour18,hour19,hour20,hour21,hour22,hour23)
+                    VALUES(1,NOW(),1,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+                    """, time);
+        }
+        var before = jdbc.queryForList("SELECT * FROM statistics ORDER BY id");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> Flyway.configure().dataSource(source).load().migrate())
+                .isInstanceOf(org.flywaydb.core.api.FlywayException.class);
+        assertThat(jdbc.queryForList("SELECT * FROM statistics ORDER BY id")).isEqualTo(before);
     }
 
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {

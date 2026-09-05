@@ -13,7 +13,7 @@
 
 | 우선순위 | 작업 | 완료 증거 |
 | --- | --- | --- |
-| 1 | 회사별 통계 transaction/checkpoint + DB company/date unique | 일부 회사 실패 후 성공 회사 생략, 직접 저장 포함 동시성, migration legacy preflight |
+| 완료 | 회사별 통계 transaction/checkpoint + DB company/date unique | CHANGE-025: 성공 회사 생략, 직접 저장 4-thread, legacy duplicate 보존, 전체 300/300 |
 | 2 | 통계 의미와 correction/backfill | gpsCycle·GPS 누락·late event·운행 경계 fixture와 계산 기대값 일치, 완료 날짜 보정 정책 |
 | 3 | Trip 상태·외부 API 경계 | ON/OFF 중복·역순·누락 상태표, Kakao timeout/실패 중 핵심 기록 보존 |
 | 4 | 수집 인증·발행 신뢰성 | 장치 권한/재전송 정책, producer confirm/return 및 dual-publish 일부 실패 검증 |
