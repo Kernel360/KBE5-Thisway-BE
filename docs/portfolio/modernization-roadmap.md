@@ -82,6 +82,7 @@ Acceptance criteria:
 
 - [x] P0-03A: 빈 MySQL 8.0.40에 Flyway V1/V2 적용, JPA validate, GPS/지오펜스·통계·Batch metadata 계약, schema drift 검출. CHANGE-017. 전체 250/250 통과.
 - [ ] P0-03B: 기존 데이터가 있는 환경의 schema 비교·복원본 검증·baseline 전환. 실제 대상 조사 전 자동 baseline은 금지하며 ADR-001에 절차를 기록했다.
+  - CHANGE-018: 읽기 전용 known-difference preflight SQL과 실제 MySQL의 과거/fresh/ambiguous fixture 검증. 실제 DB 조사 및 전환은 남아 있다.
 
 범위:
 
