@@ -10,7 +10,8 @@ V8은 기존 emulator 정보 변경이나 자동 키 발급 없이 새 테이블
 MySQL에서 마이그레이션을 적용해야 하며 H2 자동 JPA 스키마만으로 이 API를 사용할 수 없다.
 
 현재 회사의 COMPANY_ADMIN 회원 JWT로 `/api/emulators/{id}/device-key`를 호출한다.
-차량과 회사가 active이고 같은 회사 소유여야 한다.
+같은 active 회사 소유여야 한다. 발급에는 active 차량이 필요하지만 비활성 차량 조회·폐기도 가능하다.
+V9까지 적용해야 현재 코드와 일치한다. V8 키와 기존 장치는 revision 0에서 시작하며 과거 연결 이력은 복원하지 않는다.
 
 | 방법 | 성공 응답 | 의미 |
 | --- | --- | --- |
@@ -29,6 +30,8 @@ no-store와 해시 저장은 클라이언트 탈취나 네트워크 노출 자�
 - NOT_ISSUED: 발급 이력 행 없음.
 - REVOKED: 현재 해시 폐기됨.
 - BINDING_CHANGED: 차량/회사/MDN snapshot 불일치. 재발급 전에 연결을 확인한다.
+- CHANGE-035부터 연결 revision도 비교한다. 차량/MDN을 관리 API에서 변경했다 복원해도 이전 키는 무효 상태다.
+- INACTIVE: 차량 비활성 상태. 새 키 발급은 거부되지만 조회·폐기는 가능하다.
 - EXPIRED: 만료 시각 도달. 재발급 필요.
 - ACTIVE: 관리 메타데이터 기준이며 수집 인증 보장은 아님.
 - 401/403: 로그인 또는 현재 관리자 권한 확인. 404: 소유권·active 차량·존재 여부 확인.
@@ -42,6 +45,7 @@ no-store와 해시 저장은 클라이언트 탈취나 네트워크 노출 자�
 
 현재 Emulator는 use_auth=False로 전송하며 이 변경에서 수정하지 않았다. 임의의 인증 header를 추가해
 보호가 시작됐다고 판단하지 않는다. FE 관리 화면도 아직 없다.
-재연결 revision/폐기, inactive 폐기 정책, 비동기 GPS identity 전달, 세 수집 API 거부 테스트,
+관리 API의 재연결 revision과 inactive 차량 폐기는 CHANGE-035에서 구현했다. 직접 SQL 연결 변경은 revision을
+우회하므로 사용하지 않는다. active 복원·회사 이동 정책, 비동기 GPS identity 전달, 세 수집 API 거부 테스트,
 Emulator 비밀 주입·로그 차단, 기존 장치 provisioning과 rollback 순서를 함께 마련한 다음 인증을 강제한다.
 자세한 한계는 [ADR-011](../adr/011-device-credential-lifecycle.md)을 따른다.

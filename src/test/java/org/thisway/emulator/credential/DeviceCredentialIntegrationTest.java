@@ -202,11 +202,96 @@ class DeviceCredentialIntegrationTest {
         issue(device.getId(), token);
         String before = hash();
         var other = device(company);
-        var binding = new DeviceCredentialRepository.Binding(other.getId(), other.getVehicle().getId(), company.getId(), other.getMdn());
+        var binding = new DeviceCredentialRepository.Binding(other.getId(), other.getVehicle().getId(), company.getId(), other.getMdn(), 0, true);
         assertThatThrownBy(() -> repository.replace(binding, before, Instant.now(), Instant.now().plusSeconds(3600)))
                 .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
         assertThat(hash()).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential WHERE emulator_id=?", Integer.class, other.getId())).isZero();
+    }
+
+    @Test
+    void 차량을_바꿨다가_돌려도_이전키는_다시_ACTIVE가_되지_않는다() throws Exception {
+        issue(device.getId(), token);
+        var other = device(company).getVehicle();
+        update(Map.of("vehicleId", other.getId()));
+        expectState("BINDING_CHANGED");
+        update(Map.of("vehicleId", device.getVehicle().getId()));
+        assertThat(revision()).isEqualTo(2);
+        expectState("BINDING_CHANGED");
+        issue(device.getId(), token);
+        expectState("ACTIVE");
+    }
+
+    @Test
+    void MDN_복원은_키를_되살리지_않고_동일값과_펌웨어수정은_revision을_유지한다() throws Exception {
+        issue(device.getId(), token);
+        update(Map.of("mdn", device.getMdn(), "vehicleId", device.getVehicle().getId(), "deviceFirmwareVersion", "2"));
+        assertThat(revision()).isZero();
+        expectState("ACTIVE");
+        update(Map.of("mdn", "changed-" + device.getId()));
+        update(Map.of("mdn", device.getMdn()));
+        assertThat(revision()).isEqualTo(2);
+        expectState("BINDING_CHANGED");
+    }
+
+    @Test
+    void 비활성차량은_발급을_거부하지만_소유관리자의_조회와_폐기는_허용한다() throws Exception {
+        issue(device.getId(), token);
+        jdbc.update("UPDATE vehicle SET active=false WHERE id=?", device.getVehicle().getId());
+        expectState("INACTIVE");
+        mvc.perform(post(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isNotFound());
+        mvc.perform(delete(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isNoContent());
+        assertThat(hash()).isNull();
+        expectState("REVOKED");
+        var other = device(company());
+        jdbc.update("UPDATE vehicle SET active=false WHERE id=?", other.getVehicle().getId());
+        for (var request : List.of(get(path(other.getId())), delete(path(other.getId())))) {
+            mvc.perform(request.header("Authorization", "Bearer " + token)).andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    void 동시재연결과_발급은_revision증가를_잃지_않고_현재연결의_키만_ACTIVE다() throws Exception {
+        issue(device.getId(), token);
+        var first = device(company).getVehicle();
+        var second = device(company).getVehicle();
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(3);
+        var ready = new java.util.concurrent.CountDownLatch(3);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var actions = List.<java.util.concurrent.Callable<Void>>of(
+                    () -> { update(Map.of("vehicleId", first.getId())); return null; },
+                    () -> { update(Map.of("vehicleId", second.getId())); return null; },
+                    () -> { issue(device.getId(), token); return null; });
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<Void>>();
+            for (var action : actions) futures.add(executor.submit(() -> {
+                ready.countDown();
+                if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("fixture timeout");
+                return action.call();
+            }));
+            assertThat(ready.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var future : futures) future.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(revision()).isEqualTo(2);
+            long bound = jdbc.queryForObject("SELECT bound_assignment_revision FROM device_credential WHERE emulator_id=?", Long.class, device.getId());
+            assertThat(bound).isBetween(0L, 2L);
+            expectState(bound == 2 ? "ACTIVE" : "BINDING_CHANGED");
+            if (bound == 2) assertThat(jdbc.queryForObject("SELECT bound_vehicle_id FROM device_credential WHERE emulator_id=?", Long.class, device.getId()))
+                    .isEqualTo(jdbc.queryForObject("SELECT vehicle_id FROM emulator WHERE id=?", Long.class, device.getId()));
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    private long revision() {
+        return jdbc.queryForObject("SELECT assignment_revision FROM emulator WHERE id=?", Long.class, device.getId());
+    }
+
+    private void update(Map<String, Object> body) throws Exception {
+        mvc.perform(patch("/api/emulators/" + device.getId()).header("Authorization", "Bearer " + token)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(json.writeValueAsString(body)))
+                .andExpect(status().isOk());
     }
 
     private String issue(long id, String jwt) throws Exception {

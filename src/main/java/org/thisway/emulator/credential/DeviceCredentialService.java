@@ -25,6 +25,7 @@ public class DeviceCredentialService {
     public IssuedDeviceKey issue(long emulatorId) {
         Member actor = administrator();
         var binding = owned(emulatorId, actor, true);
+        if (!binding.active()) throw new CustomException(ErrorCode.EMULATOR_NOT_FOUND);
         if (binding.mdn() == null || binding.mdn().isBlank() || binding.mdn().length() > 20) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
@@ -50,6 +51,8 @@ public class DeviceCredentialService {
         var binding = owned(emulatorId, administrator(), false);
         return repository.find(emulatorId).map(snapshot -> {
             String state = !snapshot.hasKey() ? "REVOKED"
+                    : !binding.active() ? "INACTIVE"
+                    : snapshot.assignmentRevision() != binding.assignmentRevision() ? "BINDING_CHANGED"
                     : snapshot.vehicleId() != binding.vehicleId() || snapshot.companyId() != binding.companyId()
                     || !snapshot.mdn().equals(binding.mdn()) ? "BINDING_CHANGED"
                     : !snapshot.expiresAt().isAfter(Instant.now()) ? "EXPIRED" : "ACTIVE";

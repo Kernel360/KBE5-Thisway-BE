@@ -189,6 +189,14 @@ class LegacySchemaPreflightIntegrationTest {
         assertThat(jdbc.queryForList("SELECT * FROM emulator")).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential_event", Integer.class)).isZero();
+        jdbc.update("INSERT INTO device_credential(emulator_id,key_hash,bound_vehicle_id,bound_company_id,bound_mdn,issued_at,expires_at) "
+                + "VALUES(1,REPEAT('a',64),1,1,'fixture','2026-01-01','2026-01-31')");
+        var credential = jdbc.queryForMap("SELECT * FROM device_credential");
+        assertThat(Flyway.configure().dataSource(source).target("9").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForMap("SELECT * FROM device_credential")).containsAllEntriesOf(credential)
+                .containsEntry("bound_assignment_revision", 0L);
+        assertThat(jdbc.queryForMap("SELECT * FROM emulator")).containsAllEntriesOf(before.getFirst())
+                .containsEntry("assignment_revision", 0L);
     }
 
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {
