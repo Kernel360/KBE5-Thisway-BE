@@ -16,6 +16,9 @@
 - CHANGE-033: Power strict 입력·KST+5분 미래 상한, 거부 후 정상 MySQL 운행 저장 검증.
   전체 BE 380/380. [기록](work-logs/2026-09-06-power-request-validation.md). 인증과 다른 수집 경계는 별도.
 
+- CHANGE-034: 회사 관리자 전용 장치 키 발급·교체·폐기·감사 기반을 추가했다.
+  [기록](work-logs/2026-09-06-device-credential-lifecycle.md). 수집 API 인증 강제는 아직 미적용이다.
+
 ## 다음 우선순위
 
 | 우선순위 | 작업 | 완료 증거 |
@@ -23,7 +26,7 @@
 | 완료 | 회사별 통계 transaction/checkpoint + DB company/date unique | CHANGE-025: 성공 회사 생략, 직접 저장 4-thread, legacy duplicate 보존, 전체 300/300 |
 | 2 | 통계 자동 보정/이력·장애 복구 | V2 의미/fixture/명시적 날짜 보정은 CHANGE-030 완료. 자동 late-event 탐지/backfill·감사 revision·과거 fleet·JVM kill/STARTED 복구는 미완료 |
 | 3 | Trip legacy 검토와 주소 자동 복구 | 신규 관측 상태표·중복/역순·거리 분리는 CHANGE-032 완료. legacy 승인 변환, 장치 sequence, 주소 자동 worker는 미완료 |
-| 4 | 수집 인증·발행 운영 안정성 | 장치 권한/credential 발급·회전/재전송/size·rate 정책 미완료. producer confirm/return·부분 실패는 CHANGE-028 완료, 전체 deadline/부하·자동 live 복구는 별도 |
+| 4 | 수집 인증·발행 운영 안정성 | credential 관리 기반은 CHANGE-034. 수집 권한 강제·재연결 revision·비동기 identity·Emulator 연결·재전송/size·rate 정책 미완료. producer confirm/return·부분 실패는 CHANGE-028 완료, 전체 deadline/부하·자동 live 복구는 별도 |
 | 5 | 성능·운영 증거 | 고정 데이터의 p95/처리량/오류·중복·lag, DB query 측정, 경고·배포 rollback 절차 |
 | 6 | 사용자 업무 흐름과 제출 자료 | 차량 현황→운행 기록→회사 통계 데모, 실행 안내, 개인 기여·제약·면접 답변 |
 

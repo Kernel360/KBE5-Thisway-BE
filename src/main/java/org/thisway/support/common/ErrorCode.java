@@ -74,6 +74,7 @@ public enum ErrorCode {
     EMULATOR_NOT_FOUND("15000", "존재하지 않는 에뮬레이터입니다.", HttpStatus.NOT_FOUND),
     EMULATOR_ALREADY_EXIST("15001", "이미 존재하는 MDN입니다.", HttpStatus.BAD_REQUEST),
     EMULATOR_EMPTY_UPDATE_REQUEST("15002", "업데이트할 정보가 없습니다.", HttpStatus.BAD_REQUEST),
+    DEVICE_CREDENTIAL_FORBIDDEN("15003", "장치 인증 정보 관리 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
     // 페이지네이션 x6xxx
     PAGE_INVALID_PAGE_SIZE("16000", "페이지 크기는 최대 100개까지 가능합니다.", HttpStatus.BAD_REQUEST),

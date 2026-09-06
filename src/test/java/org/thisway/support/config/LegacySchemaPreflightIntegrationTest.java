@@ -171,6 +171,26 @@ class LegacySchemaPreflightIntegrationTest {
                 + "AND start_odometer IS NULL AND end_odometer IS NULL AND distance_meters IS NULL", Integer.class)).isEqualTo(2);
     }
 
+    @Test
+    void V8는_기존_장치에_자동_키를_발급하거나_정보를_바꾸지_않는다() {
+        var source = database("v8_credentials");
+        Flyway.configure().dataSource(source).target("7").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1000,1,1,1)");
+        jdbc.update("INSERT INTO emulator(id,vehicle_id,mdn,terminal_id,manufacture_id,packet_version,device_id,device_firmware_version) "
+                + "VALUES(1,1,'fixture','fixture',1,1,1,'1')");
+        var before = jdbc.queryForList("SELECT * FROM emulator");
+        assertThat(Flyway.configure().dataSource(source).target("8").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT * FROM emulator")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential_event", Integer.class)).isZero();
+    }
+
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {
         String sql = new ClassPathResource("db/preflight/schema-readiness.sql")
                 .getContentAsString(StandardCharsets.UTF_8);
