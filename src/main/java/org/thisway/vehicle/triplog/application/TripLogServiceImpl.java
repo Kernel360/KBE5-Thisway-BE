@@ -1,6 +1,7 @@
 package org.thisway.vehicle.triplog.application;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,20 +31,20 @@ public class TripLogServiceImpl implements TripLogService {
     private final VehicleService vehicleService;
     private final LogService logService;
     private final TripLogRepository tripLogRepository;
-    private final ReverseGeocodingConverter reverseGeocodingConverter;
+    private final ApplicationEventPublisher events;
     private final SecurityService securityService;
 
     public TripLogServiceImpl(
             VehicleService vehicleService,
             @Lazy LogService logService,
             TripLogRepository tripLogRepository,
-            ReverseGeocodingConverter reverseGeocodingConverter,
+            ApplicationEventPublisher events,
             SecurityService securityService
     ) {
         this.vehicleService = vehicleService;
         this.logService = logService;
         this.tripLogRepository = tripLogRepository;
-        this.reverseGeocodingConverter = reverseGeocodingConverter;
+        this.events = events;
         this.securityService = securityService;
     }
 
@@ -129,7 +130,6 @@ public class TripLogServiceImpl implements TripLogService {
     @Transactional
     public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
         TripLog tripLog;
-        ReverseGeocodeResult address = reverseGeocodingConverter.convertToAddress(tripLogSaveInput.latitude(), tripLogSaveInput.longitude());
 
         if (tripLogSaveInput.offTime() == null) {
             tripLog = TripLog.builder()
@@ -138,8 +138,6 @@ public class TripLogServiceImpl implements TripLogService {
                     .totalTripMeter(tripLogSaveInput.totalTripMeter())
                     .onLatitude(tripLogSaveInput.latitude())
                     .onLongitude(tripLogSaveInput.longitude())
-                    .onAddress(address.addr())
-                    .onAddrDetail(address.addrDetail())
                     .active(false)
                     .build();
         } else {
@@ -153,8 +151,6 @@ public class TripLogServiceImpl implements TripLogService {
                         .totalTripMeter(0)
                         .offLatitude(tripLogSaveInput.latitude())
                         .offLongitude(tripLogSaveInput.longitude())
-                        .offAddress(address.addr())
-                        .offAddrDetail(address.addrDetail())
                         .active(true)
                         .build();
             } else {
@@ -163,13 +159,14 @@ public class TripLogServiceImpl implements TripLogService {
                         tripLogSaveInput.totalTripMeter(),
                         tripLogSaveInput.latitude(),
                         tripLogSaveInput.longitude(),
-                        address.addr(),
-                        address.addrDetail()
+                        null,
+                        null
                 );
             }
         }
 
         tripLogRepository.save(tripLog);
+        events.publishEvent(new TripAddressRequested(tripLog.getId(), tripLogSaveInput.offTime() != null));
     }
 
 }

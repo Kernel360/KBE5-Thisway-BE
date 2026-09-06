@@ -63,7 +63,7 @@ class TripLogServiceTest {
     @Mock
     private TripLogRepository tripLogRepository;
     @Mock
-    private ReverseGeocodingConverter reverseGeocodingConverter;
+    private org.springframework.context.ApplicationEventPublisher events;
     @Mock
     private SecurityService securityService;
     @Mock
@@ -221,7 +221,6 @@ class TripLogServiceTest {
     @DisplayName("시동 ON 이벤트는 미완료 운행을 생성한다")
     void 시동ON_이벤트는_미완료_운행을_생성한다() {
         TripLogSaveInput input = saveInput(null, 1_000);
-        when(reverseGeocodingConverter.convertToAddress(LATITUDE, LONGITUDE)).thenReturn(ADDRESS);
 
         tripLogService.saveTripLog(input);
 
@@ -232,8 +231,9 @@ class TripLogServiceTest {
         assertThat(saved.getTotalTripMeter()).isEqualTo(1_000);
         assertThat(saved.getOnLatitude()).isEqualTo(LATITUDE);
         assertThat(saved.getOnLongitude()).isEqualTo(LONGITUDE);
-        assertThat(saved.getOnAddr()).isEqualTo(ADDRESS.addr());
-        assertThat(saved.getOnAddrDetail()).isEqualTo(ADDRESS.addrDetail());
+        assertThat(saved.getOnAddr()).isNull();
+        assertThat(saved.getOnAddrDetail()).isNull();
+        verify(events).publishEvent(new TripAddressRequested(saved.getId(), false));
         assertThat(saved.isActive()).isFalse();
         verify(tripLogRepository, never()).findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME);
     }
@@ -243,7 +243,6 @@ class TripLogServiceTest {
     void 선행ON_없는_OFF_이벤트는_거리0의_완료운행을_생성한다() {
         TripLogSaveInput input = saveInput(OFF_TIME, 1_500);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
-        when(reverseGeocodingConverter.convertToAddress(LATITUDE, LONGITUDE)).thenReturn(ADDRESS);
         when(tripLogRepository.findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME)).thenReturn(null);
 
         tripLogService.saveTripLog(input);
@@ -255,8 +254,9 @@ class TripLogServiceTest {
         assertThat(saved.getOnLatitude()).isNull();
         assertThat(saved.getOffLatitude()).isEqualTo(LATITUDE);
         assertThat(saved.getOffLongitude()).isEqualTo(LONGITUDE);
-        assertThat(saved.getOffAddr()).isEqualTo(ADDRESS.addr());
-        assertThat(saved.getOffAddrDetail()).isEqualTo(ADDRESS.addrDetail());
+        assertThat(saved.getOffAddr()).isNull();
+        assertThat(saved.getOffAddrDetail()).isNull();
+        verify(events).publishEvent(new TripAddressRequested(saved.getId(), true));
         assertThat(saved.isActive()).isTrue();
     }
 
@@ -266,7 +266,6 @@ class TripLogServiceTest {
         TripLog existingTrip = tripLog(ON_TIME, null, 1_000, false);
         TripLogSaveInput input = saveInput(OFF_TIME, 1_500);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
-        when(reverseGeocodingConverter.convertToAddress(LATITUDE, LONGITUDE)).thenReturn(ADDRESS);
         when(tripLogRepository.findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME)).thenReturn(existingTrip);
 
         tripLogService.saveTripLog(input);
@@ -276,8 +275,8 @@ class TripLogServiceTest {
         assertThat(existingTrip.getTotalTripMeter()).isEqualTo(1_500);
         assertThat(existingTrip.getOffLatitude()).isEqualTo(LATITUDE);
         assertThat(existingTrip.getOffLongitude()).isEqualTo(LONGITUDE);
-        assertThat(existingTrip.getOffAddr()).isEqualTo(ADDRESS.addr());
-        assertThat(existingTrip.getOffAddrDetail()).isEqualTo(ADDRESS.addrDetail());
+        assertThat(existingTrip.getOffAddr()).isNull();
+        assertThat(existingTrip.getOffAddrDetail()).isNull();
         assertThat(existingTrip.isActive()).isTrue();
     }
 

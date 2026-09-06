@@ -133,6 +133,11 @@ Acceptance criteria:
 
 ### P1-02 Trip state machine과 enrichment 분리
 
+진행 상태:
+
+- [x] CHANGE-026: 주소 조회 AFTER_COMMIT/NOT_SUPPORTED, 실패 시 좌표·운행 보존, 조건부 주소 update와 내부 재시도. 실제 MySQL/로컬 HTTP timeout 검증, 전체 305/305. [기록](work-logs/2026-09-06-trip-address-enrichment.md).
+- [ ] Trip 상태표·거리 분리·중복/역순 및 주소 자동 보정 worker는 남아 있다.
+
 범위:
 
 - `sum` protocol 의미를 Emulator와 계약 test로 확정
