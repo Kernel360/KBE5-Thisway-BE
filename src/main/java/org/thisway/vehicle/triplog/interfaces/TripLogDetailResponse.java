@@ -13,7 +13,8 @@ public record TripLogDetailResponse(
         Integer tripMeter,
         Double avgSpeed,
         String onAddress,
-        String offAddress
+        String offAddress,
+        org.thisway.vehicle.triplog.domain.TripDistanceStatus distanceStatus
 ) {
     public static TripLogDetailResponse from(
             Vehicle vehicle,
@@ -24,12 +25,13 @@ public record TripLogDetailResponse(
                 vehicle.getCarNumber(),
                 tripLog.getStartTime(),
                 tripLog.getEndTime(),
-                tripLog.getTotalTripMeter(),
+                tripLog.getDistanceMeters(),
                 Math.round(avgSpeed * 100.0) / 100.0,
                 Optional.ofNullable(tripLog.getOnAddr()).orElse("") +
                         Optional.ofNullable(tripLog.getOnAddrDetail()).orElse(""),
                 Optional.ofNullable(tripLog.getOffAddr()).orElse("") +
-                        Optional.ofNullable(tripLog.getOffAddrDetail()).orElse("")
+                        Optional.ofNullable(tripLog.getOffAddrDetail()).orElse(""),
+                tripLog.getDistanceStatus()
         );
     }
 }

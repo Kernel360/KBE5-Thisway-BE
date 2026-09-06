@@ -38,6 +38,7 @@
 | 원래 개인 Batch의 현대화 | [CHANGE-025](work-logs/2026-09-06-company-statistics-checkpoint.md): 회사별 commit/checkpoint·직접 저장 동시성 | 회사 목록 snapshot·통계 공식 완성·JVM kill 복구는 별도 |
 | 외부 API 장애 경계 | [CHANGE-026](work-logs/2026-09-06-trip-address-enrichment.md): commit 이후 주소 보정 | 자동 background retry/성능 향상으로 주장하지 않음 |
 | 차량 누적값 계약 검토 | [CHANGE-027](work-logs/2026-09-06-cumulative-odometer.md): 누적 m 중복 가산 교정 | 기존 오염 데이터 자동 보정·Trip 거리 분리는 별도 |
+| 운행 관측의 정합성 | [CHANGE-032](work-logs/2026-09-06-trip-observation-distance.md): 신규 Trip 중복/역순·거리 분리·MySQL 검증 | legacy 자동 변환/장치 sequence/전체 exactly-once는 아님 |
 
 ## 원래 역할과 이후 개선을 나누기
 
@@ -79,6 +80,7 @@ AI 기능이 없다는 이유로 임의 챗봇을 붙이지 않는다. 백엔드
 ## 다음 개발 우선순위에 대한 판단
 
 원래 개인 담당인 Statistics/Batch의 재시작·회사별 부분 성공은 CHANGE-024/025로 개선했다.
-다음은 통계 공식/보정 정책과 Trip 상태의 완성이다. 실제 부하 수치는 이후 동일 조건 before/after
+통계 V2는 CHANGE-030, 신규 Trip 상태/거리 분리는 CHANGE-032로 검증했다. 다음은 수집 입력/인증,
+통계 자동 보정·legacy 전환·운영 복구의 남은 경계다. 실제 부하 수치는 이후 동일 조건 before/after
 실험으로 확보한다. 검증되지 않은 “대규모 실서비스”, “15,000대 처리”, “성능 N% 개선”은 사용하지 않는다.
 제출/시연 전에는 [체크리스트](submission-checklist.md)를 따르며, 사용자 본인의 재현·설명은 별도로 확인한다.

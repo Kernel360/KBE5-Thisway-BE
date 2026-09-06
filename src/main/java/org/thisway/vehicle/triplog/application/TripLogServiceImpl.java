@@ -127,42 +127,24 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
-        TripLog tripLog;
-
-        if (tripLogSaveInput.offTime() == null) {
-            tripLog = TripLog.builder()
-                    .vehicle(tripLogSaveInput.vehicle())
-                    .startTime(tripLogSaveInput.onTime())
-                    .totalTripMeter(tripLogSaveInput.totalTripMeter())
-                    .onLatitude(tripLogSaveInput.latitude())
-                    .onLongitude(tripLogSaveInput.longitude())
-                    .active(false)
-                    .build();
-        } else {
-            tripLog = tripLogRepository.findByVehicleIdAndStartTime(tripLogSaveInput.vehicle().getId(), tripLogSaveInput.onTime());
-
-            if (tripLog == null) {
-                tripLog = TripLog.builder()
-                        .vehicle(tripLogSaveInput.vehicle())
-                        .startTime(tripLogSaveInput.onTime())
-                        .endTime(tripLogSaveInput.offTime())
-                        .totalTripMeter(0)
-                        .offLatitude(tripLogSaveInput.latitude())
-                        .offLongitude(tripLogSaveInput.longitude())
-                        .active(true)
-                        .build();
-            } else {
-                tripLog.finishTrip(
-                        tripLogSaveInput.offTime(),
-                        tripLogSaveInput.totalTripMeter(),
-                        tripLogSaveInput.latitude(),
-                        tripLogSaveInput.longitude(),
-                        null,
-                        null
-                );
-            }
+        try {
+            tripLogSaveInput.validate();
+        } catch (IllegalArgumentException exception) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        var vehicle = vehicleService.getVehicleForPowerUpdate(tripLogSaveInput.vehicle().getId());
+        var existing = tripLogRepository.findTop2ByVehicleIdAndStartTimeOrderByIdAsc(
+                vehicle.getId(), tripLogSaveInput.onTime());
+        if (existing.size() > 1 || (!existing.isEmpty() && existing.getFirst().getIdentityStartTime() == null)) {
+            throw new CustomException(ErrorCode.TRIP_LEGACY_REVIEW_REQUIRED);
+        }
+        TripLog tripLog = existing.isEmpty() ? TripLog.observed(vehicle, tripLogSaveInput.onTime()) : existing.getFirst();
+        try {
+            if (!tripLog.observe(tripLogSaveInput)) return;
+        } catch (TripObservationConflictException exception) {
+            throw new CustomException(ErrorCode.TRIP_EVENT_CONFLICT);
         }
 
         tripLogRepository.save(tripLog);

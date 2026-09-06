@@ -64,7 +64,7 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     Optional<TripLog> findByIdAndVehicleCompanyIdAndActiveTrue(Long id, Long companyId);
 
-    TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
+    List<TripLog> findTop2ByVehicleIdAndStartTimeOrderByIdAsc(Long vehicleId, LocalDateTime startTime);
 
 
     // 특정 회사의 날짜 범위에 대한 시동 횟수

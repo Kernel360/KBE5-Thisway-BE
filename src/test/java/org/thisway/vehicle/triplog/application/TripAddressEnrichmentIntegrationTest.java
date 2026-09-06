@@ -110,7 +110,9 @@ class TripAddressEnrichmentIntegrationTest {
                     ready.countDown();
                     if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
                     logService.savePowerLog(new org.thisway.vehicle.log.interfaces.PowerLogRequest(
-                            "odometer-race", "fixture", "1", "1", "1", "20200101100000", "20200101110000",
+                            "odometer-race", "fixture", "1", "1", "1",
+                            "20200101" + (meters.equals("1000") ? "090000" : meters.equals("1200") ? "100000" : "110000"),
+                            "20200101120000",
                             "A", "37500000", "127000000", "0", "0", meters));
                     return null;
                 }));
@@ -193,6 +195,131 @@ class TripAddressEnrichmentIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
                 vehicle.getId())).isZero();
         verifyNoInteractions(converter);
+    }
+
+    @Test
+    void 실제_ON_OFF_순서와_중복에도_운행은_한행이며_주소는_재조회하지_않는다() {
+        doReturn(new ReverseGeocodeResult("fixture", "detail")).when(converter).convertToAddress(37.5, 127.0);
+        for (boolean offFirst : java.util.List.of(false, true)) {
+            var vehicle = vehicle();
+            String mdn = register(vehicle);
+            var on = power(mdn, "20200101100000", "", "37500000");
+            var off = withMeters(power(mdn, "20200101100000", "20200101110000", "37500000"), "1500");
+            logService.savePowerLog(offFirst ? off : on);
+            logService.savePowerLog(offFirst ? on : off);
+            logService.savePowerLog(on);
+            logService.savePowerLog(off);
+            assertThat(count(vehicle)).isEqualTo(1);
+            assertThat(jdbc.queryForMap("SELECT start_odometer,end_odometer,distance_meters,on_addr,off_addr "
+                    + "FROM trip_log WHERE vehicle_id=?", vehicle.getId())).containsAllEntriesOf(java.util.Map.of(
+                    "start_odometer", 1000, "end_odometer", 1500, "distance_meters", 500,
+                    "on_addr", "fixture", "off_addr", "fixture"));
+            assertThat(vehicles.findById(vehicle.getId()).orElseThrow().isPowerOn()).isFalse();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                    vehicle.getId())).isEqualTo(4);
+        }
+        verify(converter, times(4)).convertToAddress(37.5, 127.0); // Exactly ON and OFF per vehicle.
+    }
+
+    @Test
+    void 같은운행의_ON과_OFF_동시재전송도_한행과_500미터로_수렴한다() throws Exception {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        var on = power(mdn, "20200101100000", "", "37500000");
+        var off = withMeters(power(mdn, "20200101100000", "20200101110000", "37500000"), "1500");
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+        var ready = new java.util.concurrent.CountDownLatch(4);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (var request : java.util.List.of(off, on, on, off)) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
+                    logService.savePowerLog(request);
+                    return null;
+                }));
+            }
+            assertThat(ready.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var future : futures) future.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(count(vehicle)).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT distance_meters FROM trip_log WHERE vehicle_id=?", Integer.class,
+                    vehicle.getId())).isEqualTo(500);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void 충돌_OFF는_409용_오류로_원본_차량거리_운행을_함께_rollback한다() {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        logService.savePowerLog(power(mdn, "20200101100000", "", "37500000"));
+        var off = withMeters(power(mdn, "20200101100000", "20200101110000", "37500000"), "1500");
+        logService.savePowerLog(off);
+        assertThatThrownBy(() -> logService.savePowerLog(withMeters(off, "9999")))
+                .isInstanceOf(org.thisway.support.common.CustomException.class).extracting("errorCode")
+                .isEqualTo(org.thisway.support.common.ErrorCode.TRIP_EVENT_CONFLICT);
+        assertThat(vehicles.findById(vehicle.getId()).orElseThrow().getMileage()).isEqualTo(1500);
+        assertThat(jdbc.queryForObject("SELECT distance_meters FROM trip_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isEqualTo(500);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isEqualTo(2);
+    }
+
+    @Test
+    void 기존_혼합의미_운행은_한행이나_중복이나_자동승격하지_않는다() {
+        for (int rows : java.util.List.of(1, 2)) {
+            var vehicle = vehicle();
+            String mdn = register(vehicle);
+            for (int i = 0; i < rows; i++) jdbc.update("INSERT INTO trip_log(vehicle_id,active,created_at,start_time,total_trip_meter) "
+                    + "VALUES(?,0,NOW(),'2020-01-01 10:00:00',1000)", vehicle.getId());
+            var before = jdbc.queryForList("SELECT * FROM trip_log WHERE vehicle_id=?", vehicle.getId());
+            assertThatThrownBy(() -> logService.savePowerLog(power(mdn, "20200101100000", "20200101110000", "37500000")))
+                    .isInstanceOf(org.thisway.support.common.CustomException.class).extracting("errorCode")
+                    .isEqualTo(org.thisway.support.common.ErrorCode.TRIP_LEGACY_REVIEW_REQUIRED);
+            assertThat(jdbc.queryForList("SELECT * FROM trip_log WHERE vehicle_id=?", vehicle.getId())).isEqualTo(before);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                    vehicle.getId())).isZero();
+        }
+    }
+
+    @Test
+    void DB_unique와_거리_check는_서비스잠금을_우회한_쓰기도_거부한다() {
+        var vehicle = vehicle();
+        trips.saveTripLog(input(vehicle));
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO trip_log(vehicle_id,active,created_at,start_time,total_trip_meter,identity_start_time,start_odometer)
+                SELECT vehicle_id,active,created_at,start_time,total_trip_meter,identity_start_time,start_odometer
+                FROM trip_log WHERE vehicle_id=?
+                """, vehicle.getId())).isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
+        assertThatThrownBy(() -> jdbc.update("UPDATE trip_log SET distance_meters=500 WHERE vehicle_id=?", vehicle.getId()))
+                .rootCause().isInstanceOf(java.sql.SQLException.class).extracting("errorCode").isEqualTo(3819);
+        assertThat(count(vehicle)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT distance_meters FROM trip_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isNull();
+    }
+
+    @Test
+    void 시작보다_이른_OFF는_core_쓰기_전체를_rollback한다() {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        assertThatThrownBy(() -> logService.savePowerLog(power(mdn, "20200101100000", "20200101090000", "37500000")))
+                .isInstanceOf(org.thisway.support.common.CustomException.class).extracting("errorCode")
+                .isEqualTo(org.thisway.support.common.ErrorCode.INVALID_INPUT_VALUE);
+        assertThat(count(vehicle)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isZero();
+        assertThat(vehicles.findById(vehicle.getId()).orElseThrow().getLastPowerEventTime()).isNull();
+    }
+
+    private org.thisway.vehicle.log.interfaces.PowerLogRequest withMeters(
+            org.thisway.vehicle.log.interfaces.PowerLogRequest request, String meters) {
+        return new org.thisway.vehicle.log.interfaces.PowerLogRequest(request.mdn(), request.tid(), request.mid(), request.pv(),
+                request.did(), request.onTime(), request.offTime(), request.gcd(), request.lat(), request.lon(),
+                request.ang(), request.spd(), meters);
     }
 
     private String register(Vehicle vehicle) {

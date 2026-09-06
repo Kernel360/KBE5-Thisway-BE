@@ -151,6 +151,26 @@ class LegacySchemaPreflightIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT last_power_event_time FROM vehicle", String.class)).isNull();
     }
 
+    @Test
+    void V7는_과거_중복운행과_혼합거리값을_보존하고_신규거리로_추정하지_않는다() {
+        var source = database("v7_legacy_trips");
+        Flyway.configure().dataSource(source).target("6").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1000,1,1,1)");
+        jdbc.update("INSERT INTO trip_log(vehicle_id,active,created_at,start_time,total_trip_meter) VALUES "
+                + "(1,0,NOW(),'2020-01-01 10:00:00',1000),(1,0,NOW(),'2020-01-01 10:00:00',0)");
+        var before = jdbc.queryForList("SELECT id,vehicle_id,start_time,total_trip_meter,active FROM trip_log ORDER BY id");
+        assertThat(Flyway.configure().dataSource(source).target("7").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,vehicle_id,start_time,total_trip_meter,active FROM trip_log ORDER BY id")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM trip_log WHERE identity_start_time IS NULL "
+                + "AND start_odometer IS NULL AND end_odometer IS NULL AND distance_meters IS NULL", Integer.class)).isEqualTo(2);
+    }
+
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {
         String sql = new ClassPathResource("db/preflight/schema-readiness.sql")
                 .getContentAsString(StandardCharsets.UTF_8);

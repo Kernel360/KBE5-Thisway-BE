@@ -29,13 +29,16 @@
     
 <img width="2559" height="1440" alt="image" src="https://github.com/user-attachments/assets/2802e16d-97f9-4802-b487-c6e28c53ff3b" />
 
-  - 차량으로부터 운행 데이터(시동 켜짐/꺼짐, 위치 등)를 RabbitMQ를 통해 비동기적으로 수신
+  - GPS는 설정에 따라 직접 저장 또는 RabbitMQ 수집, 시동 ON/OFF는 HTTP transaction에서 처리
     
 <img width="2558" height="1440" alt="image" src="https://github.com/user-attachments/assets/973fdb1a-7e92-4e16-9b55-e7689e7eed45" />
 
 
 - **운행 기록 관리 (Trip Log)**
-  - 수신된 데이터를 가공하여 운행 기록(Trip Log)으로 저장
+  - Power ON/OFF 관측을 운행 기록으로 저장. 신규 운행의 중복·역순을 처리하고 충돌은 거부
+  - 시작/종료 누적 계기값의 차이로 거리 계산. 누락·계기값 감소·과거 혼합 데이터는 확인 불가 표시
+  - [Trip 관측/거리 변경과 검증](docs/portfolio/work-logs/2026-09-06-trip-observation-distance.md),
+    [기존 데이터 전환 gate](docs/runbooks/trip-observation-v7.md)
     
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/9d9aea95-fd1b-45aa-b20b-afd193a2c0c7" />
 

@@ -228,29 +228,30 @@ class TripLogServiceTest {
         assertThat(saved.getVehicle()).isSameAs(vehicle);
         assertThat(saved.getStartTime()).isEqualTo(ON_TIME);
         assertThat(saved.getEndTime()).isNull();
-        assertThat(saved.getTotalTripMeter()).isEqualTo(1_000);
+        assertThat(saved.getStartOdometer()).isEqualTo(1_000);
+        assertThat(saved.getDistanceMeters()).isNull();
         assertThat(saved.getOnLatitude()).isEqualTo(LATITUDE);
         assertThat(saved.getOnLongitude()).isEqualTo(LONGITUDE);
         assertThat(saved.getOnAddr()).isNull();
         assertThat(saved.getOnAddrDetail()).isNull();
         verify(events).publishEvent(new TripAddressRequested(saved.getId(), false));
         assertThat(saved.isActive()).isFalse();
-        verify(tripLogRepository, never()).findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME);
+        verify(tripLogRepository).findTop2ByVehicleIdAndStartTimeOrderByIdAsc(VEHICLE_ID, ON_TIME);
     }
 
     @Test
-    @DisplayName("선행 ON 없이 OFF 이벤트가 오면 거리 0의 완료 운행을 생성한다")
-    void 선행ON_없는_OFF_이벤트는_거리0의_완료운행을_생성한다() {
+    @DisplayName("선행 ON 없이 OFF 이벤트가 오면 거리 미확정의 완료 운행을 생성한다")
+    void 선행ON_없는_OFF_이벤트는_거리미확정의_완료운행을_생성한다() {
         TripLogSaveInput input = saveInput(OFF_TIME, 1_500);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
-        when(tripLogRepository.findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME)).thenReturn(null);
 
         tripLogService.saveTripLog(input);
 
         TripLog saved = captureSavedTripLog();
         assertThat(saved.getStartTime()).isEqualTo(ON_TIME);
         assertThat(saved.getEndTime()).isEqualTo(OFF_TIME);
-        assertThat(saved.getTotalTripMeter()).isZero();
+        assertThat(saved.getDistanceMeters()).isNull();
+        assertThat(saved.getEndOdometer()).isEqualTo(1_500);
         assertThat(saved.getOnLatitude()).isNull();
         assertThat(saved.getOffLatitude()).isEqualTo(LATITUDE);
         assertThat(saved.getOffLongitude()).isEqualTo(LONGITUDE);
@@ -266,13 +267,14 @@ class TripLogServiceTest {
         TripLog existingTrip = tripLog(ON_TIME, null, 1_000, false);
         TripLogSaveInput input = saveInput(OFF_TIME, 1_500);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
-        when(tripLogRepository.findByVehicleIdAndStartTime(VEHICLE_ID, ON_TIME)).thenReturn(existingTrip);
+        when(tripLogRepository.findTop2ByVehicleIdAndStartTimeOrderByIdAsc(VEHICLE_ID, ON_TIME)).thenReturn(List.of(existingTrip));
 
         tripLogService.saveTripLog(input);
 
         verify(tripLogRepository).save(same(existingTrip));
         assertThat(existingTrip.getEndTime()).isEqualTo(OFF_TIME);
-        assertThat(existingTrip.getTotalTripMeter()).isEqualTo(1_500);
+        assertThat(existingTrip.getDistanceMeters()).isEqualTo(500);
+        assertThat(existingTrip.getEndOdometer()).isEqualTo(1_500);
         assertThat(existingTrip.getOffLatitude()).isEqualTo(LATITUDE);
         assertThat(existingTrip.getOffLongitude()).isEqualTo(LONGITUDE);
         assertThat(existingTrip.getOffAddr()).isNull();
@@ -302,17 +304,12 @@ class TripLogServiceTest {
     }
 
     private TripLog tripLog(LocalDateTime startTime, LocalDateTime endTime, int totalTripMeter, boolean active) {
-        return TripLog.builder()
-                .vehicle(vehicle)
-                .startTime(startTime)
-                .endTime(endTime)
-                .totalTripMeter(totalTripMeter)
-                .onLatitude(LATITUDE)
-                .onLongitude(LONGITUDE)
-                .onAddress(ADDRESS.addr())
-                .onAddrDetail(ADDRESS.addrDetail())
-                .active(active)
-                .build();
+        TripLog trip = TripLog.observed(vehicle, startTime);
+        trip.observe(new TripLogSaveInput(vehicle, "fixture", startTime, null, LATITUDE, LONGITUDE,
+                endTime == null ? totalTripMeter : 0));
+        if (endTime != null) trip.observe(new TripLogSaveInput(vehicle, "fixture", startTime, endTime,
+                LATITUDE, LONGITUDE, totalTripMeter));
+        return trip;
     }
 
     private GpsLogData gpsLog(LocalDateTime occurredTime, int totalTripMeter, int speed) {
@@ -331,6 +328,8 @@ class TripLogServiceTest {
     }
 
     private TripLogSaveInput saveInput(LocalDateTime offTime, int totalTripMeter) {
+        when(vehicle.getId()).thenReturn(VEHICLE_ID);
+        when(vehicleService.getVehicleForPowerUpdate(VEHICLE_ID)).thenReturn(vehicle);
         return new TripLogSaveInput(
                 vehicle,
                 "01234567890",
