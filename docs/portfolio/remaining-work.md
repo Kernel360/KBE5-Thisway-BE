@@ -13,6 +13,8 @@
 - CHANGE-030: 완료 운행 시간 V2·GPS 관측 분리·legacy/coverage와 명시적 보정, 전체 324/324 및 FE unit 11/browser 12/build 검증. 공식 변경은 사용자 위임에 따라 채택했다.
 - CHANGE-032: 신규 Trip 관측의 중복/역순·충돌·거리 분리, legacy 보존과 거리 확인 불가 표시.
   전체 BE 349/349·별도 SSE 2/2, FE unit 13/browser 15/build 통과. [기록](work-logs/2026-09-06-trip-observation-distance.md).
+- CHANGE-033: Power strict 입력·KST+5분 미래 상한, 거부 후 정상 MySQL 운행 저장 검증.
+  전체 BE 380/380. [기록](work-logs/2026-09-06-power-request-validation.md). 인증과 다른 수집 경계는 별도.
 
 ## 다음 우선순위
 
@@ -44,7 +46,8 @@
 - 차량 mileage는 신규 누적값 관측 시 max로 갱신하지만 이미 부풀린 legacy 값은 자동 정정하지 않는다. 근거 데이터와 정정 승인 필요.
 - CHANGE-031은 현재 Vehicle 상태·좌표의 Power 이벤트 시각 정렬 단계이며 전체 334/334 통과다.
   이후 신규 Trip 모델과 FE의 GPS 기반 ON 추정 제거는 CHANGE-032로 진행했다.
-  미래 시각·장치 인증과 legacy 변환은 남아 있다. [기록](work-logs/2026-09-06-vehicle-power-event-ordering.md).
+  이후 Power 미래 시각의 상한/strict 검증은 CHANGE-033으로 보강했다.
+  장치 인증·GPS/Geofence 시각 정책과 legacy 변환은 남아 있다. [기록](work-logs/2026-09-06-vehicle-power-event-ordering.md).
 - [제출/시연 체크리스트](submission-checklist.md)는 작성 완료. 실제 전체 업무 시연/사용자의 독립 설명 검증은 미완료.
 - 사용자 요청의 '모든 작업' 전체가 완료된 것은 아니다. 위 표의 남은 작업을 그대로 추적한다.
 

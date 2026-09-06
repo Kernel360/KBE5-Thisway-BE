@@ -14,6 +14,7 @@ import org.thisway.vehicle.log.domain.GpsLogData;
 import org.thisway.vehicle.log.domain.PowerLogData;
 import org.thisway.vehicle.log.interfaces.GeofenceLogRequest;
 import org.thisway.vehicle.log.interfaces.PowerLogRequest;
+import org.thisway.vehicle.log.interfaces.PowerLogRequestValidator;
 import org.thisway.vehicle.log.infrastructure.LogRepository;
 import org.thisway.vehicle.triplog.domain.TripLogSaveInput;
 import org.thisway.vehicle.triplog.application.TripLogService;
@@ -39,6 +40,7 @@ public class LogServiceImpl implements LogService {
     @Override
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void savePowerLog(PowerLogRequest request) {
+        PowerLogRequestValidator.validate(request);
         log.info("시동 정보 로그 수신: onTime={}, offTime={}", request.onTime(), request.offTime());
 
         String mdn = request.mdn();

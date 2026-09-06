@@ -122,6 +122,8 @@ Acceptance criteria:
 
 - device authentication과 request validation
 - idempotency key와 DB unique constraint
+- CHANGE-033: Power 전용 strict 입력과 서버 KST+5분 시각 상한을 service 입구에 적용.
+  [기록](work-logs/2026-09-06-power-request-validation.md). 장치 인증·GPS/Geofence 미래 정책은 별도.
 - publisher confirm/return
 - bounded retry, DLQ, replay command/API와 runbook
 - ingest accepted/rejected/duplicate, consumer lag, DLQ metric

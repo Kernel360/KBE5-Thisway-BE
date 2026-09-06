@@ -30,6 +30,8 @@
 <img width="2559" height="1440" alt="image" src="https://github.com/user-attachments/assets/2802e16d-97f9-4802-b487-c6e28c53ff3b" />
 
   - GPS는 설정에 따라 직접 저장 또는 RabbitMQ 수집, 시동 ON/OFF는 HTTP transaction에서 처리
+  - Power는 strict 날짜/숫자/좌표 검증과 서버 Asia/Seoul+5분 미래 시각 상한 적용.
+    [허용 범위와 한계](docs/portfolio/work-logs/2026-09-06-power-request-validation.md). 장치 인증은 별도 미완료
     
 <img width="2558" height="1440" alt="image" src="https://github.com/user-attachments/assets/973fdb1a-7e92-4e16-9b55-e7689e7eed45" />
 

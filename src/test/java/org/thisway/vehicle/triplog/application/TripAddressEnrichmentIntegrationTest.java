@@ -315,6 +315,27 @@ class TripAddressEnrichmentIntegrationTest {
         assertThat(vehicles.findById(vehicle.getId()).orElseThrow().getLastPowerEventTime()).isNull();
     }
 
+    @Test
+    void 미래_OFF가_차량정렬기준을_오염시키지_않고_정상운행은_이어서_저장된다() {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        assertThatThrownBy(() -> logService.savePowerLog(power(mdn, "20200101100000", "99990101110000", "37500000")))
+                .isInstanceOf(org.thisway.support.common.CustomException.class).extracting("errorCode")
+                .isEqualTo(org.thisway.support.common.ErrorCode.INVALID_INPUT_VALUE);
+        var stored = vehicles.findById(vehicle.getId()).orElseThrow();
+        assertThat(stored.getLastPowerEventTime()).isNull();
+        assertThat(stored.getMileage()).isZero();
+        assertThat(count(vehicle)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isZero();
+        logService.savePowerLog(power(mdn, "20200101100000", "", "37500000"));
+        logService.savePowerLog(withMeters(power(mdn, "20200101100000", "20200101110000", "37500000"), "1500"));
+        assertThat(jdbc.queryForObject("SELECT distance_meters FROM trip_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isEqualTo(500);
+        assertThat(vehicles.findById(vehicle.getId()).orElseThrow().getLastPowerEventTime())
+                .isEqualTo(LocalDateTime.of(2020, 1, 1, 11, 0));
+    }
+
     private org.thisway.vehicle.log.interfaces.PowerLogRequest withMeters(
             org.thisway.vehicle.log.interfaces.PowerLogRequest request, String meters) {
         return new org.thisway.vehicle.log.interfaces.PowerLogRequest(request.mdn(), request.tid(), request.mid(), request.pv(),
