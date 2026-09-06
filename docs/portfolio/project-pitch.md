@@ -35,6 +35,9 @@
 | tenant 경계 | [Vehicle](work-logs/2026-09-05-vehicle-tenant-boundary.md), [TripLog](work-logs/2026-09-05-triplog-tenant-boundary.md), [Emulator](work-logs/2026-09-05-emulator-tenant-boundary.md) | 테스트한 API 범위이며 device 인증은 미완료 |
 | 운영 작업의 안전성 | [DLQ runbook](../runbooks/gps-dlq-replay.md), [CHANGE-023](work-logs/2026-09-06-gps-replay-tool-and-pitch.md) | 제한적 로컬/터널 CLI, 조직 승인 검증·중앙 감사 시스템은 아님 |
 | 기존 코드 개선 | [기준선](baseline-audit.md) → 개별 work log·commit·회귀 테스트 | 테스트 개수 증가 자체를 성능/신뢰성 개선율로 바꾸지 않음 |
+| 원래 개인 Batch의 현대화 | [CHANGE-025](work-logs/2026-09-06-company-statistics-checkpoint.md): 회사별 commit/checkpoint·직접 저장 동시성 | 회사 목록 snapshot·통계 공식 완성·JVM kill 복구는 별도 |
+| 외부 API 장애 경계 | [CHANGE-026](work-logs/2026-09-06-trip-address-enrichment.md): commit 이후 주소 보정 | 자동 background retry/성능 향상으로 주장하지 않음 |
+| 차량 누적값 계약 검토 | [CHANGE-027](work-logs/2026-09-06-cumulative-odometer.md): 누적 m 중복 가산 교정 | 기존 오염 데이터 자동 보정·Trip 거리 분리는 별도 |
 
 ## 원래 역할과 이후 개선을 나누기
 
@@ -60,7 +63,7 @@ AI 기능이 없다는 이유로 임의 챗봇을 붙이지 않는다. 백엔드
 2. 원래 본인 담당: 차량 도메인과 통계/배치. 팀 MQ 흐름과 내 후속 변경을 구분.
 3. 대표 장애 하나: DB commit 뒤 ack 누락 → 재전달 → unique key로 동일 관측값 1행.
 4. 설계 대안: 선조회만 하는 방식의 race와 DB constraint의 역할, DLQ 무한 loop를 만들지 않은 이유.
-5. 실패 테스트 실행 결과와 남은 한계: producer dual-publish/장치 인증/운영 HA·성능은 아직 미완료.
+5. 실패 테스트 실행 결과와 남은 한계: 원자적 dual-publish/장치 인증/운영 HA·성능은 아직 미완료. producer confirm/return의 보장 범위는 CHANGE-028로 확인한다.
 
 데모는 처음부터 전체 테스트를 오래 실행하기보다 핵심 test method와 준비된 실행 결과를 보여 주고 재현 명령을 제공한다. 테스트 숫자는 제출 시점 결과로 갱신한다.
 
@@ -75,4 +78,7 @@ AI 기능이 없다는 이유로 임의 챗봇을 붙이지 않는다. 백엔드
 
 ## 다음 개발 우선순위에 대한 판단
 
-메시징 범위를 계속 넓히는 것만이 최선은 아니다. 제한적 replay 도구 정리 후에는 **원래 본인 담당인 Statistics/Batch의 재시작·동일 날짜 중복·부분 실패**를 개선하는 것이 개인 기여 서사를 연결하기 좋다. 실제 부하 수치는 이후 동일 조건 before/after 실험으로 확보한다. 검증되지 않은 “대규모 실서비스”, “15,000대 처리”, “성능 N% 개선”은 사용하지 않는다.
+원래 개인 담당인 Statistics/Batch의 재시작·회사별 부분 성공은 CHANGE-024/025로 개선했다.
+다음은 통계 공식/보정 정책과 Trip 상태의 완성이다. 실제 부하 수치는 이후 동일 조건 before/after
+실험으로 확보한다. 검증되지 않은 “대규모 실서비스”, “15,000대 처리”, “성능 N% 개선”은 사용하지 않는다.
+제출/시연 전에는 [체크리스트](submission-checklist.md)를 따르며, 사용자 본인의 재현·설명은 별도로 확인한다.
