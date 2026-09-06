@@ -49,6 +49,8 @@ class TripAddressEnrichmentIntegrationTest {
     @Autowired TripAddressEnrichment enrichment;
     @Autowired PlatformTransactionManager transactions;
     @Autowired JdbcTemplate jdbc;
+    @Autowired org.thisway.emulator.infrastructure.EmulatorRepository emulators;
+    @Autowired org.thisway.vehicle.log.application.LogService logService;
     @MockitoBean ReverseGeocodingConverter converter;
 
     @Test
@@ -90,6 +92,37 @@ class TripAddressEnrichmentIntegrationTest {
         }).when(converter).convertToAddress(37.5, 127.0);
         trips.saveTripLog(input(vehicle));
         assertThat(jdbc.queryForObject("SELECT on_addr FROM trip_log WHERE vehicle_id=?", String.class, vehicle.getId())).isNull();
+    }
+
+    @Test
+    void 실제_OFF_중복과_낮은_누적값을_동시에_처리해도_차량거리는_최댓값이다() throws Exception {
+        var vehicle = vehicle();
+        emulators.save(org.thisway.emulator.domain.Emulator.builder().mdn("odometer-race").vehicle(vehicle)
+                .terminalId("fixture").manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        doReturn(new ReverseGeocodeResult("fixture", "fixture")).when(converter).convertToAddress(37.5, 127.0);
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+        var ready = new java.util.concurrent.CountDownLatch(4);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (var meters : java.util.List.of("1000", "1500", "1500", "1200")) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
+                    logService.savePowerLog(new org.thisway.vehicle.log.interfaces.PowerLogRequest(
+                            "odometer-race", "fixture", "1", "1", "1", "20200101100000", "20200101110000",
+                            "A", "37500000", "127000000", "0", "0", meters));
+                    return null;
+                }));
+            }
+            assertThat(ready.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var future : futures) future.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(vehicles.findById(vehicle.getId()).orElseThrow().getMileage()).isEqualTo(1500);
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
     }
 
     private int count(Vehicle vehicle) {

@@ -76,10 +76,12 @@ public class Vehicle extends BaseEntity {
         this.powerOn = powerOn;
     }
 
-    public void updateMileage(Integer additionalMileage) {
-        if (additionalMileage != null && additionalMileage > 0) {
-            this.mileage += additionalMileage;
+    /** Device sum is a cumulative meter reading, not distance to add for every OFF delivery. */
+    public void observeOdometer(Integer cumulativeMeters) {
+        if (cumulativeMeters == null || cumulativeMeters < 0) {
+            throw new IllegalArgumentException("Odometer must be a non-negative meter reading");
         }
+        this.mileage = Math.max(this.mileage, cumulativeMeters);
     }
 
     public void updateLocation(Double latitude, Double longitude) {

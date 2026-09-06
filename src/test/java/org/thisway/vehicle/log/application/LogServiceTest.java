@@ -50,9 +50,8 @@ public class LogServiceTest {
     private LogServiceImpl logService;
 
     private void setupMocks() {
-        when(emulatorRepository.findByMdn(VALID_MDN)).thenReturn(Optional.of(emulator));
-        when(emulator.getVehicle()).thenReturn(vehicle);
-        when(vehicle.getId()).thenReturn(VEHICLE_ID);
+        when(emulatorRepository.findVehicleByMdn(VALID_MDN)).thenReturn(Optional.of(
+                new org.thisway.vehicle.domain.VehicleReference(VEHICLE_ID, 1L)));
     }
 
     private PowerLogRequest createValidPowerLogRequest() {
@@ -119,7 +118,7 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
-            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
+            when(vehicleService.getVehicleForPowerUpdate(VEHICLE_ID)).thenReturn(vehicle);
 
             logService.savePowerLog(request);
             verify(logRepository).savePowerLog(any(PowerLogData.class));
@@ -133,7 +132,7 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 9, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
-            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
+            when(vehicleService.getVehicleForPowerUpdate(VEHICLE_ID)).thenReturn(vehicle);
             when(vehicle.isPowerOn()).thenReturn(true);
 
             logService.savePowerLog(request);
@@ -150,7 +149,7 @@ public class LogServiceTest {
             setupMocks();
             LocalDateTime powerTime = LocalDateTime.of(2021, 9, 1, 10, 20, 0);
             when(converter.convertDateTimeWithSec(anyString())).thenReturn(powerTime);
-            when(vehicleService.getVehicleById(VEHICLE_ID)).thenReturn(vehicle);
+            when(vehicleService.getVehicleForPowerUpdate(VEHICLE_ID)).thenReturn(vehicle);
             when(vehicle.isPowerOn()).thenReturn(false);
 
             logService.savePowerLog(request);

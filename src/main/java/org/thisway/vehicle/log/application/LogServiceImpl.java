@@ -37,13 +37,14 @@ public class LogServiceImpl implements LogService {
     private final TripLogService tripLogService;
 
     @Override
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void savePowerLog(PowerLogRequest request) {
         log.info("시동 정보 로그 수신: onTime={}, offTime={}", request.onTime(), request.offTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        Vehicle vehicle = vehicleService.getVehicleById(vehicleId);
+        Vehicle vehicle = vehicleService.getVehicleForPowerUpdate(vehicleId);
 
         if ((request.onTime() != null && !request.onTime().isEmpty()) &&
                 (request.offTime() == null || request.offTime().isEmpty())) {
@@ -64,7 +65,10 @@ public class LogServiceImpl implements LogService {
 
             Integer totalTripMeter = converter.convertToInteger(request.sum());
             vehicle.updatePowerOn(false);
-            vehicle.updateMileage(totalTripMeter);
+            if (totalTripMeter == null || totalTripMeter < 0) {
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            vehicle.observeOdometer(totalTripMeter);
             vehicle.updateLocation(
                     converter.convertCoordinate(request.lat()),
                     converter.convertCoordinate(request.lon())
@@ -95,9 +99,10 @@ public class LogServiceImpl implements LogService {
     }
 
     private Long getVehicleIdByMdn(String mdn) {
-        Emulator emulator = emulatorRepository.findByMdn(mdn)
+        var reference = emulatorRepository.findVehicleByMdn(mdn)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
-        return emulator.getVehicle().getId();
+        // Projection avoids eager-loading a stale Vehicle before acquiring its write lock.
+        return reference.id();
     }
 
     @Override
