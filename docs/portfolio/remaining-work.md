@@ -10,32 +10,32 @@
 - Statistics 첫 단계는 [CHANGE-024](work-logs/2026-09-06-statistics-job-identity.md): targetDate 식별·실패 상태·전체 rollback/restart·진행 중 동일 날짜 중복 실행 거부다. 회사별 checkpoint의 완성으로 읽지 않는다.
 - 이후 [CHANGE-025](work-logs/2026-09-06-company-statistics-checkpoint.md)로 회사별 commit/checkpoint·성공 회사 생략·일자 unique를 검증했다. CHANGE-024의 전체 rollback은 과거 단계다.
 - CHANGE-026 주소 AFTER_COMMIT 보정, CHANGE-027 차량 누적 거리 가산 교정, CHANGE-028 publisher confirm/return 및 부분 실패 계수를 추가했다. 전체 313/313, BE/nginx/Chromium 2/2, FE unit 8/browser 9/build 통과. 각 실패 조건/범위는 work log 기준이다.
+- CHANGE-030: 완료 운행 시간 V2·GPS 관측 분리·legacy/coverage와 명시적 보정, 전체 324/324 및 FE unit 11/browser 12/build 검증. 공식 변경은 사용자 위임에 따라 채택했다.
 
 ## 다음 우선순위
 
 | 우선순위 | 작업 | 완료 증거 |
 | --- | --- | --- |
 | 완료 | 회사별 통계 transaction/checkpoint + DB company/date unique | CHANGE-025: 성공 회사 생략, 직접 저장 4-thread, legacy duplicate 보존, 전체 300/300 |
-| 2 | 통계 의미와 correction/backfill | 가동률 의미 사용자 확인 대기. gpsCycle·GPS 누락·late event·운행 경계 fixture, 완료 날짜 보정 정책 |
+| 2 | 통계 자동 보정/이력·장애 복구 | V2 의미/fixture/명시적 날짜 보정은 CHANGE-030 완료. 자동 late-event 탐지/backfill·감사 revision·과거 fleet·JVM kill/STARTED 복구는 미완료 |
 | 3 | Trip 상태와 주소 자동 복구 | ON/OFF 중복·역순·누락 상태표, start/end odometer·distance 분리. 주소 core 분리/timeout은 CHANGE-026 완료, 자동 worker는 미완료 |
 | 4 | 수집 인증·발행 운영 안정성 | 장치 권한/credential 발급·회전/재전송/size·rate 정책 미완료. producer confirm/return·부분 실패는 CHANGE-028 완료, 전체 deadline/부하·자동 live 복구는 별도 |
 | 5 | 성능·운영 증거 | 고정 데이터의 p95/처리량/오류·중복·lag, DB query 측정, 경고·배포 rollback 절차 |
 | 6 | 사용자 업무 흐름과 제출 자료 | 차량 현황→운행 기록→회사 통계 데모, 실행 안내, 개인 기여·제약·면접 답변 |
 
-### 결정이 필요한 통계 정의
+### 채택한 통계 정의
 
-현재 GPS 개수/(3600×차량 수)는 실제 가동 시간과 동일하지 않다. 사용자에게
-완료 운행 시간 기준 가동률로 변경하고 GPS 수신 상태를 별도 지표로 분리할지 확인을 요청했다.
-원 RFP 원문이 없으므로 이를 원래 요구사항이라고 추정해 구현하지 않는다. 답변 전 공식은 유지한다.
-완료 운행만 사용하면 아직 종료 이벤트가 없는 운행은 제외되며 늦은 OFF에 재집계가 필요하다.
-이 변경을 택하더라도 GPS 수신율 분모의 gpsCycle 이력/기대 관측 수 정책은 별도 정의해야 한다.
+사용자 판단 위임에 따라 완료 Trip의 차량별 시간 합집합 V2를 채택했다. GPS는 저장된
+관측 수로 분리하며 수신율을 추측하지 않는다. 원 RFP 요구사항을 복원한 것은 아니다.
+미종료 운행은 가동 시간에서 제외하고 건·일로 표시한다. 늦은 OFF는 현재 명시적 날짜 재집계만 지원한다.
+계산 시점 현재 active fleet을 사용하므로 과거 차량 수/소속 이력을 재현하지 못한다.
 
 운영에 실제 노출하기 전에는 4번의 인증/발행 위험과 배포 보안이 반드시 다시 gate가 된다. 이 표는 로컬 포트폴리오 개발 순서이지 미완성 수집 API를 공개하라는 뜻이 아니다.
 
 ## 별도 정리 항목
 
 - FE `codex/frontend-dependency-security`, BE 통계 작업 브랜치의 커밋·PR 검증·병합은 사용자 승인 후 진행한다.
-- FE main bundle 약 975kB의 경고는 남아 있다. 보안 업데이트가 성능 개선이라는 표현은 사용하지 않는다.
+- FE main bundle 약 976kB의 경고는 남아 있다. 보안/통계 변경이 성능 개선이라는 표현은 사용하지 않는다.
 - BE GitHub Actions의 setup-java/Node 런타임 경고를 별도 변경으로 정리한다.
 - 운영 DB 전환, broker DLQ policy 적용, 배포/기존 인프라 생존 여부는 로컬 테스트와 별개다.
 - AI 기능은 선택 과제다. 원천 데이터·고정 평가셋·rule baseline 없이는 예지정비/최적배차 성과를 주장하지 않는다.

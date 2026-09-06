@@ -34,6 +34,10 @@ public class StatisticPersistenceService {
      * - 중복 방지: 같은 회사ID + 날짜 조합이 있으면 업데이트, 없으면 신규 저장
      */
     public void saveStatistics(Long companyId, LocalDate targetDate) {
+        if (targetDate == null || targetDate.getYear() < 1000 || targetDate.getYear() > 9998
+                || !targetDate.isBefore(LocalDate.now(KOREA_ZONE))) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
         log.info("=== saveStatistics 호출 ===");
 
         // 1. 회사 정보 조회
@@ -43,14 +47,15 @@ public class StatisticPersistenceService {
 
         // 2. 해당 날짜의 시작과 끝 시간 설정 (한국 시간대 기준)
         LocalDateTime startDateTime = targetDate.atStartOfDay();
-        LocalDateTime endDateTime = targetDate.atTime(23, 59, 59);
+        LocalDateTime endDateTime = targetDate.plusDays(1).atStartOfDay();
 
         log.info("계산된 시작 시간: {}, 종료 시간: {}", startDateTime, endDateTime);
 
         // 3. 통계 계산
         Long powerOnCount = calculationService.calculatePowerOnCount(companyId, startDateTime, endDateTime);
-        Integer totalDrivingTime = calculationService.calculateTotalDrivingTime(companyId, startDateTime, endDateTime);
-        double[] hourlyOperationRates = calculationService.calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
+        var daily = calculationService.calculateDaily(companyId, startDateTime);
+        Integer totalDrivingTime = daily.time().minutes();
+        double[] hourlyOperationRates = daily.time().hourlyRates();
         Integer peakHour = calculationService.calculatePeakHourFromRates(hourlyOperationRates);
         Integer lowHour = calculationService.calculateLowHourFromRates(hourlyOperationRates);
         Double averageOperationRate = calculationService.calculateAverageOperationRate(hourlyOperationRates);
@@ -63,9 +68,10 @@ public class StatisticPersistenceService {
         if (existingStatistics.isPresent()) {
             // 기존 데이터가 있으면 업데이트
             Statistics existing = existingStatistics.get();
-            existing.updateStatistics(powerOnCount.intValue(), powerOnCount.doubleValue(),
+            existing.updateStatistics(Math.toIntExact(powerOnCount), powerOnCount.doubleValue(),
                     totalDrivingTime, peakHour, lowHour, averageOperationRate);
             existing.updateHourlyRates(hourlyOperationRates);
+            existing.markCalculated(daily.fleetSize(), daily.gpsObservations(), daily.unclosedTrips(), LocalDateTime.now(KOREA_ZONE));
             statisticsRepository.save(existing);
             log.info("기존 통계 업데이트 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         } else {
@@ -78,7 +84,7 @@ public class StatisticPersistenceService {
             Statistics statistics = Statistics.builder()
                     .company(company)
                     .date(dateToSave)
-                    .powerOnCount(powerOnCount.intValue())
+                    .powerOnCount(Math.toIntExact(powerOnCount))
                     .averageDailyPowerCount(powerOnCount.doubleValue())
                     .totalDrivingTime(totalDrivingTime)
                     .peakHour(peakHour)
@@ -110,6 +116,7 @@ public class StatisticPersistenceService {
                     .hour23(hourlyOperationRates[23])
                     .build();
 
+            statistics.markCalculated(daily.fleetSize(), daily.gpsObservations(), daily.unclosedTrips(), LocalDateTime.now(KOREA_ZONE));
             statisticsRepository.save(statistics);
             log.info("신규 통계 저장 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         }

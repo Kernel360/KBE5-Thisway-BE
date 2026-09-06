@@ -241,14 +241,15 @@ public class LogRepository {
         );
     }
 
-    /**
-     * 특정 회사의 특정 날짜에 대해 시간대별 GPS 로그 개수를 반환
-     *
-     * @param companyId     회사 ID
-     * @param startDateTime 시작 날짜시간 (해당 날짜 00:00:00)
-     * @param endDateTime   종료 날짜시간 (해당 날짜 23:59:59)
-     * @return Map<시간대 ( 0 ~ 2 3 ), GPS 로그 개수>
-     */
+    /** Stored observation rows in [from, to) for the company's current active fleet; not a reception rate. */
+    public long countGpsObservations(Long companyId, LocalDateTime from, LocalDateTime to) {
+        return jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM gps_log g JOIN vehicle v ON v.id=g.vehicle_id
+                WHERE v.company_id=? AND v.active=true AND g.occurred_time>=? AND g.occurred_time<?
+                """, Long.class, companyId, from, to);
+    }
+
+    /** Legacy GPS count query. Not used by the V2 operation-time formula. */
     public Map<Integer, Long> countGpsLogsByCompanyAndHour(Long companyId, LocalDateTime startDateTime,
                                                            LocalDateTime endDateTime) {
         // 시간대별 GPS 로그 개수 조회 (DB 호환성을 위해 EXTRACT 사용)

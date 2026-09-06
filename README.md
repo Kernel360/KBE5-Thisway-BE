@@ -45,8 +45,10 @@
 
 
 - **통계 (Statistics)**
-  - Spring Batch를 활용하여 일별/월별 운행 데이터 통계 처리
-  - 사용자별, 차량별 운행 거리, 시간 등 다양한 통계 데이터 제공
+  - Spring Batch의 회사별 일 통계 저장·재시작, 기간 조회 시 일별 값 합산/평균
+  - V2 가동률: 완료 운행의 시동 ON~OFF 구간을 차량별로 합쳐 시간대별 계산(정차 포함)
+  - 저장된 GPS 관측 수·미종료 운행·집계 일수 표시. 실제 GPS 수신율이나 과거 fleet 이력은 제공하지 않음
+  - 기존 공식과 새 공식의 혼합 방지 및 [V2 전환·보정 절차](docs/runbooks/statistics-formula-v2.md)
     
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/09b25259-5f52-43f8-8a98-b59baf3acb89" />
 
@@ -161,6 +163,8 @@
 ## 6. 테스트
 
 DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한다. V1/V2는 기본 schema, V3는 신규 GPS 관측값 중복 방지 key, V4는 회사·일자 통계 unique와 Batch 회사별 checkpoint다. V4 적용 전 `src/main/resources/db/preflight/statistics-readiness.sql`로 기존 중복을 조사한다. 중복을 자동 삭제하지 않는다. dev/prod는 `ddl-auto=validate`이며 이력이 관리되는 DB에는 후속 migration이 적용된다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+
+V5는 통계 공식 버전과 품질 필드를 추가한다. 기존 숫자는 V1로 보존하며 GET은 새 공식 V2만 집계하고 coverage를 반환한다. 전환 전 [통계 V2 runbook](docs/runbooks/statistics-formula-v2.md)과 FE 변경을 함께 검토한다. 기존 통계를 자동 삭제/재계산하지 않는다.
 
 기존 schema의 알려진 차이를 조회하는 읽기 전용 SQL과 결과 해석은 [preflight runbook](docs/runbooks/legacy-schema-preflight.md)에 있다. 점검 통과가 자동 baseline 승인이나 전체 schema 일치를 뜻하지 않는다.
 

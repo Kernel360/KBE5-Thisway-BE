@@ -378,7 +378,7 @@ class MySqlMigrationIntegrationTest {
 
     @Test
     void 빈_MySQL_migration과_JPA_validate_기동후_재실행은_noop이다() {
-        assertThat(flyway.info().applied()).hasSize(4);
+        assertThat(flyway.info().applied()).hasSize(5);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.statistics "
                 + "WHERE table_schema=DATABASE() AND table_name='trip_log' "

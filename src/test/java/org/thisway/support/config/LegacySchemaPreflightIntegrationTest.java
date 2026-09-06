@@ -114,6 +114,26 @@ class LegacySchemaPreflightIntegrationTest {
         assertThat(jdbc.queryForList("SELECT * FROM statistics ORDER BY id")).isEqualTo(before);
     }
 
+    @Test
+    void V5는_기존_GPS기반_숫자를_보존하고_이전버전으로_표시한다() {
+        var source = database("v5_legacy_formula");
+        Flyway.configure().dataSource(source).target("4").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("""
+                INSERT INTO statistics(active,created_at,company_id,date,power_on_count,average_operation_rate,
+                hour00,hour01,hour02,hour03,hour04,hour05,hour06,hour07,hour08,hour09,hour10,hour11,
+                hour12,hour13,hour14,hour15,hour16,hour17,hour18,hour19,hour20,hour21,hour22,hour23)
+                VALUES(1,NOW(),1,'2020-01-01',7,88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+                """);
+        var before = jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics");
+        assertThat(Flyway.configure().dataSource(source).load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT formula_version FROM statistics", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT calculated_at FROM statistics", String.class)).isNull();
+    }
+
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {
         String sql = new ClassPathResource("db/preflight/schema-readiness.sql")
                 .getContentAsString(StandardCharsets.UTF_8);

@@ -161,6 +161,10 @@ Acceptance criteria:
 - [x] P1-03A / CHANGE-024: identifying targetDate, Asia/Seoul scheduler, fail-fast 및 전체 tasklet rollback/restart, 완료·진행 중 동일 날짜 launch 거부를 실제 MySQL에서 검증. [기록](work-logs/2026-09-06-statistics-job-identity.md).
 - [x] P1-03B / CHANGE-025: 회사별 transaction/checkpoint, 성공 회사 생략, DB calendar-day unique 및 직접 저장 4-thread 동시성, legacy duplicate 보존 검증. 전체 300/300. [기록](work-logs/2026-09-06-company-statistics-checkpoint.md).
 - [ ] P1-03C: 비영 원천 fixture 통계 공식·late event/correction/backfill·다중 JVM 장애 복구.
+  - [x] CHANGE-030: 완료 Trip 시간 V2, 중복/겹침 union·일자 clip, GPS 관측 분리,
+    V5 기존 공식 보존·coverage·명시적 late OFF 보정·구버전 checkpoint 재계산. 실제 MySQL/HTTP 포함 전체 324/324,
+    FE 단위 11/browser 12/build 통과. [기록](work-logs/2026-09-06-statistics-formula-v2.md).
+  - [ ] 자동 late-event 탐지/backfill·수정 revision·과거 fleet 이력·다중 JVM kill/STARTED 복구는 남아 있다.
 
 현재 작업 우선순위와 Git/운영 미완료 범위는 [남은 작업](remaining-work.md)에 정리한다.
 

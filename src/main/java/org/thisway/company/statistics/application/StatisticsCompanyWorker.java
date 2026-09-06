@@ -24,13 +24,19 @@ public class StatisticsCompanyWorker {
         companies.lockById(companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
         Integer done = jdbc.queryForObject("""
-                SELECT COUNT(*) FROM statistics_checkpoint WHERE job_instance_id=? AND company_id=?
-                """, Integer.class, jobInstanceId, companyId);
+                SELECT COUNT(*) FROM statistics_checkpoint c JOIN statistics s
+                ON s.company_id=c.company_id AND DATE(s.date)=c.target_date
+                WHERE c.job_instance_id=? AND c.company_id=? AND c.formula_version=? AND s.formula_version=?
+                """, Integer.class, jobInstanceId, companyId,
+                org.thisway.company.statistics.domain.Statistics.CURRENT_FORMULA_VERSION,
+                org.thisway.company.statistics.domain.Statistics.CURRENT_FORMULA_VERSION);
         if (done != null && done > 0) return;
         statistics.saveStatistics(companyId, date);
         jdbc.update("""
-                INSERT INTO statistics_checkpoint(job_instance_id, company_id, target_date)
-                VALUES (?, ?, ?)
-                """, jobInstanceId, companyId, date);
+                INSERT INTO statistics_checkpoint(job_instance_id, company_id, target_date, formula_version)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE formula_version=VALUES(formula_version), completed_at=CURRENT_TIMESTAMP(6)
+                """, jobInstanceId, companyId, date,
+                org.thisway.company.statistics.domain.Statistics.CURRENT_FORMULA_VERSION);
     }
 }

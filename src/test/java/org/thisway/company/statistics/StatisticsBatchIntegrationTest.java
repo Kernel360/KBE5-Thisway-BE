@@ -31,6 +31,7 @@ import static org.mockito.Mockito.*;
 
 @Testcontainers
 @DirtiesContext
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 @SpringBootTest(properties = {"spring.flyway.enabled=true", "spring.jpa.hibernate.ddl-auto=validate",
         "spring.batch.jdbc.initialize-schema=never", "thisway.statistics.cron=-"})
 class StatisticsBatchIntegrationTest {
@@ -52,8 +53,15 @@ class StatisticsBatchIntegrationTest {
     @Autowired StatisticBatchConfig batch;
     @Autowired JobLauncher launcher;
     @Autowired Job statisticsJob;
+    @Autowired org.springframework.test.web.servlet.MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired StatisticsCompanyWorker worker;
+    @Autowired org.thisway.vehicle.infrastructure.VehicleRepository vehicles;
+    @Autowired org.thisway.vehicle.vehicle_model.infrastructure.VehicleModelRepository models;
+    @Autowired org.thisway.vehicle.triplog.infrastructure.TripLogRepository trips;
+    @Autowired org.thisway.company.statistics.infrastructure.StatisticsRepository statistics;
+    @Autowired org.thisway.company.statistics.domain.StatisticQueryService query;
+    @Autowired org.springframework.batch.core.repository.JobRepository jobs;
     @MockitoSpyBean CompanyRepository companies;
     @MockitoSpyBean StatisticService service;
 
@@ -180,6 +188,137 @@ class StatisticsBatchIntegrationTest {
             start.countDown();
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void 완료운행_일자분할_중복합집합과_GPS관측은_독립적이고_tenant가_격리된다() {
+        var date = LocalDate.of(2020, 2, 1);
+        var company = company("formula");
+        var a = vehicle(company, "a");
+        var b = vehicle(company, "b");
+        var other = vehicle(company("other-formula"), "other");
+        var start = date.atStartOfDay();
+        trip(a, start.minusMinutes(30), start.plusMinutes(30));
+        trip(a, start.plusHours(9), start.plusHours(11));
+        trip(a, start.plusHours(9), start.plusHours(11));
+        trip(a, start.plusHours(10), start.plusHours(12));
+        trip(a, start.plusHours(23).plusMinutes(30), start.plusDays(1).plusMinutes(30));
+        trip(b, start.plusHours(9).plusMinutes(30), start.plusHours(10).plusMinutes(30));
+        trip(a, start.plusHours(13), null);
+        trip(a, start.plusDays(1), start.plusDays(1).plusHours(1));
+        trip(other, start, start.plusDays(1));
+        service.saveStatistics(company.getId(), date);
+        var beforeGps = query.getStatisticByDateRange(company.getId(), date, date);
+        assertThat(beforeGps.totalDrivingTime()).isEqualTo(300);
+        assertThat(beforeGps.powerOnCount()).isEqualTo(5);
+        assertThat(beforeGps.hours().get(0)).isEqualTo(25);
+        assertThat(beforeGps.hours().get(9)).isEqualTo(75);
+        assertThat(beforeGps.hours().get(10)).isEqualTo(75);
+        assertThat(beforeGps.hours().get(11)).isEqualTo(50);
+        assertThat(beforeGps.hours().get(23)).isEqualTo(25);
+        assertThat(beforeGps.averageOperationRate()).isCloseTo(300.0 / (2 * 1440) * 100, within(1e-9));
+        assertThat(beforeGps.quality().unclosedTripDays()).isEqualTo(1);
+        assertThat(beforeGps.quality().gpsObservationCount()).isZero();
+        jdbc.update("INSERT INTO gps_log(vehicle_id,mdn,occurred_time) VALUES(?,?,?),(?,?,?),(?,?,?)",
+                a.getId(), "fixture", start.plusHours(9),
+                a.getId(), "fixture", start.plusDays(1), other.getId(), "fixture", start.plusHours(9));
+        jdbc.update("UPDATE company SET gps_cycle=5 WHERE id=?", company.getId());
+        service.saveStatistics(company.getId(), date);
+        var afterGps = query.getStatisticByDateRange(company.getId(), date, date);
+        assertThat(afterGps.hours()).isEqualTo(beforeGps.hours());
+        assertThat(afterGps.quality().gpsObservationCount()).isEqualTo(1);
+        assertThat(count(date)).isEqualTo(1);
+    }
+
+    @Test
+    void 늦은_OFF는_명시적_재계산으로_같은행을_보정하고_완료_job을_속여_재실행하지_않는다() throws Exception {
+        var date = LocalDate.of(2020, 2, 2);
+        var company = company("late-off");
+        var vehicle = vehicle(company, "late");
+        var trip = trip(vehicle, date.atTime(9, 0), null);
+        doReturn(List.of(company.getId())).when(companies).findAllActiveCompanyIds();
+        assertThat(batch.runForDate(date).getStatus()).isEqualTo(BatchStatus.COMPLETED);
+        assertThat(query.getStatisticByDateRange(company.getId(), date, date).totalDrivingTime()).isZero();
+        jdbc.update("UPDATE trip_log SET end_time=?,active=1 WHERE id=?", date.atTime(11, 0), trip.getId());
+        assertThatThrownBy(() -> batch.runForDate(date)).isInstanceOf(JobInstanceAlreadyCompleteException.class);
+        service.saveStatistics(company.getId(), date); // Existing administrator correction use case.
+        var corrected = query.getStatisticByDateRange(company.getId(), date, date);
+        assertThat(corrected.totalDrivingTime()).isEqualTo(120);
+        assertThat(corrected.quality().unclosedTripDays()).isZero();
+        assertThat(count(date)).isEqualTo(1);
+    }
+
+    @Test
+    void 이전공식과_미집계일은_0일로_섞지_않고_coverage를_노출한다() {
+        var date = LocalDate.of(2020, 2, 3);
+        var company = company("coverage");
+        statistics.save(org.thisway.company.statistics.domain.Statistics.builder().company(company)
+                .date(date.atStartOfDay()).powerOnCount(99).totalDrivingTime(999).averageOperationRate(99.0).build());
+        service.saveStatistics(company.getId(), date.plusDays(1));
+        var result = query.getStatisticByDateRange(company.getId(), date, date.plusDays(2));
+        assertThat(result.powerOnCount()).isZero();
+        assertThat(result.totalDrivingTime()).isZero();
+        assertThat(result.quality().coveredDays()).isEqualTo(1);
+        assertThat(result.quality().requestedDays()).isEqualTo(3);
+        assertThat(result.quality().excludedLegacyDays()).isEqualTo(1);
+        assertThat(query.getStatisticByDateRange(company.getId(), date, date).quality().coveredDays()).isZero();
+        assertThatThrownBy(() -> query.getStatisticByDateRange(company.getId(), date.plusDays(1), date))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+        assertThatThrownBy(() -> query.getStatisticByDateRange(company.getId(), date, date.plusDays(366)))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+        assertThatThrownBy(() -> service.saveStatistics(company.getId(), LocalDate.now(java.time.ZoneId.of("Asia/Seoul"))))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+    }
+
+    @Test
+    void 이전공식_checkpoint는_성공으로_건너뛰지_않고_같은키를_갱신한다() throws Exception {
+        var date = LocalDate.of(2020, 2, 6);
+        var id = company("version-marker").getId();
+        var job = jobs.createJobExecution("formula-fixture", new JobParametersBuilder().addString("date", date.toString()).toJobParameters());
+        long instance = job.getJobInstance().getInstanceId();
+        worker.process(instance, id, date);
+        jdbc.update("UPDATE statistics SET formula_version=1 WHERE company_id=?", id);
+        jdbc.update("UPDATE statistics_checkpoint SET formula_version=1 WHERE company_id=?", id);
+        worker.process(instance, id, date);
+        verify(service, times(2)).saveStatistics(id, date);
+        assertThat(jdbc.queryForObject("SELECT formula_version FROM statistics_checkpoint WHERE company_id=?", Integer.class, id)).isEqualTo(2);
+        assertThat(query.getStatisticByDateRange(id, date, date).quality().coveredDays()).isEqualTo(1);
+    }
+
+    @Test
+    void 통계_HTTP는_인증회사만_조회하고_quality를_직렬화하며_잘못된_기간은_400이다() throws Exception {
+        var date = LocalDate.of(2020, 2, 7);
+        var own = company("http-own");
+        var other = company("http-other");
+        service.saveStatistics(own.getId(), date);
+        var principal = org.thisway.support.security.dto.request.MemberDetails.builder()
+                .username("fixture@example.test").companyId(own.getId()).build();
+        var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(principal, null,
+                List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_COMPANY_ADMIN")));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/statistics")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(auth))
+                        .param("companyId", other.getId().toString()).param("startDate", date.toString()).param("endDate", date.toString()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.companyId").value(own.getId()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.quality.formulaVersion").value(2))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.quality.coveredDays").value(1));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/statistics")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(auth))
+                        .param("startDate", date.plusDays(1).toString()).param("endDate", date.toString()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    private org.thisway.vehicle.domain.Vehicle vehicle(Company company, String suffix) {
+        var model = models.save(org.thisway.vehicle.vehicle_model.domain.VehicleModel.builder()
+                .name("fixture").manufacturer("fixture").modelYear(2020).build());
+        return vehicles.save(org.thisway.vehicle.domain.Vehicle.builder().company(company).vehicleModel(model)
+                .carNumber("formula-" + suffix).color("white").mileage(0).powerOn(false).build());
+    }
+
+    private org.thisway.vehicle.triplog.domain.TripLog trip(org.thisway.vehicle.domain.Vehicle vehicle,
+            java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        return trips.save(org.thisway.vehicle.triplog.domain.TripLog.builder().vehicle(vehicle)
+                .startTime(start).endTime(end).totalTripMeter(0).active(end != null).build());
     }
 
     private int count(LocalDate date) {
