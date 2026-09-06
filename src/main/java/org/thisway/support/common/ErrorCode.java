@@ -29,6 +29,7 @@ public enum ErrorCode {
 
     // SSE 에러 x4xxx
     SSE_SEND_ERROR("04000", "SSE로 데이터를 발송하는데 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    GPS_PUBLISH_UNAVAILABLE("05000", "GPS 저장 메시지의 접수를 확인하지 못했습니다. 재시도해 주세요.", HttpStatus.SERVICE_UNAVAILABLE),
 
     /* 비즈니스 에러 */
     INVALID_INPUT_VALUE("10000", "요청 데이터가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
