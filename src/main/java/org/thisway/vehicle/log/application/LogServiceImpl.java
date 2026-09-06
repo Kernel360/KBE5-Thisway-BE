@@ -52,7 +52,8 @@ public class LogServiceImpl implements LogService {
                     request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
 
-            vehicle.updatePowerOn(true);
+            vehicle.observePowerEvent(powerLogData.powerTime(), true,
+                    powerLogData.latitude(), powerLogData.longitude());
             vehicleService.saveVehicle(vehicle);
 
             log.info("시동 ON 정보 로그 저장: onTime={}", request.onTime());
@@ -64,15 +65,12 @@ public class LogServiceImpl implements LogService {
             logRepository.savePowerLog(powerLogData);
 
             Integer totalTripMeter = converter.convertToInteger(request.sum());
-            vehicle.updatePowerOn(false);
             if (totalTripMeter == null || totalTripMeter < 0) {
                 throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
             }
             vehicle.observeOdometer(totalTripMeter);
-            vehicle.updateLocation(
-                    converter.convertCoordinate(request.lat()),
-                    converter.convertCoordinate(request.lon())
-            );
+            vehicle.observePowerEvent(powerLogData.powerTime(), false,
+                    powerLogData.latitude(), powerLogData.longitude());
             vehicleService.saveVehicle(vehicle);
             log.info("시동 OFF 정보 로그 저장: offTime={}", request.offTime());
         }

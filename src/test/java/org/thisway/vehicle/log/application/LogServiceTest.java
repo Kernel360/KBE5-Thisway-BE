@@ -137,7 +137,7 @@ public class LogServiceTest {
 
             logService.savePowerLog(request);
 
-            verify(vehicle).updatePowerOn(true);
+            verify(vehicle).observePowerEvent(eq(powerTime), eq(true), any(), any());
             verify(vehicleService).saveVehicle(vehicle);
             assertThat(vehicle.isPowerOn()).isTrue();
         }
@@ -154,7 +154,7 @@ public class LogServiceTest {
 
             logService.savePowerLog(request);
 
-            verify(vehicle).updatePowerOn(false);
+            verify(vehicle).observePowerEvent(eq(powerTime), eq(false), any(), any());
             verify(vehicleService).saveVehicle(vehicle);
             assertThat(vehicle.isPowerOn()).isFalse();
         }

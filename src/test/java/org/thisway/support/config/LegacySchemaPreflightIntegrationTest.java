@@ -128,10 +128,27 @@ class LegacySchemaPreflightIntegrationTest {
                 VALUES(1,NOW(),1,'2020-01-01',7,88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
                 """);
         var before = jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics");
-        assertThat(Flyway.configure().dataSource(source).load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(Flyway.configure().dataSource(source).target("5").load().migrate().migrationsExecuted).isEqualTo(1);
         assertThat(jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics")).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT formula_version FROM statistics", Integer.class)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT calculated_at FROM statistics", String.class)).isNull();
+    }
+
+    @Test
+    void V6는_기존_차량상태를_보존하고_이벤트시각을_추측하지_않는다() {
+        var source = database("v6_power_watermark");
+        Flyway.configure().dataSource(source).target("5").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,latitude,longitude,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1234,1,37.5,127,1,1)");
+        var before = jdbc.queryForList("SELECT id,mileage,power_on,latitude,longitude FROM vehicle");
+        assertThat(Flyway.configure().dataSource(source).target("6").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,mileage,power_on,latitude,longitude FROM vehicle")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT last_power_event_time FROM vehicle", String.class)).isNull();
     }
 
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {

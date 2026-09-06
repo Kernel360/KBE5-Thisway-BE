@@ -9,6 +9,8 @@ import org.thisway.support.common.BaseEntity;
 import org.thisway.company.domain.Company;
 import org.thisway.vehicle.interfaces.VehicleUpdateRequest;
 import org.thisway.vehicle.vehicle_model.domain.VehicleModel;
+import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -38,6 +40,9 @@ public class Vehicle extends BaseEntity {
     private Double latitude;
 
     private Double longitude;
+
+    // Null means no ordering watermark exists for this legacy/new vehicle yet.
+    private LocalDateTime lastPowerEventTime;
 
     @Builder
     public Vehicle(
@@ -72,8 +77,19 @@ public class Vehicle extends BaseEntity {
         }
     }
 
-    public void updatePowerOn(boolean powerOn) {
+    /** Event time wins over arrival order. OFF wins a same-second ON/OFF tie. */
+    public boolean observePowerEvent(LocalDateTime eventTime, boolean powerOn,
+                                     Double latitude, Double longitude) {
+        Objects.requireNonNull(eventTime, "Power event time is required");
+        if (lastPowerEventTime != null && (eventTime.isBefore(lastPowerEventTime)
+                || (eventTime.equals(lastPowerEventTime) && (!this.powerOn || powerOn)))) {
+            return false;
+        }
+        this.lastPowerEventTime = eventTime;
         this.powerOn = powerOn;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        return true;
     }
 
     /** Device sum is a cumulative meter reading, not distance to add for every OFF delivery. */
@@ -84,8 +100,4 @@ public class Vehicle extends BaseEntity {
         this.mileage = Math.max(this.mileage, cumulativeMeters);
     }
 
-    public void updateLocation(Double latitude, Double longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
 }

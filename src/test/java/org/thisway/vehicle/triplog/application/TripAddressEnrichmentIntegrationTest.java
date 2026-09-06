@@ -125,6 +125,88 @@ class TripAddressEnrichmentIntegrationTest {
         }
     }
 
+    @Test
+    void 새_ON_뒤_늦은_OFF와_ON이_와도_DB의_현재상태와_좌표는_보존된다() {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        logService.savePowerLog(power(mdn, "20200101120000", "", "38500000"));
+        logService.savePowerLog(power(mdn, "20200101100000", "20200101110000", "37500000"));
+        logService.savePowerLog(power(mdn, "20200101090000", "", "36500000"));
+        var stored = vehicles.findById(vehicle.getId()).orElseThrow();
+        assertThat(stored.isPowerOn()).isTrue();
+        assertThat(stored.getLatitude()).isEqualTo(38.5);
+        assertThat(stored.getLastPowerEventTime()).isEqualTo(LocalDateTime.of(2020, 1, 1, 12, 0));
+        assertThat(stored.getMileage()).isEqualTo(1000); // Odometer max is independent of state ordering.
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isEqualTo(3); // Historical evidence is not discarded.
+        assertThat(count(vehicle)).isEqualTo(3); // Trip deduplication is a separate change.
+    }
+
+    @Test
+    void 동시_역순_요청은_차량잠금_안에서_최신_이벤트로_수렴한다() throws Exception {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        var requests = java.util.List.of(
+                power(mdn, "20200101120000", "", "38500000"),
+                power(mdn, "20200101100000", "20200101110000", "37500000"),
+                power(mdn, "20200101100000", "20200101110000", "37500000"),
+                power(mdn, "20200101100000", "20200101110000", "37500000"));
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+        var ready = new java.util.concurrent.CountDownLatch(4);
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var futures = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (var request : requests) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    if (!start.await(5, java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException("start timeout");
+                    logService.savePowerLog(request);
+                    return null;
+                }));
+            }
+            assertThat(ready.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            for (var future : futures) future.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            var stored = vehicles.findById(vehicle.getId()).orElseThrow();
+            assertThat(stored.isPowerOn()).isTrue();
+            assertThat(stored.getLatitude()).isEqualTo(38.5);
+            assertThat(stored.getLastPowerEventTime()).isEqualTo(LocalDateTime.of(2020, 1, 1, 12, 0));
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void 원본_transaction_rollback이면_상태와_정렬기준도_함께_복원된다() {
+        var vehicle = vehicle();
+        String mdn = register(vehicle);
+        new TransactionTemplate(transactions).executeWithoutResult(status -> {
+            logService.savePowerLog(power(mdn, "20200101120000", "", "38500000"));
+            status.setRollbackOnly();
+        });
+        var stored = vehicles.findById(vehicle.getId()).orElseThrow();
+        assertThat(stored.isPowerOn()).isFalse();
+        assertThat(stored.getLatitude()).isNull();
+        assertThat(stored.getLastPowerEventTime()).isNull();
+        assertThat(count(vehicle)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM power_log WHERE vehicle_id=?", Integer.class,
+                vehicle.getId())).isZero();
+        verifyNoInteractions(converter);
+    }
+
+    private String register(Vehicle vehicle) {
+        String mdn = UUID.randomUUID().toString().substring(0, 20);
+        emulators.save(org.thisway.emulator.domain.Emulator.builder().mdn(mdn).vehicle(vehicle)
+                .terminalId("fixture").manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
+        return mdn;
+    }
+
+    private org.thisway.vehicle.log.interfaces.PowerLogRequest power(String mdn, String on, String off, String lat) {
+        return new org.thisway.vehicle.log.interfaces.PowerLogRequest(mdn, "fixture", "1", "1", "1", on, off,
+                "A", lat, "127000000", "0", "0", "1000");
+    }
+
     private int count(Vehicle vehicle) {
         return jdbc.queryForObject("SELECT COUNT(*) FROM trip_log WHERE vehicle_id=?", Integer.class, vehicle.getId());
     }
