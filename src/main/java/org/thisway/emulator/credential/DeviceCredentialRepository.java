@@ -18,6 +18,30 @@ public class DeviceCredentialRepository {
     public record Snapshot(boolean hasKey, long vehicleId, long companyId, String mdn,
                            Instant issuedAt, Instant expiresAt, Instant revokedAt, long assignmentRevision) {}
 
+    record AuthenticationCandidate(DeviceIdentity identity, String keyHash) {
+        @Override public String toString() { return "AuthenticationCandidate[redacted]"; }
+    }
+
+    // One statement reads credential and current ownership in the same DB snapshot.
+    // This is an admission snapshot, not a lock held until asynchronous consumption.
+    Optional<AuthenticationCandidate> findAuthenticationCandidate(long emulatorId, Instant now) {
+        return jdbc.query("""
+                SELECT e.id,e.vehicle_id,v.company_id,e.mdn,e.assignment_revision,d.key_hash
+                FROM emulator e JOIN vehicle v ON v.id=e.vehicle_id
+                JOIN company c ON c.id=v.company_id
+                JOIN device_credential d ON d.emulator_id=e.id
+                WHERE e.id=? AND v.active=true AND c.active=true
+                  AND d.key_hash IS NOT NULL AND d.revoked_at IS NULL
+                  AND d.issued_at<=? AND d.expires_at>?
+                  AND d.bound_vehicle_id=e.vehicle_id AND d.bound_company_id=v.company_id
+                  AND BINARY d.bound_mdn=BINARY e.mdn
+                  AND d.bound_assignment_revision=e.assignment_revision
+                """, (rs, row) -> new AuthenticationCandidate(new DeviceIdentity(rs.getLong("id"),
+                rs.getLong("vehicle_id"), rs.getLong("company_id"), rs.getString("mdn"),
+                rs.getLong("assignment_revision")), rs.getString("key_hash")),
+                emulatorId, utc(now), utc(now)).stream().findFirst();
+    }
+
     public Optional<Binding> findOwned(long id, long companyId, boolean lock) {
         String sql = """
                 SELECT e.id,e.vehicle_id,e.mdn,e.assignment_revision,v.active FROM emulator e JOIN vehicle v ON v.id=e.vehicle_id

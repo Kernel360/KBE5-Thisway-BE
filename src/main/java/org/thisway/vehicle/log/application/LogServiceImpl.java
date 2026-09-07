@@ -87,6 +87,7 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public void saveGeofenceLog(GeofenceLogRequest request) {
+        org.thisway.vehicle.log.interfaces.GeofenceLogRequestValidator.validate(request);
         log.info("지오펜스 정보 로그 수신");
 
         String mdn = request.mdn();

@@ -17,6 +17,9 @@ public class Statistics extends BaseEntity {
     public static final int CURRENT_FORMULA_VERSION = 2;
 
     @Column(nullable = false)
+    private long revision;
+
+    @Column(nullable = false)
     private int formulaVersion = 1;
     @Column(nullable = false)
     private long fleetVehicleCount;
@@ -27,6 +30,7 @@ public class Statistics extends BaseEntity {
     private LocalDateTime calculatedAt;
 
     public void markCalculated(long fleetSize, long gpsCount, long unclosedCount, LocalDateTime at) {
+        revision = Math.addExact(revision, 1);
         formulaVersion = CURRENT_FORMULA_VERSION;
         fleetVehicleCount = fleetSize;
         gpsObservationCount = gpsCount;

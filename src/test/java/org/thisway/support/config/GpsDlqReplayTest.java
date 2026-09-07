@@ -43,6 +43,11 @@ class GpsDlqReplayTest {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(body));
     }
 
+    private Map<String, Object> identityHeaders() {
+        return org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.headers(
+                new org.thisway.emulator.credential.DeviceIdentity(1, 2, 3, "fixture", 0));
+    }
+
     private Channel channel(byte[] body, Map<String, Object> headers) throws Exception {
         var channel = mock(Channel.class);
         when(channel.basicGet(RabbitMQConfig.GPS_LOG_DLQ, false)).thenReturn(new GetResponse(
@@ -57,7 +62,7 @@ class GpsDlqReplayTest {
 
     @Test
     void preview는_원문없이_hash만_보이고_publish_ack하지_않는다() throws Exception {
-        var channel = channel(BODY, Map.of());
+        var channel = channel(BODY, identityHeaders());
         assertThat(GpsDlqReplay.processOne(channel, null, (e, d) -> {})).contains(digest(BODY)).doesNotContain("fixture");
         untouched(channel);
     }
@@ -76,7 +81,7 @@ class GpsDlqReplayTest {
 
     @Test
     void audit쓰기_실패는_publish를_막는다() throws Exception {
-        var channel = channel(BODY, Map.of());
+        var channel = channel(BODY, identityHeaders());
         assertThatThrownBy(() -> GpsDlqReplay.processOne(channel,
                 new GpsDlqReplay.Approval("TICKET-1", digest(BODY)), (e, d) -> { throw new java.io.IOException("fixture"); }))
                 .isInstanceOf(java.io.IOException.class);
@@ -85,12 +90,35 @@ class GpsDlqReplayTest {
 
     @Test
     void confirm_timeout은_ack하지_않는다() throws Exception {
-        var channel = channel(BODY, Map.of());
+        var channel = channel(BODY, identityHeaders());
         doThrow(new java.util.concurrent.TimeoutException()).when(channel).waitForConfirmsOrDie(5000);
         assertThatThrownBy(() -> GpsDlqReplay.processOne(channel,
                 new GpsDlqReplay.Approval("TICKET-1", digest(BODY)), (e, d) -> {}))
                 .isInstanceOf(java.util.concurrent.TimeoutException.class);
         verify(channel, never()).basicAck(anyLong(), anyBoolean());
+    }
+
+    @Test
+    void identity없는_legacy_replay는_원본을_ack하거나_발행하지않는다() throws Exception {
+        var channel = channel(BODY, Map.of());
+        assertThatThrownBy(() -> GpsDlqReplay.processOne(channel,
+                new GpsDlqReplay.Approval("TICKET-1", digest(BODY)), (e, d) -> {}))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+        untouched(channel);
+    }
+
+    @Test
+    void replay는_검증한_identity만_보존하고_임의헤더는_제거한다() throws Exception {
+        var headers = new java.util.HashMap<>(identityHeaders());
+        headers.put("X-Device-Key", "fixture-secret");
+        headers.put("arbitrary", "ignored");
+        var channel = channel(BODY, headers);
+        GpsDlqReplay.processOne(channel, new GpsDlqReplay.Approval("TICKET-1", digest(BODY)), (e, d) -> {});
+        var properties = org.mockito.ArgumentCaptor.forClass(AMQP.BasicProperties.class);
+        verify(channel).basicPublish(anyString(), anyString(), eq(true), properties.capture(), eq(BODY));
+        assertThat(properties.getValue().getHeaders()).containsAllEntriesOf(identityHeaders())
+                .doesNotContainKeys("X-Device-Key", "arbitrary");
+        verify(channel).basicAck(1L, false);
     }
 
     @Test

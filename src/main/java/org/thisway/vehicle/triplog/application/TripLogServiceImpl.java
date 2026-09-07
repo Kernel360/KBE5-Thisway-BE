@@ -148,6 +148,9 @@ public class TripLogServiceImpl implements TripLogService {
         }
 
         tripLogRepository.save(tripLog);
+        events.publishEvent(new org.thisway.company.statistics.application.StatisticsSourceChanged(
+                vehicle.getCompany().getId(), tripLogSaveInput.onTime().toLocalDate(),
+                java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(1), "TRIP_OBSERVED"));
         events.publishEvent(new TripAddressRequested(tripLog.getId(), tripLogSaveInput.offTime() != null));
     }
 

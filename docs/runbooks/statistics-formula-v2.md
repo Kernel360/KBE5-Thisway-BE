@@ -1,6 +1,6 @@
 # 통계 V2 전환·늦은 종료 보정
 
-2026-09-06. 현재 코드로 가능한 명시적 재계산 절차다. 실제 운영 실행 완료 기록이 아니다.
+2026-09-07. CHANGE-040의 자동 보정·fleet snapshot과 명시적 재계산 절차다. 실제 운영 실행 완료 기록이 아니다.
 
 ## 배포 전
 
@@ -33,8 +33,9 @@ WHERE company_id = :approved_company_id
 - 늦은 OFF가 여러 날짜를 가로지르면 영향을 받는 **각 날짜**를 확인 후 재계산한다.
 
 실패하면 회사 transaction은 rollback한다. 이미 성공한 다른 회사는 유지된다.
-현재 코드에는 통계 변경 revision 감사 테이블이나 bulk 보정 CLI가 없다. 대량 전환 자동화는
-사전 데이터 조사와 별도 승인·rate 제한·실행 결과 기록을 추가한 후 진행한다.
+CHANGE-040에서 통계 값이 바뀌면 `statistics_revision`에 이전/새 revision을 보존한다. 같은 값의 재계산은 revision을 늘리지 않는다. 최초 신규 집계는 당시 active fleet의 차량 ID 목록을 고정하고 이후 계산은 이 목록의 원천을 사용한다. 기존 통계에 snapshot이 없으면 409 `STATISTICS_FLEET_REVIEW_REQUIRED`로 보존한다. ADMIN이 현재 차량 목록과 영향을 검토한 경우만 기존 save 경로에 `captureCurrentFleet=true`를 명시해 seed한다. 이 seed는 실제 과거 소속/활성 이력의 복원이 아니다.
+
+Trip/GPS 저장 transaction에서 기존 통계 날짜에 보정 요청을 기록한다. queue 기록이 실패하면 원천 저장도 rollback하여 조용한 보정 누락을 방지한다. 회사/날짜별 requested/completed generation을 사용하고 5분 주기의 worker가 최대20개씩 처리한다(`thisway.statistics.correction-cron`). 실패는 backoff 후 재시도하며 원천이 같은 중복 GPS는 불필요한 revision을 만들지 않는다. 완료되지 않은 과거 날짜 자체를 자동 생성하는 backfill은 아니므로 누락 날짜는 기존 배치/명시적 날짜 계산으로 처리한다. bulk 운영 전환은 실제 데이터 조사와 실행 결과 기록이 필요하다.
 
 ## 재현
 
@@ -44,3 +45,8 @@ WHERE company_id = :approved_company_id
 ```
 
 자동화 테스트는 컨테이너 fixture만 사용한다. 운영 DB나 기존 volume에는 접근하지 않는다.
+
+
+## STARTED 실행의 복구
+
+프로세스가 강제 종료되어 STARTED가 남으면 [offline 복구 절차](statistics-orphan-recovery.md)를 따른다. age만 보고 살아있는 실행을 탈취하지 않는다. 모든 writer 중지, execution/version/step snapshot 검토와 감사 기록이 필요하며 원천 통계와 성공 checkpoint는 삭제하지 않는다.

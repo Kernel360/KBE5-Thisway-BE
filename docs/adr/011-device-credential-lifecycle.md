@@ -1,13 +1,13 @@
 # ADR-011: 회사 범위 장치 credential 관리 기반
 
 - 날짜: 2026-09-06
-- 상태: 채택 — 관리 기반만 구현, 수집 인증 적용은 후속
+- 상태: 채택 — CHANGE-037에서 수집 인증/비동기 identity/Emulator 연결, 운영 전환은 후속
 - 관련: CHANGE-034, P1-01C
 
 ## 맥락과 결정
 
-GPS/Power/Geofence 수집 API는 아직 공개 요청을 허용한다. 검증기를 먼저 붙이기 전에
-누가 장치 키를 발급·교체·폐기할지와 원문 보관 경계를 정의한다. 이 ADR이 수집 API를 보호했다는 뜻은 아니다.
+CHANGE-034 시점에는 GPS/Power/Geofence 수집 API가 공개 요청을 허용했다. 먼저 키 발급·교체·폐기와
+원문 보관 경계를 정의했고, 아래 CHANGE-037 보완 결정에서 수집 인증을 연결했다.
 
 사람의 JWT를 장치에 복사하지 않고 SecureRandom 32바이트로 독립적인 opaque key를 발급한다.
 DB에는 SHA-256 해시만 저장한다. 사람이 고르는 저엔트로피 비밀번호에 이 방식을 적용하는 것은 다른 문제다.
@@ -64,3 +64,36 @@ EmulatorService의 변경 조회에 PESSIMISTIC_WRITE를 적용해 키 발급과
 직접 SQL/bulk update는 이 규칙을 우회하므로 허용된 운영 변경 경로가 아니다. 부득이한 데이터 복구는
 해당 키 폐기와 revision 증가를 함께 수행하는 별도 승인 절차가 필요하다.
 차량 회사 이동과 active 전환은 이 revision이 기록하는 이벤트가 아니며 해당 정책은 후속 설계다.
+
+## CHANGE-036 보완 결정: 인증 검증기
+
+키 검증은 관리용 status와 분리한 DeviceAuthenticationService에서 담당한다.
+장치 ID를 locator로 사용하고 credential과 현재 emulator/vehicle/company를 단일 JOIN으로 읽는다.
+발급 당시 소속·revision·MDN, 현재 활성 회사/차량, 발급/만료/폐기를 확인한 후보만 해시 비교한다.
+payload MDN도 exact 비교하며 반환 identity의 회사/차량은 DB에서 얻는다.
+SQL의 MDN 비교는 BINARY로 지정해 기본 collation의 대소문자/후행공백 동등 처리를 허용하지 않는다.
+
+MessageDigest.isEqual로 고정 길이 SHA-256 해시를 비교한다. 전체 요청의 일정한 응답 시간을
+보장하지 않는다. 실패 원인은 단일 인증 오류로 반환하되 DB 장애는 서버 오류로 남긴다.
+검증은 read-only snapshot으로, 이후 비동기 저장까지 소속을 고정하지 않는다.
+HTTP 수집 경로 연결, 서버 identity 메시지 전달, consumer 재검증과 Emulator 연결은 여전히 후속이다.
+자세한 검증과 한계는 [CHANGE-036](../portfolio/work-logs/2026-09-07-device-authentication-verifier.md)에 기록한다.
+
+## CHANGE-037 보완 결정: 수집과 소비의 소속 검증
+
+세 수집 POST는 X-Device-Id/X-Device-Key를 검증한다. device locator는 emulator DB ID이며 payload did와 다르다.
+GPS body는 유지하고 서버에서 확인한 version/emulatorId/vehicleId/companyId/assignmentRevision을 AMQP header에 담는다.
+저장·방송은 현재 active 소속/revision을 FOR UPDATE로 재검증한다. guard와 쓰기는 같은 transaction이다.
+Power/Geofence의 기존 MDN 재조회도 해당 잠금 안에서 수행한다. GPS 쓰기와 방송 대상은 identity ID를 직접 사용한다.
+
+키 폐기/만료/교체 이후 새 인증은 거부하지만 이미 인증한 같은 연결의 메시지는 처리한다.
+연결 변경은 이전 세대를 거부하며, identity 없는 legacy 메시지는 자동 MDN fallback 없이 검토 대상으로 남긴다.
+저장 오류의 기존 retry/DLQ 분류를 유지하고 live는 실패 시 재큐잉하지 않는 best effort로 분리한다.
+replay는 검증한 identity allowlist만 복사한다. broker publish ACL은 필수 신뢰 경계이며 identity 자체가 서명은 아니다.
+
+Python Emulator는 private MDN별 credential 파일을 읽고, 브라우저 Emulator는 실행 중 메모리에서만 입력 키를 사용한다.
+두 client 모두 인증 실패를 성공으로 무시하지 않는다. 브라우저 저장소에 키를 저장하지 않으며 JavaScript heap의
+암호학적 메모리 삭제나 브라우저 확장 프로그램까지 보호하는 방식은 아니다.
+잠금 확대·SSE 지연·운영 처리량, nonce/replay·size/rate 정책, legacy backlog와 실제 배포는 미완료다.
+[CHANGE-037](../portfolio/work-logs/2026-09-07-device-ingestion-authentication.md),
+[운영 전환 gate](../runbooks/device-ingestion-authentication.md)에 검증 범위를 기록한다.

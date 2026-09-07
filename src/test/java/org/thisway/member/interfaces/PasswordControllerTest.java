@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PasswordController.class)
+@org.springframework.context.annotation.Import(io.micrometer.core.instrument.simple.SimpleMeterRegistry.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor

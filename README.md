@@ -31,7 +31,7 @@
 
   - GPS는 설정에 따라 직접 저장 또는 RabbitMQ 수집, 시동 ON/OFF는 HTTP transaction에서 처리
   - Power는 strict 날짜/숫자/좌표 검증과 서버 Asia/Seoul+5분 미래 시각 상한 적용.
-    [허용 범위와 한계](docs/portfolio/work-logs/2026-09-06-power-request-validation.md). 장치 인증은 별도 미완료
+    [허용 범위와 한계](docs/portfolio/work-logs/2026-09-06-power-request-validation.md). 장치 인증 연결은 [CHANGE-037](docs/portfolio/work-logs/2026-09-07-device-ingestion-authentication.md) 참고
     
 <img width="2558" height="1440" alt="image" src="https://github.com/user-attachments/assets/973fdb1a-7e92-4e16-9b55-e7689e7eed45" />
 
@@ -191,3 +191,23 @@ Redis를 수동으로 `localhost:6379`에 실행할 필요는 없다. Redis inte
 Docker가 준비되지 않았다면 실제 Redis 직렬화와 TTL 계약을 검증할 수 없으므로 해당 통합 테스트를 자동으로 건너뛰지 않고 실패시킨다.
 
 실제 Boot·nginx·Chromium SSE 검증은 별도 `./gradlew sseBrowserTest --console=plain`으로 실행한다. 인접 `../KBE5-Thisway-FE` checkout에서 `npm ci`와 `npx playwright install chromium`을 먼저 실행하고 Node가 PATH에 있어야 한다. 기본 `test`에는 이 브라우저 시나리오가 포함되지 않는다. 정확한 검증 범위와 재현 조건은 [CHANGE-015](docs/portfolio/work-logs/2026-09-05-sse-boot-nginx-browser.md)를 참고한다.
+
+## 장치 수집 인증 실행
+
+세 수집 POST API는 `X-Device-Id`(Emulator DB id)와 `X-Device-Key`를 요구한다.
+사람 JWT만으로 수집 요청을 허용하지 않는다. 장치 키 발급·Emulator 비밀 주입·구형 메시지 전환은
+[장치 인증 runbook](docs/runbooks/device-ingestion-authentication.md)을 따른다.
+소속이 변경된 GPS 메시지는 저장/방송을 거부하며, 기존 keyless queue 메시지를 현재 MDN에 자동 귀속하지 않는다.
+
+`./gradlew emulatorClientTest -Demulator.python=/path/to/venv/bin/python --console=plain`은
+sibling Python Emulator→임시 Boot→MySQL의 실제 HTTP 인증 계약을 검증한다.
+기본 `test`와 별도이며 Python 의존성과 Docker가 필요하다.
+
+
+### 2026-09-07 로컬 마무리 변경
+
+수집 API는 `X-Device-Id`, `X-Device-Key`와 함께 전송 시도별 `X-Request-Id`(UUID v4), `X-Request-Timestamp`(epoch seconds)를 요구한다. 기본 120회/60초, 256 KiB 제한과 clock ±5분을 적용한다. [인증/전환 절차](docs/runbooks/device-ingestion-authentication.md)를 두 Emulator와 함께 따른다.
+
+V10 주소 retry worker, V11 통계 correction queue, V12 수정 revision, V13 최초 fleet ID snapshot, V14 orphan 복구 감사가 추가됐다. 기존 fleet 정보가 없는 통계는 자동 추정하지 않고 409로 보존한다. [통계 절차](docs/runbooks/statistics-formula-v2.md), [주소 worker](docs/runbooks/trip-address-worker.md), [배치 offline 복구](docs/runbooks/statistics-orphan-recovery.md), [경보/rollback](docs/runbooks/reliability-alerts-and-release.md)을 참고한다. 운영 DB·broker·AWS 적용 완료를 뜻하지 않는다.
+
+추가 opt-in 검증은 `fleetEvidenceTest`, `fleetBrowserTest`, `statisticsCrashRecoveryTest`, `emulatorClientTest`다. Docker·FE npm/Chromium·Emulator Python 의존성을 갖추고 Gradle task는 같은 checkout에서 순서대로 실행한다. `emulatorClientTest`는 `-Demulator.python=/사용할/venv/bin/python`을 지정할 수 있다. 정확한 현재 검증 결과와 남은 외부 입력은 [남은 작업](docs/portfolio/remaining-work.md)에 기록한다.

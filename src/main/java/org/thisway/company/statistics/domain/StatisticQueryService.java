@@ -9,7 +9,6 @@ import org.thisway.company.statistics.infrastructure.StatisticsRepository;
 import org.thisway.company.statistics.interfaces.StatisticResponse;
 import org.thisway.vehicle.triplog.domain.TripLocationRaw;
 import org.thisway.vehicle.triplog.domain.TripLocationStats;
-import org.thisway.vehicle.triplog.infrastructure.TripLogRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,7 +25,8 @@ import java.util.stream.IntStream;
 public class StatisticQueryService {
 
     private final StatisticsRepository statisticsRepository;
-    private final TripLogRepository tripLogRepository;
+    private final StatisticsSourceReader sources;
+    private final StatisticsFleetSnapshots fleetSnapshots;
 
     /**
      * 날짜 범위 기반 통계 조회
@@ -50,7 +50,9 @@ public class StatisticQueryService {
                 stored.size() - statisticsList.size(),
                 statisticsList.stream().mapToLong(Statistics::getGpsObservationCount).sum(),
                 statisticsList.stream().mapToLong(Statistics::getUnclosedTripCount).sum(),
-                "CURRENT_ACTIVE_FLEET_AT_CALCULATION");
+                fleetSnapshots.countKnown(companyId, startDate, endDate, Statistics.CURRENT_FORMULA_VERSION)
+                        == statisticsList.size() && !statisticsList.isEmpty()
+                        ? "INITIAL_CALCULATION_FLEET_SNAPSHOT" : "LEGACY_FLEET_SNAPSHOT_UNKNOWN");
 
         // 3. 합산 계산 - Stream API 활용
         int totalPowerOnCount = Math.toIntExact(statisticsList.stream()
@@ -142,7 +144,7 @@ public class StatisticQueryService {
      */
     private List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("출발지 통계 조회: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
-        List<TripLocationRaw> rawLocation = tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
+        List<TripLocationRaw> rawLocation = sources.locations(companyId, startTime, endTime);
 
         long total = rawLocation.stream().mapToLong(TripLocationRaw::count).sum();
 

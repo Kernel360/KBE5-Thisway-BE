@@ -56,7 +56,7 @@ class PowerLogValidationTest {
         var trips = mock(TripLogService.class);
         var service = new LogServiceImpl(emulators, logs, converter, vehicles, trips);
         assertThatThrownBy(() -> service.savePowerLog(request)).isInstanceOf(CustomException.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new LogController(service, mock(GpsLogService.class)))
+        var mvc = MockMvcBuilders.standaloneSetup(new LogController(mock(GpsLogService.class), mock(org.thisway.emulator.credential.DeviceAuthenticationService.class), mock(org.thisway.vehicle.log.application.DeviceTelemetryService.class), mock(org.thisway.vehicle.log.application.TelemetryRequestGuard.class)))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
         mvc.perform(post("/api/logs/power").contentType("application/json")
                 .content(JSON.writeValueAsString(request)))

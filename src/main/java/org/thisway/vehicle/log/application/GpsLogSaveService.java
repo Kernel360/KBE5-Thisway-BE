@@ -1,5 +1,8 @@
 package org.thisway.vehicle.log.application;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.thisway.emulator.credential.DeviceIdentity;
+import org.thisway.emulator.credential.DeviceBindingGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,13 +29,31 @@ public class GpsLogSaveService {
     private final EmulatorRepository emulatorRepository;
     private final LogRepository logRepository;
     private final LogDataConverter converter;
+    private final DeviceBindingGuard bindingGuard;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
+    @Transactional
+    public void saveGpsLog(GpsLogRequest request, DeviceIdentity identity) {
+        GpsLogRequestValidator.validate(request);
+        bindingGuard.requireCurrent(identity, request.mdn());
+        var observations = persist(request, identity.vehicleId());
+        var first = observations.stream().map(GpsLogData::occurredTime).min(LocalDateTime::compareTo).orElseThrow();
+        var last = observations.stream().map(GpsLogData::occurredTime).max(LocalDateTime::compareTo).orElseThrow();
+        events.publishEvent(new org.thisway.company.statistics.application.StatisticsSourceChanged(
+                identity.companyId(), first.toLocalDate(), last.toLocalDate(), "GPS_OBSERVED"));
+    }
+
+    // Internal legacy characterization entry point; never used by HTTP or broker consumers.
     public void saveGpsLog(GpsLogRequest request) {
+        GpsLogRequestValidator.validate(request);
+        persist(request, getVehicleIdByMdn(request.mdn()));
+    }
+
+    private List<GpsLogData> persist(GpsLogRequest request, Long vehicleId) {
         GpsLogRequestValidator.validate(request);
         log.info("주기 정보 로그 수신: 항목 수={}, 시간={}", request.cCnt(), request.oTime());
 
         String mdn = request.mdn();
-        Long vehicleId = getVehicleIdByMdn(mdn);
 
         List<GpsLogData> gpsLogDataList = new ArrayList<>();
 
@@ -73,6 +94,7 @@ public class GpsLogSaveService {
         logRepository.saveGpsLogs(gpsLogDataList);
 
         log.info("주기 정보 로그 저장 요청 처리 완료: 입력 항목 수={}", gpsLogDataList.size());
+        return gpsLogDataList;
     }
 
     private Long getVehicleIdByMdn(String mdn) {

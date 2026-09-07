@@ -11,7 +11,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thisway.vehicle.triplog.domain.ReverseGeocodingConverter;
 
-/** Coordinates are durable in TripLog; a failed lookup leaves the address NULL for explicit retry. */
+/** Coordinates are durable in TripLog; a failed lookup leaves the address NULL for retry. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,30 +26,39 @@ public class TripAddressEnrichment {
         enrich(event.tripId(), event.off());
     }
 
-    /** Internal retry entry point, not a public HTTP endpoint or automatic job. */
+    /** Backward-compatible internal retry entry point; the worker uses the detailed outcome. */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public boolean enrich(long tripId, boolean off) {
+        return enrichWithOutcome(tripId, off) == Outcome.UPDATED;
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Outcome enrichWithOutcome(long tripId, boolean off) {
         String side = off ? "off" : "on"; // SQL identifiers are fixed, never request strings.
         try {
             var points = jdbc.query("SELECT " + side + "_latitude," + side + "_longitude FROM trip_log "
                             + "WHERE id=? AND " + side + "_addr IS NULL AND " + side + "_latitude IS NOT NULL "
                             + "AND " + side + "_longitude IS NOT NULL",
                     (rs, row) -> new double[]{rs.getDouble(1), rs.getDouble(2)}, tripId);
-            if (points.isEmpty()) return false;
+            if (points.isEmpty()) return Outcome.NO_LONGER_NEEDED;
             double[] point = points.getFirst();
             // No DB transaction or row lock is held during external I/O.
             var address = converter.convertToAddress(point[0], point[1]);
+            if (address == null || address.addr() == null || address.addr().isBlank()) return Outcome.RETRY;
             var write = new TransactionTemplate(transactions);
             write.setPropagationBehavior(TransactionTemplate.PROPAGATION_REQUIRES_NEW);
             return Boolean.TRUE.equals(write.execute(status -> jdbc.update("UPDATE trip_log SET " + side
                             + "_addr=?," + side + "_addr_detail=? WHERE id=? AND " + side + "_addr IS NULL "
                             + "AND " + side + "_latitude=? AND " + side + "_longitude=?",
-                    address.addr(), address.addrDetail(), tripId, point[0], point[1]) == 1));
+                    address.addr(), address.addrDetail(), tripId, point[0], point[1]) == 1))
+                    ? Outcome.UPDATED : Outcome.RETRY;
         } catch (RuntimeException failure) {
             // Do not log exception text: HTTP exceptions can contain URLs and coordinates.
             log.warn("운행 주소 보정 보류: tripId={}, side={}, failureType={}",
                     tripId, side, failure.getClass().getSimpleName());
-            return false;
+            return Outcome.RETRY;
         }
     }
+
+    public enum Outcome { UPDATED, NO_LONGER_NEEDED, RETRY }
 }

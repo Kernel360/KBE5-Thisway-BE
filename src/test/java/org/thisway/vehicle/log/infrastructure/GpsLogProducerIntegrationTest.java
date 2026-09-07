@@ -51,6 +51,7 @@ class GpsLogProducerIntegrationTest {
     }
 
     @AfterEach void cleanup() {
+        producer.close();
         admin.deleteQueue(storage); admin.deleteQueue(live);
         admin.deleteExchange(RabbitMQConfig.GPS_LOG_EXCHANGE);
         admin.deleteExchange(RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE);
@@ -61,7 +62,7 @@ class GpsLogProducerIntegrationTest {
         bindStorage();
         admin.declareBinding(new Binding(live, Binding.DestinationType.QUEUE,
                 RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE, "", null));
-        producer.sendGpsLog(request());
+        producer.sendGpsLog(request(), identity());
         var saved = template.receive(storage, 1000);
         assertThat(saved).isNotNull();
         assertThat(saved.getMessageProperties().getReceivedDeliveryMode()).isEqualTo(MessageDeliveryMode.PERSISTENT);
@@ -72,7 +73,7 @@ class GpsLogProducerIntegrationTest {
     @Test void 저장_라우팅이_없으면_ack이어도_return을_실패로_처리하고_live는_발행하지_않는다() {
         admin.declareBinding(new Binding(live, Binding.DestinationType.QUEUE,
                 RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE, "", null));
-        assertThatThrownBy(() -> producer.sendGpsLog(request())).isInstanceOf(CustomException.class)
+        assertThatThrownBy(() -> producer.sendGpsLog(request(), identity())).isInstanceOf(CustomException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.GPS_PUBLISH_UNAVAILABLE);
         assertThat(template.receive(live, 100)).isNull();
         assertThat(meters.counter("gps.publisher.storage.unconfirmed").count()).isEqualTo(1);
@@ -80,7 +81,7 @@ class GpsLogProducerIntegrationTest {
 
     @Test void 저장_성공후_live_라우팅이_없어도_저장접수는_성공이고_부분실패를_계수한다() {
         bindStorage();
-        assertThatCode(() -> producer.sendGpsLog(request())).doesNotThrowAnyException();
+        assertThatCode(() -> producer.sendGpsLog(request(), identity())).doesNotThrowAnyException();
         assertThat(template.receive(storage, 1000)).isNotNull();
         assertThat(meters.counter("gps.publisher.broadcast.unconfirmed").count()).isEqualTo(1);
     }
@@ -88,7 +89,7 @@ class GpsLogProducerIntegrationTest {
     @Test void 저장_성공후_live_exchange가_없으면_채널실패를_부분실패로_남긴다() {
         bindStorage();
         admin.deleteExchange(RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE);
-        assertThatCode(() -> producer.sendGpsLog(request())).doesNotThrowAnyException();
+        assertThatCode(() -> producer.sendGpsLog(request(), identity())).doesNotThrowAnyException();
         assertThat(template.receive(storage, 1000)).isNotNull();
         assertThat(meters.counter("gps.publisher.broadcast.unconfirmed").count()).isEqualTo(1);
     }
@@ -97,6 +98,10 @@ class GpsLogProducerIntegrationTest {
         admin.declareBinding(new Binding(storage, Binding.DestinationType.QUEUE,
                 RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY, null));
     }
+    static org.thisway.emulator.credential.DeviceIdentity identity() {
+        return new org.thisway.emulator.credential.DeviceIdentity(1, 2, 3, "fixture", 0);
+    }
+
     static GpsLogRequest request() {
         // Serialization-only fixture. Controller/consumer validation is tested separately.
         return new GpsLogRequest("fixture", "fixture", "1", "1", "1", "20200101100000", "0", List.of());

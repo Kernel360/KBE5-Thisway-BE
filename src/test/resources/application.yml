@@ -1,5 +1,6 @@
 spring.application.name: thisway
 thisway.statistics.cron: "-"
+thisway.statistics.correction-cron: "-"
 
 spring:
   flyway:

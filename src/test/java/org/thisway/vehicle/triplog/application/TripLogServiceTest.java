@@ -328,6 +328,9 @@ class TripLogServiceTest {
     }
 
     private TripLogSaveInput saveInput(LocalDateTime offTime, int totalTripMeter) {
+        var company = org.mockito.Mockito.mock(org.thisway.company.domain.Company.class);
+        when(vehicle.getCompany()).thenReturn(company);
+        when(company.getId()).thenReturn(COMPANY_ID);
         when(vehicle.getId()).thenReturn(VEHICLE_ID);
         when(vehicleService.getVehicleForPowerUpdate(VEHICLE_ID)).thenReturn(vehicle);
         return new TripLogSaveInput(

@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @org.testcontainers.junit.jupiter.Testcontainers
-@SpringBootTest(properties = {"spring.flyway.enabled=true", "spring.jpa.hibernate.ddl-auto=validate",
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {"spring.flyway.enabled=true", "spring.jpa.hibernate.ddl-auto=validate",
         "spring.batch.jdbc.initialize-schema=never"})
 @AutoConfigureMockMvc
 @DirtiesContext
@@ -44,14 +44,29 @@ class DeviceCredentialIntegrationTest {
                     .withEnv("MYSQL_PASSWORD", "test").withEnv("MYSQL_ROOT_PASSWORD", "test-root")
                     .withExposedPorts(3306).waitingFor(org.testcontainers.containers.wait.strategy.Wait
                             .forLogMessage(".*ready for connections.*port: 3306.*", 1));
+    @org.testcontainers.junit.jupiter.Container
+    static final org.testcontainers.containers.GenericContainer<?> RABBIT =
+            new org.testcontainers.containers.GenericContainer<>("rabbitmq:3.13.7-alpine")
+                    .withEnv("RABBITMQ_DEFAULT_USER", "test").withEnv("RABBITMQ_DEFAULT_PASS", "test")
+                    .withExposedPorts(5672).waitingFor(org.testcontainers.containers.wait.strategy.Wait
+                            .forLogMessage(".*Server startup complete.*", 1));
+
+    @org.testcontainers.junit.jupiter.Container
+    static final org.testcontainers.containers.GenericContainer<?> REDIS =
+            new org.testcontainers.containers.GenericContainer<>("redis:7.4.2-alpine").withExposedPorts(6379);
+
     @org.springframework.test.context.DynamicPropertySource
     static void database(org.springframework.test.context.DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", REDIS::getHost);
+        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
         registry.add("spring.datasource.url", () -> "jdbc:mysql://" + MYSQL.getHost() + ":"
                 + MYSQL.getMappedPort(3306) + "/credentials_test?allowPublicKeyRetrieval=true&useSSL=false");
         registry.add("spring.datasource.username", () -> "test");
         registry.add("spring.datasource.password", () -> "test");
         registry.add("spring.datasource.driver-class-name", () -> "com.mysql.cj.jdbc.Driver");
     }
+    @org.springframework.boot.test.web.server.LocalServerPort int serverPort;
+    @org.junit.jupiter.api.io.TempDir java.nio.file.Path tempDirectory;
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JdbcTemplate jdbc;
@@ -61,6 +76,15 @@ class DeviceCredentialIntegrationTest {
     @Autowired VehicleRepository vehicles;
     @Autowired MemberRepository members;
     @Autowired EmulatorRepository emulators;
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.thisway.vehicle.triplog.domain.ReverseGeocodingConverter geocoding;
+    @Autowired DeviceAuthenticationService authentication;
+    @Autowired org.thisway.vehicle.log.application.TelemetryRequestGuard requestGuard;
+    @Autowired org.thisway.vehicle.log.application.GpsLogSaveService gpsSave;
+    @Autowired org.thisway.vehicle.log.application.DeviceTelemetryService telemetry;
+    @Autowired DeviceBindingGuard guard;
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
+    @MockitoSpyBean org.thisway.vehicle.triplog.application.StreamCoordinatesService streams;
     @MockitoSpyBean DeviceCredentialRepository repository;
     private Company company;
     private Member admin;
@@ -69,6 +93,8 @@ class DeviceCredentialIntegrationTest {
 
     @BeforeEach
     void fixture() {
+        when(geocoding.convertToAddress(anyDouble(), anyDouble())).thenReturn(
+                new org.thisway.vehicle.triplog.domain.ReverseGeocodeResult("fixture", "fixture"));
         company = company();
         admin = members.save(Member.builder().company(company).role(MemberRole.COMPANY_ADMIN).name("fixture")
                 .email(UUID.randomUUID() + "@example.test").password("fixture-unused-password").phone("01000000000").memo("fixture").build());
@@ -282,6 +308,453 @@ class DeviceCredentialIntegrationTest {
             start.countDown();
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void 인증은_DB에서_회사_차량_연결세대를_반환하고_비밀을_노출하지_않는다() throws Exception {
+        String key = issue(device.getId(), token);
+        var identity = authentication.authenticate(device.getId(), key, device.getMdn());
+        assertThat(identity).isEqualTo(new DeviceIdentity(device.getId(), device.getVehicle().getId(),
+                company.getId(), device.getMdn(), 0));
+        assertThat(identity.toString()).doesNotContain(key, device.getMdn(), hash());
+        var candidate = repository.findAuthenticationCandidate(device.getId(), Instant.now()).orElseThrow();
+        assertThat(candidate.toString()).doesNotContain(key, hash(), device.getMdn());
+        assertThat(events()).isEqualTo(1); // Authentication is read-only; no credential changes/audit writes.
+    }
+
+    @Test
+    void 다른회사_장치의_키와_MDN을_서로_바꾸어_사용할_수_없다() throws Exception {
+        String key = issue(device.getId(), token);
+        var other = device(company());
+        // Another tenant's valid credential; provisioning is fixture-only, not an API bypass.
+        String otherKey = DeviceKeyMaterial.generate();
+        repository.replace(new DeviceCredentialRepository.Binding(other.getId(), other.getVehicle().getId(),
+                other.getVehicle().getCompany().getId(), other.getMdn(), 0, true),
+                DeviceKeyMaterial.hash(otherKey), Instant.now().minusSeconds(1), Instant.now().plusSeconds(3600));
+        rejectAuthentication(device.getId(), otherKey, device.getMdn());
+        rejectAuthentication(other.getId(), key, other.getMdn());
+        rejectAuthentication(device.getId(), key, other.getMdn());
+        assertThat(authentication.authenticate(other.getId(), otherKey, other.getMdn()).companyId())
+                .isEqualTo(other.getVehicle().getCompany().getId());
+    }
+
+    @Test
+    void 교체_폐기_미발급_삭제_장치의_키는_인증을_거부한다() throws Exception {
+        rejectAuthentication(device.getId(), DeviceKeyMaterial.generate(), device.getMdn());
+        String old = issue(device.getId(), token);
+        String current = issue(device.getId(), token);
+        rejectAuthentication(device.getId(), old, device.getMdn());
+        assertThat(authentication.authenticate(device.getId(), current, device.getMdn())).isNotNull();
+        mvc.perform(delete(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isNoContent());
+        rejectAuthentication(device.getId(), current, device.getMdn());
+        String last = issue(device.getId(), token);
+        emulators.deleteById(device.getId());
+        rejectAuthentication(device.getId(), last, device.getMdn());
+    }
+
+    @Test
+    void 만료경계는_배타적이고_미래발급과_폐기시각이_있는_키도_거부한다() throws Exception {
+        String key = issue(device.getId(), token);
+        var snapshot = repository.find(device.getId()).orElseThrow();
+        assertThat(repository.findAuthenticationCandidate(device.getId(), snapshot.issuedAt().minusNanos(1000))).isEmpty();
+        assertThat(repository.findAuthenticationCandidate(device.getId(), snapshot.issuedAt())).isPresent();
+        assertThat(repository.findAuthenticationCandidate(device.getId(), snapshot.expiresAt().minusNanos(1000))).isPresent();
+        assertThat(repository.findAuthenticationCandidate(device.getId(), snapshot.expiresAt())).isEmpty();
+        jdbc.update("UPDATE device_credential SET issued_at='2020-01-01',expires_at='2020-01-31' WHERE emulator_id=?", device.getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+        jdbc.update("UPDATE device_credential SET issued_at='2099-01-01',expires_at='2099-01-31' WHERE emulator_id=?", device.getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+        key = issue(device.getId(), token);
+        jdbc.update("UPDATE device_credential SET revoked_at=issued_at WHERE emulator_id=?", device.getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+    }
+
+    @Test
+    void 차량과_회사가_비활성이면_유효한_키도_인증을_거부한다() throws Exception {
+        String key = issue(device.getId(), token);
+        jdbc.update("UPDATE vehicle SET active=false WHERE id=?", device.getVehicle().getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+        jdbc.update("UPDATE vehicle SET active=true WHERE id=?", device.getVehicle().getId());
+        jdbc.update("UPDATE company SET active=false WHERE id=?", company.getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+    }
+
+    @Test
+    void 차량재연결후_원복해도_이전키_인증은_실패하고_새키는_현재세대를_반환한다() throws Exception {
+        String old = issue(device.getId(), token);
+        update(Map.of("vehicleId", device(company).getVehicle().getId()));
+        rejectAuthentication(device.getId(), old, device.getMdn());
+        update(Map.of("vehicleId", device.getVehicle().getId()));
+        rejectAuthentication(device.getId(), old, device.getMdn());
+        String current = issue(device.getId(), token);
+        assertThat(authentication.authenticate(device.getId(), current, device.getMdn()).assignmentRevision()).isEqualTo(2);
+    }
+
+    @Test
+    void MDN은_MySQL_collation과_무관하게_대소문자와_후행공백을_구분한다() throws Exception {
+        update(Map.of("mdn", "Device-Mdn"));
+        String key = issue(device.getId(), token);
+        assertThat(authentication.authenticate(device.getId(), key, "Device-Mdn")).isNotNull();
+        rejectAuthentication(device.getId(), key, "device-mdn");
+        rejectAuthentication(device.getId(), key, "Device-Mdn ");
+        jdbc.update("UPDATE emulator SET mdn='device-mdn' WHERE id=?", device.getId());
+        rejectAuthentication(device.getId(), key, "device-mdn");
+        jdbc.update("UPDATE emulator SET mdn='Device-Mdn ' WHERE id=?", device.getId());
+        rejectAuthentication(device.getId(), key, "Device-Mdn ");
+    }
+
+    @Test
+    void revision을_우회한_차량과_회사_변경도_발급당시_소속과_다르면_거부한다() throws Exception {
+        String key = issue(device.getId(), token);
+        var anotherVehicle = device(company).getVehicle();
+        jdbc.update("UPDATE emulator SET vehicle_id=? WHERE id=?", anotherVehicle.getId(), device.getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+        jdbc.update("UPDATE emulator SET vehicle_id=? WHERE id=?", device.getVehicle().getId(), device.getId());
+        jdbc.update("UPDATE vehicle SET company_id=? WHERE id=?", company().getId(), device.getVehicle().getId());
+        rejectAuthentication(device.getId(), key, device.getMdn());
+    }
+
+    @Test
+    void 세_수집API는_키없음_잘못된키_타장치키와_JWT만으로는_쓰기할수없다() throws Exception {
+        String key = issue(device.getId(), token);
+        for (String kind : List.of("gps", "power", "geofence")) {
+            String body = json.writeValueAsString(packet(kind));
+            mvc.perform(post("/api/logs/" + kind).contentType("application/json").content(body))
+                    .andExpect(status().isUnauthorized());
+            mvc.perform(post("/api/logs/" + kind).header("Authorization", "Bearer " + token)
+                    .contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+            for (String id : List.of("0", "-1", "9223372036854775808", "1,2", "bad")) {
+                mvc.perform(post("/api/logs/" + kind).header("X-Device-Id", id).header("X-Device-Key", key).header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", Long.toString(Instant.now().getEpochSecond()))
+                        .contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+            }
+            mvc.perform(post("/api/logs/" + kind).header("X-Device-Id", device.getId())
+                    .header("X-Device-Key", DeviceKeyMaterial.generate()).contentType("application/json").content(body))
+                    .andExpect(status().isUnauthorized());
+            mvc.perform(post("/api/logs/" + kind).header("X-Device-Id", device(company()).getId())
+                    .header("X-Device-Key", key).header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", Long.toString(Instant.now().getEpochSecond())).contentType("application/json").content(body))
+                    .andExpect(status().isUnauthorized());
+            assertThat(logCount(kind)).isZero();
+        }
+    }
+
+    @Test
+    void 정상키로_세_수집API를_호출하면_인증된_차량에_저장된다() throws Exception {
+        String key = issue(device.getId(), token);
+        for (String kind : List.of("gps", "power", "geofence")) {
+            mvc.perform(post("/api/logs/" + kind).header("X-Device-Id", device.getId())
+                    .header("X-Device-Key", key).header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", Long.toString(Instant.now().getEpochSecond())).contentType("application/json")
+                    .content(json.writeValueAsString(packet(kind)))).andExpect(status().isOk());
+            assertThat(logCount(kind)).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM trip_log WHERE vehicle_id=?", Integer.class,
+                device.getVehicle().getId())).isEqualTo(1);
+    }
+
+    @Test
+    void 인증후_재연결하면_저장과_방송이_거부되고_원복해도_이전세대는_거부된다() throws Exception {
+        var identity = authentication.authenticate(device.getId(), issue(device.getId(), token), device.getMdn());
+        update(Map.of("vehicleId", device(company).getVehicle().getId()));
+        rejectAdmission(identity);
+        update(Map.of("vehicleId", device.getVehicle().getId()));
+        rejectAdmission(identity);
+        assertThat(logCount("gps")).isZero();
+        assertThat(logCount("power")).isZero();
+        assertThat(logCount("geofence")).isZero();
+        verifyNoInteractions(streams);
+    }
+
+    @Test
+    void 접수후_키폐기와_만료는_이미접수한_동일연결_메시지를_버리지않는다() throws Exception {
+        var identity = authentication.authenticate(device.getId(), issue(device.getId(), token), device.getMdn());
+        mvc.perform(delete(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isNoContent());
+        gpsSave.saveGpsLog(gpsPacket(), identity);
+        gpsSave.saveGpsLog(gpsPacket(), identity);
+        assertThat(logCount("gps")).isEqualTo(1);
+        telemetry.streamGps(gpsPacket(), identity); // Missing min is normalized before SSE conversion.
+        verify(streams).sendCurrentCoordinates(eq(new org.thisway.vehicle.domain.VehicleReference(identity.vehicleId(), identity.companyId())), anyList());
+    }
+
+    @Test
+    void 소속잠금은_저장commit까지_재연결을_대기시킨다() throws Exception {
+        var identity = authentication.authenticate(device.getId(), issue(device.getId(), token), device.getMdn());
+        var destination = device(company).getVehicle();
+        var executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+        var started = new java.util.concurrent.CountDownLatch(1);
+        var future = new java.util.concurrent.atomic.AtomicReference<java.util.concurrent.Future<?>>();
+        try {
+            new org.springframework.transaction.support.TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+                guard.requireCurrent(identity, device.getMdn());
+                future.set(executor.submit(() -> {
+                    started.countDown();
+                    update(Map.of("vehicleId", destination.getId()));
+                    return null;
+                }));
+                try {
+                    assertThat(started.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                    assertThatThrownBy(() -> future.get().get(200, java.util.concurrent.TimeUnit.MILLISECONDS))
+                            .isInstanceOf(java.util.concurrent.TimeoutException.class);
+                } catch (InterruptedException error) { throw new RuntimeException(error); }
+                gpsSave.saveGpsLog(gpsPacket(), identity);
+            });
+            future.get().get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(logCount("gps")).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM gps_log WHERE vehicle_id=?", Integer.class, destination.getId())).isZero();
+            assertThatThrownBy(() -> gpsSave.saveGpsLog(gpsPacket(), identity)).isInstanceOf(org.thisway.support.common.CustomException.class);
+        } finally { executor.shutdownNow(); }
+    }
+
+    @Test
+    void 실제_HTTP_broker_consumer_경로는_identity를_보존하고_retry와_중복저장을_제한한다() throws Exception {
+        String key = issue(device.getId(), token);
+        var identity = authentication.authenticate(device.getId(), key, device.getMdn());
+        try (var broker = new AuthenticatedBroker(true)) {
+            var controller = new org.thisway.vehicle.log.interfaces.LogController(
+                    new org.thisway.vehicle.log.application.RabbitMqGpsLogService(broker.producer), authentication, telemetry, requestGuard);
+            var http = org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup(controller)
+                    .setControllerAdvice(new org.thisway.support.common.GlobalExceptionHandler()).build();
+            broker.container.start();
+            for (int i = 0; i < 2; i++) http.perform(post("/api/logs/gps")
+                    .header("X-Device-Id", device.getId()).header("X-Device-Key", key).header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", Long.toString(Instant.now().getEpochSecond()))
+                    .contentType("application/json").content(json.writeValueAsString(gpsPacket())))
+                    .andExpect(status().isOk());
+            org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10)).untilAsserted(() -> {
+                assertThat(broker.attempts.get()).isEqualTo(4); // First delivery: two transient failures then success.
+                assertThat(logCount("gps")).isEqualTo(1);
+            });
+            var live = broker.template.receive(broker.liveQueue, 1000);
+            assertThat(live).isNotNull();
+            assertThat(org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.read(live.getMessageProperties().getHeaders(), device.getMdn()))
+                    .isEqualTo(identity);
+            assertThat(live.toString()).doesNotContain(key, DeviceKeyMaterial.hash(key));
+            new org.thisway.vehicl_consumer.log.StreamGpsLogConsumer(telemetry).StreamGpsLog(gpsPacket(), live.getMessageProperties().getHeaders());
+            assertThat(broker.template.receive(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DLQ, 100)).isNull();
+        }
+    }
+
+    @Test
+    void 지연된_이전소속과_identity없는_메시지는_retry없이_DLQ로_이동하고_방송하지않는다() throws Exception {
+        var identity = authentication.authenticate(device.getId(), issue(device.getId(), token), device.getMdn());
+        try (var broker = new AuthenticatedBroker(false)) {
+            broker.producer.sendGpsLog(gpsPacket(), identity);
+            update(Map.of("vehicleId", device(company).getVehicle().getId()));
+            update(Map.of("vehicleId", device.getVehicle().getId()));
+            broker.template.convertAndSend(org.thisway.support.config.RabbitMQConfig.GPS_LOG_EXCHANGE,
+                    org.thisway.support.config.RabbitMQConfig.GPS_LOG_ROUTING_KEY, gpsPacket());
+            broker.container.start();
+            var first = broker.template.receive(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DLQ, 10000);
+            var second = broker.template.receive(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DLQ, 10000);
+            assertThat(first).isNotNull();
+            assertThat(second).isNotNull();
+            assertThat(broker.attempts.get()).isEqualTo(2);
+            assertThat(logCount("gps")).isZero();
+            var live = broker.template.receive(broker.liveQueue, 1000);
+            assertThatThrownBy(() -> new org.thisway.vehicl_consumer.log.StreamGpsLogConsumer(telemetry)
+                    .StreamGpsLog(gpsPacket(), live.getMessageProperties().getHeaders()))
+                    .isInstanceOf(org.thisway.support.common.CustomException.class);
+            verifyNoInteractions(streams);
+        }
+    }
+
+    private class AuthenticatedBroker implements AutoCloseable {
+        final java.util.concurrent.atomic.AtomicInteger attempts = new java.util.concurrent.atomic.AtomicInteger();
+        final org.springframework.amqp.rabbit.connection.CachingConnectionFactory connection;
+        final org.springframework.amqp.rabbit.core.RabbitTemplate template;
+        final org.springframework.amqp.rabbit.core.RabbitAdmin admin;
+        final org.thisway.vehicle.log.infrastructure.GpsLogProducer producer;
+        final org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer container;
+        final io.micrometer.core.instrument.simple.SimpleMeterRegistry meters = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        final String liveQueue = "identity-live-" + UUID.randomUUID();
+
+        AuthenticatedBroker(boolean transientFailure) {
+            connection = new org.springframework.amqp.rabbit.connection.CachingConnectionFactory(RABBIT.getHost(), RABBIT.getMappedPort(5672));
+            connection.setUsername("test"); connection.setPassword("test");
+            var config = new org.thisway.support.config.RabbitMQConfig(null);
+            var converter = config.jackson2JsonMessageConverter();
+            template = config.rabbitTemplate(connection, converter);
+            admin = new org.springframework.amqp.rabbit.core.RabbitAdmin(connection);
+            admin.declareExchange(config.gpsLogExchange());
+            admin.declareExchange(config.broadcastExchange());
+            admin.declareExchange(config.gpsDeadExchange());
+            admin.declareQueue(config.gpsDeadQueue());
+            admin.declareBinding(config.gpsDeadBinding());
+            // Isolated fixture queue; deployment uses the documented broker DLX policy.
+            admin.declareQueue(org.springframework.amqp.core.QueueBuilder.durable(org.thisway.support.config.RabbitMQConfig.GPS_LOG_QUEUE)
+                    .deadLetterExchange(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DLX)
+                    .deadLetterRoutingKey(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DEAD_KEY).build());
+            admin.declareBinding(config.gpsLogBinding());
+            admin.declareQueue(new org.springframework.amqp.core.Queue(liveQueue));
+            admin.declareBinding(new org.springframework.amqp.core.Binding(liveQueue, org.springframework.amqp.core.Binding.DestinationType.QUEUE,
+                    org.thisway.support.config.RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE, "", null));
+            producer = new org.thisway.vehicle.log.infrastructure.GpsLogProducer(template, converter, mock(io.micrometer.tracing.Tracer.class), meters);
+            var consumer = new org.thisway.vehicl_consumer.log.SaveGpsLogConsumer(gpsSave);
+            var endpoint = new org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint();
+            endpoint.setId("authenticated-fixture");
+            endpoint.setQueueNames(org.thisway.support.config.RabbitMQConfig.GPS_LOG_QUEUE);
+            endpoint.setMessageListener(message -> {
+                int attempt = attempts.incrementAndGet();
+                if (transientFailure && attempt < 3) throw new org.springframework.dao.CannotAcquireLockException("fixture transient");
+                consumer.receiveGpsLog((org.thisway.vehicle.log.interfaces.GpsLogRequest) converter.fromMessage(message), message.getMessageProperties().getHeaders());
+            });
+            container = config.gpsSaveListenerContainerFactory(connection, converter, meters).createListenerContainer(endpoint);
+        }
+
+        @Override public void close() {
+            producer.close();
+            container.stop(); container.destroy();
+            admin.deleteQueue(org.thisway.support.config.RabbitMQConfig.GPS_LOG_QUEUE);
+            admin.deleteQueue(org.thisway.support.config.RabbitMQConfig.GPS_LOG_DLQ);
+            admin.deleteQueue(liveQueue);
+            connection.destroy(); meters.close();
+        }
+    }
+
+    @Test
+    @org.junit.jupiter.api.Tag("emulator-client")
+    void 실제_Emulator_HTTP요청은_저장되고_키폐기후_거부된다() throws Exception {
+        String key = issue(device.getId(), token);
+        var credentials = tempDirectory.resolve("device-credentials.json");
+        java.nio.file.Files.createFile(credentials, java.nio.file.attribute.PosixFilePermissions
+                .asFileAttribute(java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")));
+        java.nio.file.Files.writeString(credentials, json.writeValueAsString(Map.of(device.getMdn(),
+                Map.of("device_id", device.getId(), "key", key))));
+        try {
+            runEmulatorContract(credentials, "accepted");
+            for (String kind : List.of("gps", "power", "geofence")) assertThat(logCount(kind)).isEqualTo(1);
+            mvc.perform(delete(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isNoContent());
+            runEmulatorContract(credentials, "rejected");
+            for (String kind : List.of("gps", "power", "geofence")) assertThat(logCount(kind)).isEqualTo(1);
+        } finally { java.nio.file.Files.deleteIfExists(credentials); }
+    }
+
+    @Test
+    @org.junit.jupiter.api.Tag("emulator-client")
+    void actualPythonMidnightPacketsPreserveAllFiveMysqlObservationTimes() throws Exception {
+        String key = issue(device.getId(), token);
+        var credentials = tempDirectory.resolve("boundary-credentials.json");
+        java.nio.file.Files.createFile(credentials, java.nio.file.attribute.PosixFilePermissions
+                .asFileAttribute(java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")));
+        java.nio.file.Files.writeString(credentials, json.writeValueAsString(Map.of(device.getMdn(),
+                Map.of("device_id", device.getId(), "key", key))));
+        try {
+            runEmulatorContract(credentials, "hour-boundary");
+            var times = jdbc.query("SELECT occurred_time FROM gps_log WHERE vehicle_id=? ORDER BY occurred_time",
+                    (rs, row) -> rs.getTimestamp(1).toLocalDateTime(), device.getVehicle().getId());
+            var first = java.time.LocalDateTime.of(2020, 1, 1, 23, 59, 58);
+            assertThat(times).containsExactlyElementsOf(java.util.stream.IntStream.range(0, 5).mapToObj(first::plusSeconds).toList());
+        } finally { java.nio.file.Files.deleteIfExists(credentials); }
+    }
+
+    private void runEmulatorContract(java.nio.file.Path credentials, String expected) throws Exception {
+        var source = java.nio.file.Path.of(System.getProperty("emulator.source")).toAbsolutePath();
+        var process = new ProcessBuilder(System.getProperty("emulator.python"), "tests/live_device_contract.py", expected)
+                .directory(source.toFile()).redirectErrorStream(true);
+        process.environment().put("PYTHONPATH", source.toString());
+        process.environment().put("DEVICE_CREDENTIALS_FILE", credentials.toString());
+        process.environment().put("TEST_BACKEND_URL", "http://127.0.0.1:" + serverPort);
+        process.environment().put("TEST_MDN", device.getMdn());
+        var child = process.start();
+        try {
+            assertThat(child.waitFor(45, java.util.concurrent.TimeUnit.SECONDS)).as("Emulator contract timeout").isTrue();
+            assertThat(child.exitValue()).as("Emulator contract failed; no secret output is echoed").isZero();
+            assertThat(new String(child.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8))
+                    .isEqualTo(expected.equals("hour-boundary") ? "hour boundary verified\n" : "3 telemetry contracts verified\n");
+        } finally { child.destroyForcibly(); }
+    }
+
+    @Test
+    void duplicateRequestAttemptIsRejectedAcrossEndpointsAndFreshRetryRemainsIdempotent() throws Exception {
+        String key = issue(device.getId(), token);
+        String nonce = UUID.randomUUID().toString();
+        String timestamp = Long.toString(Instant.now().getEpochSecond());
+        String body = json.writeValueAsString(packet("gps"));
+        for (int expected : new int[]{200, 409}) {
+            mvc.perform(post("/api/logs/gps").header("X-Device-Id", device.getId())
+                    .header("X-Device-Key", key).header("X-Request-Id", nonce).header("X-Request-Timestamp", timestamp)
+                    .contentType("application/json").content(body)).andExpect(status().is(expected));
+        }
+        mvc.perform(post("/api/logs/power").header("X-Device-Id", device.getId())
+                .header("X-Device-Key", key).header("X-Request-Id", nonce).header("X-Request-Timestamp", timestamp)
+                .contentType("application/json").content(json.writeValueAsString(packet("power")))).andExpect(status().isConflict());
+        mvc.perform(post("/api/logs/gps").header("X-Device-Id", device.getId()).header("X-Device-Key", key)
+                .header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", timestamp)
+                .contentType("application/json").content(body)).andExpect(status().isOk());
+        assertThat(logCount("gps")).isEqualTo(1); assertThat(logCount("power")).isZero();
+    }
+
+    @Test
+    void missingFreshnessAndRateExceededCannotWrite() throws Exception {
+        String key = issue(device.getId(), token);
+        String body = json.writeValueAsString(packet("gps"));
+        mvc.perform(post("/api/logs/gps").header("X-Device-Id", device.getId()).header("X-Device-Key", key)
+                .contentType("application/json").content(body)).andExpect(status().isBadRequest());
+        // Exhaust the shared real Redis budget, then verify the HTTP boundary, not just Lua output.
+        for (int i = 0; i < 120; i++) requestGuard.accept(device.getId(), UUID.randomUUID().toString(), Long.toString(Instant.now().getEpochSecond()));
+        mvc.perform(post("/api/logs/gps").header("X-Device-Id", device.getId()).header("X-Device-Key", key)
+                .header("X-Request-Id", UUID.randomUUID().toString()).header("X-Request-Timestamp", Long.toString(Instant.now().getEpochSecond()))
+                .contentType("application/json").content(body)).andExpect(status().isTooManyRequests());
+        assertThat(logCount("gps")).isZero();
+    }
+
+    @Test
+    void browserPreflightAllowsAllTelemetryHeadersAndMalformedJsonDoesNotEchoBody() throws Exception {
+        mvc.perform(options("/api/logs/gps").header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type,x-device-id,x-device-key,x-request-id,x-request-timestamp"))
+                .andExpect(status().isOk()).andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+        var response = mvc.perform(post("/api/logs/gps").contentType("application/json").content("{private-fixture"))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+        assertThat(response).doesNotContain("private-fixture", "Jackson");
+    }
+
+    @Test
+    void oversizedBrowserRequestStillExposes413ThroughAllowedCors() throws Exception {
+        byte[] body = new byte[org.thisway.vehicle.log.interfaces.TelemetryBodyLimitFilter.MAX_BYTES + 1];
+        mvc.perform(post("/api/logs/gps").header("Origin", "http://localhost:5173")
+                .contentType("application/json").content(body))
+                .andExpect(status().is(413)).andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+        mvc.perform(post("/api/logs/gps").header("Origin", "https://unknown.invalid")
+                .contentType("application/json").content(body))
+                .andExpect(status().isForbidden()).andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+        assertThat(logCount("gps")).isZero();
+    }
+
+    private void rejectAdmission(DeviceIdentity identity) {
+        assertThatThrownBy(() -> gpsSave.saveGpsLog(gpsPacket(), identity)).isInstanceOf(org.thisway.support.common.CustomException.class);
+        assertThatThrownBy(() -> telemetry.streamGps(gpsPacket(), identity)).isInstanceOf(org.thisway.support.common.CustomException.class);
+        assertThatThrownBy(() -> telemetry.savePowerLog((org.thisway.vehicle.log.interfaces.PowerLogRequest) packet("power"), identity))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+        assertThatThrownBy(() -> telemetry.saveGeofenceLog((org.thisway.vehicle.log.interfaces.GeofenceLogRequest) packet("geofence"), identity))
+                .isInstanceOf(org.thisway.support.common.CustomException.class);
+    }
+
+    private int logCount(String kind) {
+        // Test-controlled table allowlist; no request input is interpolated.
+        if (!List.of("gps", "power", "geofence").contains(kind)) throw new IllegalArgumentException();
+        return jdbc.queryForObject("SELECT COUNT(*) FROM " + kind + "_log WHERE vehicle_id=?", Integer.class, device.getVehicle().getId());
+    }
+
+    private org.thisway.vehicle.log.interfaces.GpsLogRequest gpsPacket() {
+        return new org.thisway.vehicle.log.interfaces.GpsLogRequest(device.getMdn(), "1", "1", "1", "1", "20200101102000", "1",
+                List.of(new org.thisway.vehicle.log.interfaces.GpsLogEntry(null, "30", "A", "37000000", "127000000", "0", "0", "100", "12")));
+    }
+
+    private Object packet(String kind) {
+        return switch (kind) {
+            case "gps" -> gpsPacket();
+            case "power" -> new org.thisway.vehicle.log.interfaces.PowerLogRequest(device.getMdn(), "1", "1", "1", "1",
+                    "20200101102000", "", "A", "37000000", "127000000", "0", "0", "100");
+            case "geofence" -> new org.thisway.vehicle.log.interfaces.GeofenceLogRequest(device.getMdn(), "1", "1", "1", "1",
+                    "20200101102000", "1", "1", "1", "A", "37000000", "127000000", "0", "0", "100");
+            default -> throw new IllegalArgumentException();
+        };
+    }
+
+    private void rejectAuthentication(long id, String key, String mdn) {
+        assertThatThrownBy(() -> authentication.authenticate(id, key, mdn))
+                .isInstanceOfSatisfying(org.thisway.support.common.CustomException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(org.thisway.support.common.ErrorCode.DEVICE_AUTHENTICATION_FAILED))
+                .hasMessage(org.thisway.support.common.ErrorCode.DEVICE_AUTHENTICATION_FAILED.getMessage());
     }
 
     private long revision() {

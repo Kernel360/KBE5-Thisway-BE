@@ -14,6 +14,12 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(org.springframework.http.converter.HttpMessageNotReadableException ignored) {
+        // Jackson errors can contain raw coordinates or credentials. Return only the fixed code.
+        return ApiErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
@@ -49,6 +55,10 @@ public class GlobalExceptionHandler {
             log.info("예외 발생: {}", message);
         }
 
+        if (errorCode == ErrorCode.TELEMETRY_RATE_LIMITED) {
+            return ResponseEntity.status(status).header("Retry-After", "60")
+                    .body(new ApiErrorResponse(errorCode.getCode(), message));
+        }
         return ApiErrorResponse.of(errorCode);
     }
 }

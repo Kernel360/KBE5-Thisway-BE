@@ -1,5 +1,6 @@
 package org.thisway.vehicl_consumer.log;
 
+import org.thisway.vehicle.log.infrastructure.GpsMessageIdentity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -25,10 +26,15 @@ public class SaveGpsLogConsumer {
     @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5",
             containerFactory = "gpsSaveListenerContainerFactory")
     public void receiveGpsLog(GpsLogRequest request, @Headers Map<String, Object> headers) {
-        String traceId = (String) headers.get(MdcKeys.TRACE_ID);
+        String traceId = headers.get(MdcKeys.TRACE_ID) instanceof String value ? value : null;
         MDC.put(MdcKeys.TRACE_ID, traceId);
 
-        log.debug("GPS 저장 메시지 수신: 항목 수={}", request.cCnt());
-        gpsLogSaveService.saveGpsLog(request);
+        try {
+            log.debug("GPS 저장 메시지 수신");
+            gpsLogSaveService.saveGpsLog(request,
+                    GpsMessageIdentity.read(headers, request.mdn()));
+        } finally {
+            MDC.remove(MdcKeys.TRACE_ID);
+        }
     }
 }

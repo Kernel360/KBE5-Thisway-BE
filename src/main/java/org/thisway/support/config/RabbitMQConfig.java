@@ -104,6 +104,20 @@ public class RabbitMQConfig {
         return factory;
     }
 
+    @Bean
+    public SimpleRabbitListenerContainerFactory gpsStreamListenerContainerFactory(
+            ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter) {
+        var factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(converter);
+        factory.setDefaultRequeueRejected(false);
+        factory.setErrorHandler(error -> {
+            log.warn("GPS live delivery rejected; live stream is best effort");
+            throw new AmqpRejectAndDontRequeueException("GPS live delivery rejected");
+        });
+        return factory;
+    }
+
     /* Fanout Exchange */
     @Bean
     public FanoutExchange broadcastExchange() {
