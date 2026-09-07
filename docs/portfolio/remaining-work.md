@@ -22,6 +22,10 @@
 
 최종 전체 회귀와 교차 저장소 검증은 [CHANGE-049 통합 기록](work-logs/2026-09-07-local-completion-review.md)에 확정한다. 앞선 작업 로그의 테스트 수는 당시 스냅샷이며 최신 개수로 소급 변경하지 않는다.
 
+## 관측성 후속 작업
+
+[CHANGE-050](work-logs/2026-09-07-observability-evidence.md): 안전한 공통 로그·correlation/MDC 복원, 실제 Prometheus/Grafana와18개 panel,90초 단계 부하·consumer pause/recovery 증거를 보강한다. 구체적인 실행 결과는 해당 work log가 기준이다. 후속 gate는 운영 metrics 접근 격리, 중앙 로그 retention/권한, 실제 알림 수신, 개별 observation의 접수→DB commit 지연, 장기 soak·동일환경 A/B다.
+
 ## 실제 입력 또는 별도 실행이 필요한 것
 
 | 남은 항목 | 필요한 근거·다음 행동 |
@@ -30,7 +34,7 @@
 | 최초 계산 이전의 실제 fleet 가입·소속 이력 | 당시 원천 자료가 필요하다. 새 snapshot과 ADMIN의 현재 목록 seed는 과거 이력 복원 결과가 아니다. |
 | 운영 broker/Redis/주소 API 전환 | 실제 queue/DLQ policy, credential/nonce client 동시 전환, Redis persistence/HA/eviction/time sync, Kakao quota와 worker cron 활성화 판단. 로컬 fixture가 운영 설정을 바꾸지 않는다. |
 | 운영 경보 수신·배포·rollback 훈련 | 실제 scrape/Alertmanager 수신자, AWS task/image digest/inventory와 복원 검증. [절차](../runbooks/reliability-alerts-and-release.md). |
-| Git 공개 반영 | 현재 dirty 변경을 검토해 commit 단위로 정리한 뒤 원격 push/PR/CI/merge를 진행한다. 이번 로컬 실행이 원격 반영을 의미하지 않는다. |
+| Git 공개 반영 | 앞선 범위는 BE #235 / FE #84 / Emulator #22 draft PR 생성, BE CI 성공까지 확인했다. merge/운영 배포는 미실행. CHANGE-050 관측성 후속 변경은 별도 로컬 branch에서 검증한다. |
 | 독립 설명·시연 | 사용자가 [학습 계획](learning-review-plan.md)과 [체크리스트](submission-checklist.md)의 핵심 테스트를 직접 실행하고 설계 이유를 설명해야 한다. AI가 대신 완료 표시할 수 없다. |
 
 ## 의도적으로 확정하지 않은 추가 범위

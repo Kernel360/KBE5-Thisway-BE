@@ -22,19 +22,23 @@ import java.util.Map;
 public class SaveGpsLogConsumer {
 
     private final GpsLogSaveService gpsLogSaveService;
+    private final io.micrometer.core.instrument.MeterRegistry meters;
 
     @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5",
             containerFactory = "gpsSaveListenerContainerFactory")
     public void receiveGpsLog(GpsLogRequest request, @Headers Map<String, Object> headers) {
         String traceId = headers.get(MdcKeys.TRACE_ID) instanceof String value ? value : null;
-        MDC.put(MdcKeys.TRACE_ID, traceId);
-
-        try {
+        long started = System.nanoTime();
+        String outcome = "failed";
+        try (var context = org.thisway.support.logging.TraceContext.open(traceId)) {
             log.debug("GPS 저장 메시지 수신");
             gpsLogSaveService.saveGpsLog(request,
                     GpsMessageIdentity.read(headers, request.mdn()));
+            outcome = "committed"; // Transactional service proxy returned after commit.
         } finally {
-            MDC.remove(MdcKeys.TRACE_ID);
+            io.micrometer.core.instrument.Timer.builder("gps.consumer.processing")
+                    .tag("outcome", outcome).publishPercentileHistogram()
+                    .register(meters).record(System.nanoTime() - started, java.util.concurrent.TimeUnit.NANOSECONDS);
         }
     }
 }

@@ -51,7 +51,7 @@ public class GpsLogSaveService {
 
     private List<GpsLogData> persist(GpsLogRequest request, Long vehicleId) {
         GpsLogRequestValidator.validate(request);
-        log.info("주기 정보 로그 수신: 항목 수={}, 시간={}", request.cCnt(), request.oTime());
+        log.debug("event=gps_storage_started");
 
         String mdn = request.mdn();
 
@@ -61,13 +61,11 @@ public class GpsLogSaveService {
         try {
             if (request.oTime().length() == 14) {
                 baseTime = converter.convertDateTimeWithSec(request.oTime());
-                log.info("초 단위 시간 형식 감지: {}", request.oTime());
             } else {
                 baseTime = converter.convertDateTime(request.oTime());
-                log.info("분 단위 시간 형식 감지: {}", request.oTime());
             }
         } catch (Exception e) {
-            log.error("시간 형식 변환 오류: {}, 오류 메시지: {}", request.oTime(), e.getMessage());
+            log.warn("event=gps_time_conversion_failed");
             throw new CustomException(ErrorCode.SERVER_ERROR);
         }
 
@@ -93,7 +91,7 @@ public class GpsLogSaveService {
 
         logRepository.saveGpsLogs(gpsLogDataList);
 
-        log.info("주기 정보 로그 저장 요청 처리 완료: 입력 항목 수={}", gpsLogDataList.size());
+        log.debug("event=gps_storage_statement_completed");
         return gpsLogDataList;
     }
 

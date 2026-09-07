@@ -211,3 +211,7 @@ sibling Python Emulator→임시 Boot→MySQL의 실제 HTTP 인증 계약을 �
 V10 주소 retry worker, V11 통계 correction queue, V12 수정 revision, V13 최초 fleet ID snapshot, V14 orphan 복구 감사가 추가됐다. 기존 fleet 정보가 없는 통계는 자동 추정하지 않고 409로 보존한다. [통계 절차](docs/runbooks/statistics-formula-v2.md), [주소 worker](docs/runbooks/trip-address-worker.md), [배치 offline 복구](docs/runbooks/statistics-orphan-recovery.md), [경보/rollback](docs/runbooks/reliability-alerts-and-release.md)을 참고한다. 운영 DB·broker·AWS 적용 완료를 뜻하지 않는다.
 
 추가 opt-in 검증은 `fleetEvidenceTest`, `fleetBrowserTest`, `statisticsCrashRecoveryTest`, `emulatorClientTest`다. Docker·FE npm/Chromium·Emulator Python 의존성을 갖추고 Gradle task는 같은 checkout에서 순서대로 실행한다. `emulatorClientTest`는 `-Demulator.python=/사용할/venv/bin/python`을 지정할 수 있다. 정확한 현재 검증 결과와 남은 외부 입력은 [남은 작업](docs/portfolio/remaining-work.md)에 기록한다.
+
+### 관측성과 재현 실험
+
+로그의 민감정보 제외·HTTP/RabbitMQ correlation, consumer transaction timer, publisher queue 지표와 Grafana18개 패널을 추가했다. [실행계획](docs/portfolio/observability-execution-plan.md)과 [실행 절차](docs/runbooks/observability-evidence.md)를 참고한다. 실제 격리 Prometheus/Grafana 수집과90초 단계 부하·consumer pause/recovery는 `./gradlew observabilityEvidenceTest --console=plain`으로 재현한다. [CHANGE-050](docs/portfolio/work-logs/2026-09-07-observability-evidence.md)의 원시 자료와 한계를 함께 읽는다. 운영 지속 수집/알림 수신, 최대 처리량이나 개선율을 검증한 결과는 아니다.

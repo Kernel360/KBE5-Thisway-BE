@@ -37,6 +37,12 @@ public class GpsLogProducer {
             task -> { var thread = new Thread(task, "gps-publisher"); thread.setDaemon(true); return thread; },
             new java.util.concurrent.ThreadPoolExecutor.AbortPolicy());
 
+    @jakarta.annotation.PostConstruct
+    void registerCapacityMetrics() {
+        meters.gauge("gps.publisher.active", publishes, java.util.concurrent.ThreadPoolExecutor::getActiveCount);
+        meters.gauge("gps.publisher.queued", publishes, executor -> executor.getQueue().size());
+    }
+
     @jakarta.annotation.PreDestroy
     public void close() { publishes.shutdownNow(); }
 
@@ -46,14 +52,22 @@ public class GpsLogProducer {
         properties.getHeaders().putAll(GpsMessageIdentity.headers(identity));
         if (!identity.mdn().equals(request.mdn())) throw new CustomException(ErrorCode.DEVICE_AUTHENTICATION_FAILED);
         long deadline = System.nanoTime() + BUDGET_NANOS;
-        String traceId = tracer.currentSpan() != null ? tracer.currentSpan().context().traceId() : "unknown";
+        String traceId = org.slf4j.MDC.get(MdcKeys.TRACE_ID);
+        if (traceId == null && tracer.currentSpan() != null) traceId = tracer.currentSpan().context().traceId();
+        try (var context = org.thisway.support.logging.TraceContext.open(traceId)) {
+            traceId = org.slf4j.MDC.get(MdcKeys.TRACE_ID);
+        }
         properties.setHeader(MdcKeys.TRACE_ID, traceId);
         properties.setDeliveryMode(MessageDeliveryMode.PERSISTENT);
         Message message = messageConverter.toMessage(request, properties);
         var storageConfirmed = new java.util.concurrent.atomic.AtomicBoolean();
         java.util.concurrent.Future<?> task;
         try {
-            task = publishes.submit(() -> send(message, deadline, storageConfirmed));
+            task = publishes.submit(() -> {
+                try (var context = org.thisway.support.logging.TraceContext.open(message.getMessageProperties().getHeader(MdcKeys.TRACE_ID))) {
+                    send(message, deadline, storageConfirmed);
+                }
+            });
         } catch (java.util.concurrent.RejectedExecutionException saturated) {
             meters.counter("gps.publisher.saturated").increment();
             throw new CustomException(ErrorCode.GPS_PUBLISH_UNAVAILABLE);

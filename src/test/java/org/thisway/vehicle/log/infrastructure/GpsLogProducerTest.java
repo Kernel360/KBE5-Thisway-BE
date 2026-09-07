@@ -92,4 +92,22 @@ class GpsLogProducerTest {
         } finally { release.countDown(); producer.close(); meters.close(); }
     }
 
+    @Test void HTTP_추적값을_비동기_worker와_메시지에_전달한다() {
+        var template = mock(RabbitTemplate.class);
+        String trace = "0123456789abcdef0123456789abcdef";
+        doAnswer(call -> {
+            Message message = call.getArgument(2);
+            assertThat(message.getMessageProperties().getHeaders().get("traceId")).isEqualTo(trace);
+            assertThat(org.slf4j.MDC.get("traceId")).isEqualTo(trace);
+            ((CorrelationData) call.getArgument(3)).getFuture().complete(new CorrelationData.Confirm(true, null));
+            return null;
+        }).when(template).send(anyString(), anyString(), any(Message.class), any(CorrelationData.class));
+        var producer = new GpsLogProducer(template, new Jackson2JsonMessageConverter(), mock(Tracer.class), new SimpleMeterRegistry());
+        org.slf4j.MDC.put("traceId", trace);
+        try {
+            producer.sendGpsLog(GpsLogProducerIntegrationTest.request(), GpsLogProducerIntegrationTest.identity());
+            assertThat(org.slf4j.MDC.get("traceId")).isEqualTo(trace);
+        } finally { producer.close(); org.slf4j.MDC.clear(); }
+    }
+
 }

@@ -222,6 +222,8 @@ Acceptance criteria:
 - test를 포함한 build gate
 - commit SHA image tag, GitHub OIDC, ECS 안정화 wait, health check, rollback
 
+[CHANGE-050](work-logs/2026-09-07-observability-evidence.md)에서 안전한 공통 로그와MDC scope, consumer transaction 지표, 버전 관리 대시보드 및 실제 수집·지속 부하·pause/recovery 검증을 추가한다. 운영 수신·배포와 장기부하/A-B 검증은 별도 gate로 유지한다.
+
 ## Phase 3. 선택적 AI 기능
 
 ### 추천: 이상 운행 후보 랭킹 + 근거 설명

@@ -69,8 +69,11 @@ import static org.mockito.Mockito.when;
 /** Opt-in small-fixture baseline. It deliberately does not run in the normal test task. */
 @Tag("fleet-evidence")
 @Testcontainers
+@org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability
 @DirtiesContext
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "management.endpoints.web.exposure.include=health,prometheus",
+        "management.metrics.distribution.percentiles-histogram.http.server.requests=true",
         "spring.flyway.enabled=true", "spring.flyway.baseline-on-migrate=false",
         "spring.jpa.hibernate.ddl-auto=validate", "spring.jpa.show-sql=false",
         "spring.batch.jdbc.initialize-schema=never", "gps-log-collect-mode=rabbitmq",
@@ -89,7 +92,7 @@ class FleetEvidenceIntegrationTest {
             .withExposedPorts(3306).waitingFor(Wait.forLogMessage(".*ready for connections.*port: 3306.*", 1));
     @Container static final GenericContainer<?> RABBIT = new GenericContainer<>("rabbitmq:3.13.7-alpine")
             .withEnv("RABBITMQ_DEFAULT_USER", "test").withEnv("RABBITMQ_DEFAULT_PASS", "test")
-            .withExposedPorts(5672).waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1));
+            .withExposedPorts(5672, 15692).waitingFor(Wait.forLogMessage(".*Server startup complete.*", 1));
     @Container static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7.4.2-alpine")
             .withExposedPorts(6379);
 
@@ -153,6 +156,10 @@ class FleetEvidenceIntegrationTest {
             devices.add(new Device(emulator, key));
         }
 
+        if (Boolean.getBoolean("fleet.observability")) {
+            sustainedObservability(devices);
+            return;
+        }
         Batch warmup = gpsBatch("warmup", devices, 0, 2, 16);
         List<Batch> rounds = new ArrayList<>();
         for (int round = 0; round < 3; round++) {
@@ -382,4 +389,180 @@ class FleetEvidenceIntegrationTest {
         }
         return java.util.HexFormat.of().formatHex(digest.digest());
     }
+    private void sustainedObservability(List<Device> devices) throws Exception {
+        assertThat(RABBIT.execInContainer("rabbitmq-plugins", "enable", "rabbitmq_prometheus").getExitCode()).isZero();
+        org.testcontainers.Testcontainers.exposeHostPorts(port, RABBIT.getMappedPort(15692));
+        Path output = Path.of("build/reports/observability-evidence");
+        Files.createDirectories(output);
+        Path config = Files.createTempFile("thisway-prometheus-", ".yml");
+        String scrape = "global:\n  scrape_interval: 1s\nscrape_configs:\n"
+                + "  - job_name: spring-boot-application\n    metrics_path: /actuator/prometheus\n"
+                + "    static_configs:\n      - targets: ['host.testcontainers.internal:" + port + "']\n"
+                + "  - job_name: RabbitMQ\n    static_configs:\n      - targets: ['host.testcontainers.internal:"
+                + RABBIT.getMappedPort(15692) + "']\n";
+        Files.writeString(config, scrape);
+        try (var prom = new GenericContainer<>("prom/prometheus:v3.4.1")
+                    .withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath(config, 0644), "/etc/prometheus/prometheus.yml")
+                    .withExposedPorts(9090).waitingFor(Wait.forHttp("/-/ready"));
+             var grafana = new GenericContainer<>("grafana/grafana:12.0.2")
+                    .withEnv("GF_AUTH_ANONYMOUS_ENABLED", "true").withEnv("GF_AUTH_ANONYMOUS_ORG_ROLE", "Viewer")
+                    .withEnv("GF_ANALYTICS_REPORTING_ENABLED", "false").withEnv("GF_ANALYTICS_CHECK_FOR_UPDATES", "false")
+                    .withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath("infra/observability/provisioning/dashboards"), "/etc/grafana/provisioning/dashboards")
+                    .withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath("infra/observability/dashboards"), "/var/lib/grafana/dashboards")
+                    .withExposedPorts(3000).waitingFor(Wait.forHttp("/api/health"))) {
+            prom.start();
+            org.testcontainers.Testcontainers.exposeHostPorts(prom.getMappedPort(9090));
+            Path datasource = Files.createTempFile("thisway-datasource-", ".yml");
+            Files.writeString(datasource, Files.readString(Path.of("infra/observability/provisioning/datasources/prometheus.yml"))
+                    .replace("http://prometheus:9090", "http://host.testcontainers.internal:" + prom.getMappedPort(9090)));
+            grafana.withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath(datasource, 0644), "/etc/grafana/provisioning/datasources/prometheus.yml");
+            grafana.start();
+            Files.deleteIfExists(datasource);
+            String promUrl = "http://" + prom.getHost() + ":" + prom.getMappedPort(9090);
+            String grafanaUrl = "http://" + grafana.getHost() + ":" + grafana.getMappedPort(3000);
+            await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+                JsonNode up = promQuery(promUrl, "up");
+                assertThat(up.path("data").path("result").size()).isEqualTo(2);
+                up.path("data").path("result").forEach(item -> assertThat(item.path("value").get(1).asText()).as(item.path("metric").path("job").asText()).isEqualTo("1"));
+            });
+            gpsBatch("warmup", devices, 0, 2, 16);
+            List<Map<String, Object>> stages = new ArrayList<>();
+            List<Sample> allSamples = new ArrayList<>();
+            List<Map<String, Object>> resources = new ArrayList<>();
+            RabbitAdmin admin = new RabbitAdmin(rabbit);
+            int index = 16;
+            for (int targetRps : new int[]{20, 40, 80}) {
+                int seconds = 30, requests = seconds * targetRps;
+                long started = System.nanoTime();
+                List<java.util.concurrent.Future<Sample>> pending = new ArrayList<>();
+                try (var workers = new java.util.concurrent.ThreadPoolExecutor(8, 8, 0, java.util.concurrent.TimeUnit.SECONDS,
+                        new java.util.concurrent.ArrayBlockingQueue<>(256))) {
+                    for (int i = 0; i < requests; i++) {
+                        long scheduled = started + (long) i * 1_000_000_000L / targetRps;
+                        long wait = scheduled - System.nanoTime();
+                        if (wait > 0) java.util.concurrent.TimeUnit.NANOSECONDS.sleep(wait);
+                        final int requestIndex = index++;
+                        try {
+                            pending.add(workers.submit(() -> sendObservation("rps-" + targetRps, devices, requestIndex)));
+                        } catch (java.util.concurrent.RejectedExecutionException full) {
+                            pending.add(java.util.concurrent.CompletableFuture.completedFuture(
+                                    new Sample("rps-" + targetRps, requestIndex, -1, 0)));
+                        }
+                        if (i % targetRps == 0) resources.add(resourceSample(admin, targetRps));
+                    }
+                    List<Sample> samples = new ArrayList<>();
+                    for (var future : pending) samples.add(future.get());
+                    double wall = elapsedMs(started);
+                    allSamples.addAll(samples);
+                    stages.add(Map.of("targetRps", targetRps, "scheduledSeconds", seconds,
+                            "maxClientWorkers", 8, "http", summary(samples, wall)));
+                }
+            }
+            final int expectedBeforePause = index;
+            await().atMost(Duration.ofSeconds(30)).until(() -> gpsCount() == expectedBeforePause);
+            listeners.stop();
+            long beforePause = gpsCount();
+            List<Sample> outageSamples = new ArrayList<>();
+            for (int i = 0; i < 80; i++) outageSamples.add(sendObservation("consumer-stopped", devices, index++));
+            assertThat(gpsCount()).isEqualTo(beforePause);
+            long backlog = ready(admin, RabbitMQConfig.GPS_LOG_QUEUE);
+            assertThat(backlog).isEqualTo(80);
+            var backlogProof = new java.util.concurrent.atomic.AtomicReference<JsonNode>();
+            // Keep the fault present until it is visible through the real exporter/scraper path.
+            await().atMost(Duration.ofSeconds(25)).pollInterval(Duration.ofSeconds(1)).untilAsserted(() -> {
+                JsonNode backlogMetric = promQuery(promUrl, "sum(rabbitmq_queue_messages_ready)");
+                assertThat(backlogMetric.path("data").path("result").isEmpty()).isFalse();
+                assertThat(backlogMetric.path("data").path("result").get(0).path("value").get(1).asDouble()).isGreaterThanOrEqualTo(80);
+                backlogProof.set(backlogMetric);
+            });
+            long recoveryStarted = System.nanoTime();
+            listeners.start();
+            final int expectedAfterRecovery = index;
+            await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(20))
+                    .until(() -> gpsCount() == expectedAfterRecovery && ready(admin, RabbitMQConfig.GPS_LOG_QUEUE) == 0);
+            double recoveryMs = elapsedMs(recoveryStarted);
+            List<Sample> duplicates = new ArrayList<>();
+            for (int i = 16; i < 40; i++) duplicates.add(sendObservation("duplicate", devices, i));
+            await().atMost(Duration.ofSeconds(30)).until(() -> ready(admin, RabbitMQConfig.GPS_LOG_QUEUE) == 0);
+            listeners.stop();
+            assertThat(gpsCount()).isEqualTo(expectedAfterRecovery);
+            Map<String, Object> queries = new LinkedHashMap<>();
+            for (String expr : List.of("up", "sum(rate(http_server_requests_seconds_count[1m]))",
+                    "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[1m])))",
+                    "sum(gps_consumer_processing_seconds_count{outcome=\"committed\"})", "gps_publisher_queued",
+                    "jvm_memory_used_bytes{area=\"heap\"}", "hikaricp_connections_active", "rabbitmq_queue_messages_ready")) {
+                JsonNode result = promQuery(promUrl, expr);
+                assertThat(result.path("status").asText()).isEqualTo("success");
+                assertThat(result.path("data").path("result").isEmpty()).as("metric available: " + expr).isFalse();
+                queries.put(expr, result);
+            }
+            JsonNode dashboard = json.readTree(http.send(HttpRequest.newBuilder(URI.create(grafanaUrl
+                    + "/api/dashboards/uid/thisway-reliability")).GET().build(), HttpResponse.BodyHandlers.ofString()).body());
+            assertThat(dashboard.path("dashboard").path("panels").size()).isEqualTo(18);
+            JsonNode proxy = json.readTree(http.send(HttpRequest.newBuilder(URI.create(grafanaUrl
+                    + "/api/datasources/proxy/uid/thisway-prometheus/api/v1/query?query=up")).GET().build(), HttpResponse.BodyHandlers.ofString()).body());
+            assertThat(proxy.path("status").asText()).isEqualTo("success");
+            Map<String, Object> report = new LinkedHashMap<>();
+            report.put("measuredAt", Instant.now().toString());
+            report.put("compiledClassesSha256", compiledClassesDigest());
+            report.put("fixture", Map.of("seed", SEED, "devices", DEVICES, "warmupRequests", 16,
+                    "stageSeconds", 30, "admissionLimitPerDevicePerMinute", 10000));
+            report.put("environment", Map.of("java", System.getProperty("java.runtime.version"), "os", System.getProperty("os.name"),
+                    "architecture", System.getProperty("os.arch"), "maxHeapBytes", Runtime.getRuntime().maxMemory(),
+                    "mysql", MYSQL.getDockerImageName(), "rabbitmq", RABBIT.getDockerImageName(), "redis", REDIS.getDockerImageName(),
+                    "prometheus", prom.getDockerImageName(), "grafana", grafana.getDockerImageName()));
+            report.put("stages", stages); report.put("samples", allSamples); report.put("resourceSamples", resources);
+            report.put("recovery", Map.of("pausedConsumerAccepted", outageSamples.size(), "readyBeforeRestart", backlog,
+                    "recoveryMs", recoveryMs, "expectedUniqueRows", expectedAfterRecovery, "actualUniqueRows", gpsCount(),
+                    "duplicateRequests", duplicates.size(), "deadLetters", ready(admin, RabbitMQConfig.GPS_LOG_DLQ)));
+            report.put("backlogObservedByPrometheus", backlogProof.get());
+            report.put("prometheusQueries", queries); report.put("dashboardPanels", 18); report.put("grafanaDatasourceProxy", "success");
+            report.put("limitations", List.of("Local synthetic baseline, no before/after performance claim or production SLA.",
+                    "Client worker queue bounded at 256; -1 status means generator saturation. HTTP times exclude client executor wait.",
+                    "HTTP timing is broker acceptance, consumer timer excludes queue wait, recovery is batch-level polling upper bound.",
+                    "Same host generates load and runs Docker; CPU/memory quotas and background activity not pinned.",
+                    "90 second stepped run, not long-duration soak or maximum capacity. No per-observation end-to-end latency.",
+                    "Consumer pause is controlled stop, not broker/process crash. Prometheus and Grafana API verified, screenshots separate.",
+                    "No remote write, external alerts or production changes. Geocoding mocked; all coordinates synthetic."));
+            Files.writeString(output.resolve("result.json"), json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+            Files.writeString(output.resolve("dashboard.json"), json.writerWithDefaultPrettyPrinter().writeValueAsString(dashboard));
+            var capture = new ProcessBuilder("node", "scripts/observability/capture-dashboard.mjs", grafanaUrl, output.toAbsolutePath().toString())
+                    .redirectErrorStream(true).redirectOutput(output.resolve("browser-process.log").toFile()).start();
+            boolean captured = capture.waitFor(45, java.util.concurrent.TimeUnit.SECONDS);
+            if (!captured) capture.destroyForcibly();
+            assertThat(captured).as("Grafana browser capture completed").isTrue();
+            assertThat(capture.exitValue()).as("Grafana browser capture exit").isZero();
+            assertThat(allSamples).allMatch(sample -> sample.status() == 200);
+            assertThat(outageSamples).allMatch(sample -> sample.status() == 200);
+            assertThat(duplicates).allMatch(sample -> sample.status() == 200);
+        } finally { Files.deleteIfExists(config); }
+    }
+
+    private Sample sendObservation(String phase, List<Device> devices, int index) {
+        Device device = devices.get(index % DEVICES);
+        LocalDateTime time = DATE.atTime(10, 0).plusSeconds(index / DEVICES);
+        var payload = new GpsLogRequest(device.emulator().getMdn(), "fixture", "1", "1", "1", PROTOCOL_TIME.format(time),
+                "1", List.of(new GpsLogEntry(null, null, "A", "37000000", "127000000", "90", "20",
+                        Integer.toString(1000 + index / DEVICES), "12")));
+        long started = System.nanoTime();
+        try { return new Sample(phase, index, telemetry("gps", payload, device).statusCode(), elapsedMs(started)); }
+        catch (Exception failure) { return new Sample(phase, index, 0, elapsedMs(started)); }
+    }
+
+    private Map<String, Object> resourceSample(RabbitAdmin admin, int targetRps) {
+        Map<String, Object> sample = new LinkedHashMap<>();
+        sample.put("at", Instant.now().toString()); sample.put("targetRps", targetRps);
+        sample.put("gpsRows", gpsCount()); sample.put("readyMessages", ready(admin, RabbitMQConfig.GPS_LOG_QUEUE));
+        for (String name : List.of("process.cpu.usage", "hikaricp.connections.active", "hikaricp.connections.pending", "gps.publisher.queued")) {
+            var gauge = meters.find(name).gauge(); sample.put(name, gauge == null ? null : gauge.value());
+        }
+        sample.put("heapUsedBytes", java.lang.management.ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
+        return sample;
+    }
+    private JsonNode promQuery(String url, String expression) throws Exception {
+        return json.readTree(http.send(HttpRequest.newBuilder(URI.create(url + "/api/v1/query?query="
+                + java.net.URLEncoder.encode(expression, java.nio.charset.StandardCharsets.UTF_8))).GET().build(),
+                HttpResponse.BodyHandlers.ofString()).body());
+    }
+
 }

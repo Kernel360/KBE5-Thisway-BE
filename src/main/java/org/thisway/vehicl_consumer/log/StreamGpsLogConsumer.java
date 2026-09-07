@@ -23,13 +23,9 @@ public class StreamGpsLogConsumer {
     @RabbitListener(queues = "#{broadcastQueue.name}", containerFactory = "gpsStreamListenerContainerFactory")
     public void StreamGpsLog(GpsLogRequest request, @Headers Map<String, Object> headers) {
         String traceId = headers.get(MdcKeys.TRACE_ID) instanceof String value ? value : null;
-        MDC.put(MdcKeys.TRACE_ID, traceId);
-
-        try {
+        try (var context = org.thisway.support.logging.TraceContext.open(traceId)) {
             log.debug("GPS 방송 메시지 수신");
             telemetry.streamGps(request, GpsMessageIdentity.read(headers, request.mdn()));
-        } finally {
-            MDC.remove(MdcKeys.TRACE_ID);
         }
     }
 }

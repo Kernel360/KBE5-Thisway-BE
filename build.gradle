@@ -209,3 +209,14 @@ def localGradle = file('build.local.gradle')
 if (localGradle.exists()) {
     apply from: localGradle
 }
+
+// Opt-in sustained local load and actual Prometheus/Grafana contract verification.
+tasks.register('observabilityEvidenceTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'fleet-evidence' }
+    systemProperty 'fleet.observability', 'true'
+    inputs.files(fileTree('infra/observability'), fileTree('infra/prod/monitoring/prometheus/rules'), fileTree('scripts/observability'), file('../KBE5-Thisway-FE/package.json'), file('../KBE5-Thisway-FE/package-lock.json'))
+            .withPropertyName('monitoringContracts').withPathSensitivity(PathSensitivity.RELATIVE)
+    shouldRunAfter tasks.test
+}
