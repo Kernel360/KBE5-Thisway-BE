@@ -14,6 +14,7 @@ import org.thisway.vehicle.log.domain.GpsLogData;
 import org.thisway.vehicle.log.domain.PowerLogData;
 import org.thisway.vehicle.log.interfaces.GeofenceLogRequest;
 import org.thisway.vehicle.log.interfaces.PowerLogRequest;
+import org.thisway.vehicle.log.interfaces.PowerLogRequestValidator;
 import org.thisway.vehicle.log.infrastructure.LogRepository;
 import org.thisway.vehicle.triplog.domain.TripLogSaveInput;
 import org.thisway.vehicle.triplog.application.TripLogService;
@@ -37,13 +38,15 @@ public class LogServiceImpl implements LogService {
     private final TripLogService tripLogService;
 
     @Override
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void savePowerLog(PowerLogRequest request) {
+        PowerLogRequestValidator.validate(request);
         log.info("시동 정보 로그 수신: onTime={}, offTime={}", request.onTime(), request.offTime());
 
         String mdn = request.mdn();
         Long vehicleId = getVehicleIdByMdn(mdn);
 
-        Vehicle vehicle = vehicleService.getVehicleById(vehicleId);
+        Vehicle vehicle = vehicleService.getVehicleForPowerUpdate(vehicleId);
 
         if ((request.onTime() != null && !request.onTime().isEmpty()) &&
                 (request.offTime() == null || request.offTime().isEmpty())) {
@@ -51,7 +54,8 @@ public class LogServiceImpl implements LogService {
                     request, vehicleId, true, request.onTime(), converter);
             logRepository.savePowerLog(powerLogData);
 
-            vehicle.updatePowerOn(true);
+            vehicle.observePowerEvent(powerLogData.powerTime(), true,
+                    powerLogData.latitude(), powerLogData.longitude());
             vehicleService.saveVehicle(vehicle);
 
             log.info("시동 ON 정보 로그 저장: onTime={}", request.onTime());
@@ -63,12 +67,12 @@ public class LogServiceImpl implements LogService {
             logRepository.savePowerLog(powerLogData);
 
             Integer totalTripMeter = converter.convertToInteger(request.sum());
-            vehicle.updatePowerOn(false);
-            vehicle.updateMileage(totalTripMeter);
-            vehicle.updateLocation(
-                    converter.convertCoordinate(request.lat()),
-                    converter.convertCoordinate(request.lon())
-            );
+            if (totalTripMeter == null || totalTripMeter < 0) {
+                throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            vehicle.observeOdometer(totalTripMeter);
+            vehicle.observePowerEvent(powerLogData.powerTime(), false,
+                    powerLogData.latitude(), powerLogData.longitude());
             vehicleService.saveVehicle(vehicle);
             log.info("시동 OFF 정보 로그 저장: offTime={}", request.offTime());
         }
@@ -83,6 +87,7 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public void saveGeofenceLog(GeofenceLogRequest request) {
+        org.thisway.vehicle.log.interfaces.GeofenceLogRequestValidator.validate(request);
         log.info("지오펜스 정보 로그 수신");
 
         String mdn = request.mdn();
@@ -95,9 +100,10 @@ public class LogServiceImpl implements LogService {
     }
 
     private Long getVehicleIdByMdn(String mdn) {
-        Emulator emulator = emulatorRepository.findByMdn(mdn)
+        var reference = emulatorRepository.findVehicleByMdn(mdn)
                 .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
-        return emulator.getVehicle().getId();
+        // Projection avoids eager-loading a stale Vehicle before acquiring its write lock.
+        return reference.id();
     }
 
     @Override

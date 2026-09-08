@@ -21,6 +21,7 @@ import org.thisway.support.security.filter.JwtAuthenticationFilter;
 @EnableWebSecurity
 public class SecurityConfig {
     @Bean
+    @org.springframework.core.annotation.Order(2)
     public SecurityFilterChain filterChain(
             HttpSecurity http,
             GlobalExceptionHandlerFilter globalExceptionHandlerFilter,

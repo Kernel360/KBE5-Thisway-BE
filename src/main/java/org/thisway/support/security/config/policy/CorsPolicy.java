@@ -34,6 +34,10 @@ public class CorsPolicy {
         config.setAllowedHeaders(List.of(
                 "Content-Type",
                 "Authorization",
+                "X-Device-Id",
+                "X-Device-Key",
+                "X-Request-Id",
+                "X-Request-Timestamp",
                 "Accept"));
 
         config.setAllowCredentials(true);

@@ -10,6 +10,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.retry.RejectAndDontRequeueRecoverer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -103,6 +104,20 @@ public class RabbitMQConfig {
         return factory;
     }
 
+    @Bean
+    public SimpleRabbitListenerContainerFactory gpsStreamListenerContainerFactory(
+            ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter) {
+        var factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(converter);
+        factory.setDefaultRequeueRejected(false);
+        factory.setErrorHandler(error -> {
+            log.warn("GPS live delivery rejected; live stream is best effort");
+            throw new AmqpRejectAndDontRequeueException("GPS live delivery rejected");
+        });
+        return factory;
+    }
+
     /* Fanout Exchange */
     @Bean
     public FanoutExchange broadcastExchange() {
@@ -132,8 +147,13 @@ public class RabbitMQConfig {
             ConnectionFactory connectionFactory,
             Jackson2JsonMessageConverter messageConverter
     ) {
+        if (connectionFactory instanceof CachingConnectionFactory caching) {
+            caching.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED);
+            caching.setPublisherReturns(true);
+        }
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(messageConverter);
+        rabbitTemplate.setMandatory(true);
         return rabbitTemplate;
     }
 

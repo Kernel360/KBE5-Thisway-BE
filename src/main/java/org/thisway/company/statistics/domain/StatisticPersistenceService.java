@@ -27,6 +27,8 @@ public class StatisticPersistenceService {
     private final StatisticsRepository statisticsRepository;
     private final CompanyRepository companyRepository;
     private final StatisticCalculationService calculationService;
+    private final StatisticsRevisionRecorder audit;
+    private final StatisticsFleetSnapshots fleetSnapshots;
 
     /**
      * 통계 저장 (배치용)
@@ -34,38 +36,63 @@ public class StatisticPersistenceService {
      * - 중복 방지: 같은 회사ID + 날짜 조합이 있으면 업데이트, 없으면 신규 저장
      */
     public void saveStatistics(Long companyId, LocalDate targetDate) {
+        saveStatistics(companyId, targetDate, "DIRECT_OR_BATCH");
+    }
+
+    public void saveStatistics(Long companyId, LocalDate targetDate, String reason) {
+        if (!java.util.Set.of("DIRECT_OR_BATCH", "LATE_TRIP_OBSERVED", "LATE_GPS_OBSERVED", "REVIEWED_FLEET_SNAPSHOT").contains(reason)) {
+            throw new IllegalArgumentException("Unknown statistics calculation reason");
+        }
+        if (targetDate == null || targetDate.getYear() < 1000 || targetDate.getYear() > 9998
+                || !targetDate.isBefore(LocalDate.now(KOREA_ZONE))) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
         log.info("=== saveStatistics 호출 ===");
 
         // 1. 회사 정보 조회
-        Company company = companyRepository.findById(companyId)
+        // Serialize both batch and direct correction before taking any aggregate snapshot.
+        Company company = companyRepository.lockById(companyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMPANY_NOT_FOUND));
 
         // 2. 해당 날짜의 시작과 끝 시간 설정 (한국 시간대 기준)
         LocalDateTime startDateTime = targetDate.atStartOfDay();
-        LocalDateTime endDateTime = targetDate.atTime(23, 59, 59);
+        LocalDateTime endDateTime = targetDate.plusDays(1).atStartOfDay();
 
         log.info("계산된 시작 시간: {}, 종료 시간: {}", startDateTime, endDateTime);
 
+        // Read the stored denominator before calculation. Automatic correction never silently changes it.
+        Optional<Statistics> existingStatistics = statisticsRepository.getStatisticByCompanyIdAndDate(
+                companyId, startDateTime, endDateTime);
+        boolean capturedFleet = !fleetSnapshots.exists(companyId, targetDate);
+        if (capturedFleet) {
+            if (existingStatistics.isPresent() && !reason.equals("REVIEWED_FLEET_SNAPSHOT")) {
+                throw new CustomException(ErrorCode.STATISTICS_FLEET_REVIEW_REQUIRED);
+            }
+            fleetSnapshots.captureCurrent(companyId, targetDate);
+        }
+
         // 3. 통계 계산
         Long powerOnCount = calculationService.calculatePowerOnCount(companyId, startDateTime, endDateTime);
-        Integer totalDrivingTime = calculationService.calculateTotalDrivingTime(companyId, startDateTime, endDateTime);
-        double[] hourlyOperationRates = calculationService.calculateHourlyOperationRates(companyId, startDateTime, endDateTime);
+        var daily = calculationService.calculateDaily(companyId, startDateTime);
+        Integer totalDrivingTime = daily.time().minutes();
+        double[] hourlyOperationRates = daily.time().hourlyRates();
         Integer peakHour = calculationService.calculatePeakHourFromRates(hourlyOperationRates);
         Integer lowHour = calculationService.calculateLowHourFromRates(hourlyOperationRates);
         Double averageOperationRate = calculationService.calculateAverageOperationRate(hourlyOperationRates);
 
-        // 4. 기존 통계 데이터 확인 (중복 방지)
-        LocalDateTime startOfDay = targetDate.atStartOfDay();
-        LocalDateTime startOfNextDay = targetDate.plusDays(1).atStartOfDay();
-        Optional<Statistics> existingStatistics = statisticsRepository.getStatisticByCompanyIdAndDate(companyId, startOfDay, startOfNextDay);
-
         if (existingStatistics.isPresent()) {
             // 기존 데이터가 있으면 업데이트
             Statistics existing = existingStatistics.get();
-            existing.updateStatistics(powerOnCount.intValue(), powerOnCount.doubleValue(),
+            if (!capturedFleet && sameValues(existing, powerOnCount, daily, peakHour, lowHour, averageOperationRate)) return;
+            // Preserve the pre-audit row exactly, including legacy formulas, before its first correction.
+            if (existing.getRevision() == 0) audit.append(existing, "PRE_AUDIT_SNAPSHOT");
+            existing.updateStatistics(Math.toIntExact(powerOnCount), powerOnCount.doubleValue(),
                     totalDrivingTime, peakHour, lowHour, averageOperationRate);
             existing.updateHourlyRates(hourlyOperationRates);
+            existing.markCalculated(daily.fleetSize(), daily.gpsObservations(), daily.unclosedTrips(),
+                    LocalDateTime.now(KOREA_ZONE).truncatedTo(java.time.temporal.ChronoUnit.MICROS));
             statisticsRepository.save(existing);
+            audit.append(existing, reason);
             log.info("기존 통계 업데이트 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         } else {
             // 기존 데이터가 없으면 신규 저장
@@ -77,7 +104,7 @@ public class StatisticPersistenceService {
             Statistics statistics = Statistics.builder()
                     .company(company)
                     .date(dateToSave)
-                    .powerOnCount(powerOnCount.intValue())
+                    .powerOnCount(Math.toIntExact(powerOnCount))
                     .averageDailyPowerCount(powerOnCount.doubleValue())
                     .totalDrivingTime(totalDrivingTime)
                     .peakHour(peakHour)
@@ -109,8 +136,27 @@ public class StatisticPersistenceService {
                     .hour23(hourlyOperationRates[23])
                     .build();
 
+            statistics.markCalculated(daily.fleetSize(), daily.gpsObservations(), daily.unclosedTrips(),
+                    LocalDateTime.now(KOREA_ZONE).truncatedTo(java.time.temporal.ChronoUnit.MICROS));
             statisticsRepository.save(statistics);
+            audit.append(statistics, reason);
             log.info("신규 통계 저장 완료: 회사 ID {}, 날짜 {}", companyId, targetDate);
         }
+    }
+
+    private static boolean sameValues(Statistics value, long powerOnCount, StatisticCalculationService.Daily daily,
+                                      int peakHour, int lowHour, double averageRate) {
+        return value.getFormulaVersion() == Statistics.CURRENT_FORMULA_VERSION
+                && value.getFleetVehicleCount() == daily.fleetSize()
+                && value.getGpsObservationCount() == daily.gpsObservations()
+                && value.getUnclosedTripCount() == daily.unclosedTrips()
+                && java.util.Objects.equals(value.getPowerOnCount(), Math.toIntExact(powerOnCount))
+                && java.util.Objects.equals(value.getAverageDailyPowerCount(), (double) powerOnCount)
+                && java.util.Objects.equals(value.getTotalDrivingTime(), daily.time().minutes())
+                && java.util.Objects.equals(value.getPeakHour(), peakHour)
+                && java.util.Objects.equals(value.getLowHour(), lowHour)
+                && java.util.Objects.equals(value.getAverageOperationRate(), averageRate)
+                && java.util.Arrays.equals(value.getHourlyRatesArray(),
+                        java.util.Arrays.stream(daily.time().hourlyRates()).boxed().toArray(Double[]::new));
     }
 }

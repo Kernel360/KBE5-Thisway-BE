@@ -113,11 +113,19 @@ jib {
 }
 
 tasks.named('test') {
-    useJUnitPlatform { excludeTags 'sse-browser' }
+    useJUnitPlatform { excludeTags 'sse-browser', 'emulator-client', 'fleet-evidence', 'statistics-crash', 'fleet-browser' }
     // Forked SSE subscribers need the same test/runtime classes as this worker.
     doFirst {
         systemProperty 'sse.test.classpath', sourceSets.test.runtimeClasspath.asPath
     }
+}
+
+// Cross-repository clients are part of these contracts, not merely runtime prerequisites.
+def siblingFrontendContractInputs = fileTree('../KBE5-Thisway-FE') {
+    include 'src/**', 'tests/**', 'index.html', 'package.json', 'package-lock.json', 'vite.config.*', 'playwright*.mjs'
+}
+def siblingEmulatorContractInputs = fileTree('../KBE5-Thisway-Emulator') {
+    include 'models/**/*.py', 'services/**/*.py', 'tests/**/*.py', 'requirements*.txt'
 }
 
 tasks.register('sseBrowserTest', Test) {
@@ -126,6 +134,36 @@ tasks.register('sseBrowserTest', Test) {
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform { includeTags 'sse-browser' }
     systemProperty 'sse.fe.path', file('../KBE5-Thisway-FE').absolutePath
+    inputs.files(siblingFrontendContractInputs).withPropertyName('frontendContractSources').withPathSensitivity(PathSensitivity.RELATIVE)
+    shouldRunAfter tasks.test
+}
+
+tasks.register('emulatorClientTest', Test) {
+    description = 'Actual Python Emulator -> Boot -> MySQL device authentication contract; requires sibling Emulator Python dependencies.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'emulator-client' }
+    systemProperty 'emulator.source', file('../KBE5-Thisway-Emulator').absolutePath
+    systemProperty 'emulator.python', System.getProperty('emulator.python', 'python3')
+    inputs.files(siblingEmulatorContractInputs).withPropertyName('emulatorContractSources').withPathSensitivity(PathSensitivity.RELATIVE)
+    shouldRunAfter tasks.test
+}
+
+tasks.register('fleetEvidenceTest', Test) {
+    description = 'Isolated fixed-fixture workflow and throughput evidence; requires Docker.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'fleet-evidence' }
+    shouldRunAfter tasks.test
+}
+
+tasks.register('fleetBrowserTest', Test) {
+    description = 'Actual fleet UI through the sibling FE and isolated backend data stores.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'fleet-browser' }
+    systemProperty 'fleet.fe.path', file('../KBE5-Thisway-FE').absolutePath
+    inputs.files(siblingFrontendContractInputs).withPropertyName('frontendContractSources').withPathSensitivity(PathSensitivity.RELATIVE)
     shouldRunAfter tasks.test
 }
 
@@ -151,8 +189,35 @@ tasks.register('gpsDlqReplay', JavaExec) {
     mainClass = 'org.thisway.ops.GpsDlqReplay'
 }
 
+tasks.register('statisticsOrphanRecovery', JavaExec) {
+    description = 'Offline guarded recovery of an orphaned statistics job; see statistics orphan recovery runbook.'
+    classpath = sourceSets.replay.runtimeClasspath
+    mainClass = 'org.thisway.ops.StatisticsOrphanRecovery'
+}
+
+tasks.register('statisticsCrashRecoveryTest', Test) {
+    description = 'Separate JVM termination and guarded MySQL statistics restart evidence.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'statistics-crash' }
+    doFirst { systemProperty 'statistics.crash.classpath', sourceSets.test.runtimeClasspath.asPath }
+    shouldRunAfter tasks.test
+}
+
 def localGradle = file('build.local.gradle')
 
 if (localGradle.exists()) {
     apply from: localGradle
+}
+
+// Opt-in sustained local load and actual Prometheus/Grafana contract verification.
+tasks.register('observabilityEvidenceTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'fleet-evidence' }
+    systemProperty 'fleet.observability', 'true'
+    systemProperty 'fleet.stageSeconds', providers.gradleProperty('evidenceStageSeconds').getOrElse('30')
+    inputs.files(fileTree('infra/observability'), fileTree('infra/prod/monitoring/prometheus/rules'), fileTree('scripts/observability'), file('../KBE5-Thisway-FE/package.json'), file('../KBE5-Thisway-FE/package-lock.json'))
+            .withPropertyName('monitoringContracts').withPathSensitivity(PathSensitivity.RELATIVE)
+    shouldRunAfter tasks.test
 }

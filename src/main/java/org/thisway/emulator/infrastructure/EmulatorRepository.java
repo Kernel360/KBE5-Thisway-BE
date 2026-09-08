@@ -17,6 +17,10 @@ public interface EmulatorRepository extends JpaRepository<Emulator, Long> {
 
     Optional<Emulator> findByIdAndVehicleCompanyId(Long id, Long companyId);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM Emulator e WHERE e.id = :id AND e.vehicle.company.id = :companyId")
+    Optional<Emulator> findOwnedForUpdate(@Param("id") Long id, @Param("companyId") Long companyId);
+
     Page<Emulator> findAllByVehicleCompanyId(Long companyId, Pageable pageable);
 
     @Query(""" 

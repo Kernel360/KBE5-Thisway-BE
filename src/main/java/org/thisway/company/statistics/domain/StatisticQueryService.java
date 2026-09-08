@@ -9,7 +9,6 @@ import org.thisway.company.statistics.infrastructure.StatisticsRepository;
 import org.thisway.company.statistics.interfaces.StatisticResponse;
 import org.thisway.vehicle.triplog.domain.TripLocationRaw;
 import org.thisway.vehicle.triplog.domain.TripLocationStats;
-import org.thisway.vehicle.triplog.infrastructure.TripLogRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,7 +25,8 @@ import java.util.stream.IntStream;
 public class StatisticQueryService {
 
     private final StatisticsRepository statisticsRepository;
-    private final TripLogRepository tripLogRepository;
+    private final StatisticsSourceReader sources;
+    private final StatisticsFleetSnapshots fleetSnapshots;
 
     /**
      * 날짜 범위 기반 통계 조회
@@ -34,29 +34,35 @@ public class StatisticQueryService {
      * - 실시간 계산이 아닌 저장된 데이터 활용으로 빠른 응답
      */
     public StatisticResponse getStatisticByDateRange(Long companyId, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)
+                || startDate.getYear() < 1000 || endDate.getYear() > 9998
+                || ChronoUnit.DAYS.between(startDate, endDate) >= 366) {
+            throw new org.thisway.support.common.CustomException(org.thisway.support.common.ErrorCode.INVALID_INPUT_VALUE);
+        }
         log.info("날짜 범위 통계 조회: 회사 ID {}, 시작 날짜 {}, 종료 날짜 {}", companyId, startDate, endDate);
 
         // 1. 해당 날짜 범위의 저장된 통계 데이터들 조회
-        List<Statistics> statisticsList = statisticsRepository.findByCompanyIdAndDateRange(companyId, startDate, endDate);
-
-//        if (statisticsList.isEmpty()) {
-//            throw new CustomException(ErrorCode.STATISTICS_NOT_FOUND);
-//        }
-
-        // 2. 날짜 범위 계산
-        long daysBetween = ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        List<Statistics> stored = statisticsRepository.findByCompanyIdAndDateRange(companyId, startDate, endDate);
+        List<Statistics> statisticsList = stored.stream()
+                .filter(s -> s.getFormulaVersion() == Statistics.CURRENT_FORMULA_VERSION).toList();
+        var quality = new StatisticResponse.Quality(Statistics.CURRENT_FORMULA_VERSION,
+                statisticsList.size(), ChronoUnit.DAYS.between(startDate, endDate) + 1,
+                stored.size() - statisticsList.size(),
+                statisticsList.stream().mapToLong(Statistics::getGpsObservationCount).sum(),
+                statisticsList.stream().mapToLong(Statistics::getUnclosedTripCount).sum(),
+                fleetSnapshots.countKnown(companyId, startDate, endDate, Statistics.CURRENT_FORMULA_VERSION)
+                        == statisticsList.size() && !statisticsList.isEmpty()
+                        ? "INITIAL_CALCULATION_FLEET_SNAPSHOT" : "LEGACY_FLEET_SNAPSHOT_UNKNOWN");
 
         // 3. 합산 계산 - Stream API 활용
-        int totalPowerOnCount = statisticsList.stream()
-                .mapToInt(Statistics::getPowerOnCount)
-                .sum();
+        int totalPowerOnCount = Math.toIntExact(statisticsList.stream()
+                .mapToLong(Statistics::getPowerOnCount).sum());
 
-        int totalDrivingTime = statisticsList.stream()
-                .mapToInt(Statistics::getTotalDrivingTime)
-                .sum();
+        int totalDrivingTime = Math.toIntExact(statisticsList.stream()
+                .mapToLong(Statistics::getTotalDrivingTime).sum());
 
         // 4. 평균 계산
-        double averageDailyPowerCount = (double) totalPowerOnCount / daysBetween;
+        double averageDailyPowerCount = statisticsList.isEmpty() ? 0 : (double) totalPowerOnCount / statisticsList.size();
 
         double averageOperationRate = statisticsList.stream()
                 .mapToDouble(Statistics::getAverageOperationRate)
@@ -79,7 +85,7 @@ public class StatisticQueryService {
         String dateRange = startDate + StatisticConstants.DATE_RANGE_SEPARATOR + endDate;
         return StatisticResponse.fromAggregatedData(
                 companyId, dateRange, totalPowerOnCount, averageDailyPowerCount,
-                totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyAverages, locationStats
+                totalDrivingTime, peakHour, lowHour, averageOperationRate, hourlyAverages, locationStats, quality
         );
     }
 
@@ -138,7 +144,7 @@ public class StatisticQueryService {
      */
     private List<TripLocationStats> getStartLocationStatBetweenDates(Long companyId, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("출발지 통계 조회: 회사 ID {}, 시작 시간 {}, 종료 시간 {}", companyId, startTime, endTime);
-        List<TripLocationRaw> rawLocation = tripLogRepository.countGroupedByOnAddr(companyId, startTime, endTime);
+        List<TripLocationRaw> rawLocation = sources.locations(companyId, startTime, endTime);
 
         long total = rawLocation.stream().mapToLong(TripLocationRaw::count).sum();
 

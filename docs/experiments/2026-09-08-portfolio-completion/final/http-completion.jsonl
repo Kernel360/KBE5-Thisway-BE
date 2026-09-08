@@ -1,0 +1,16 @@
+{"traceId":"6a9ff182b0e6d5ffe45aaee8076ebd76","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=193.500709 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182866ac8a2b12ef0f3c637f115","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=193.279375 asyncStarted=false failed=false"}
+{"traceId":"6a9ff18262da2db5a34f764542419c87","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=193.560292 asyncStarted=false failed=false"}
+{"traceId":"6a9ff1822ab7528d8492a96f8f112ea3","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=193.368834 asyncStarted=false failed=false"}
+{"traceId":"6a9ff1823b6204ab3b31e67a0090129a","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.520542 asyncStarted=false failed=false"}
+{"traceId":"6a9ff18249b876e87f61ceeff2162ad3","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.572667 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182e02d5f79debad97e567c5560","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.565959 asyncStarted=false failed=false"}
+{"traceId":"6a9ff1821b82193e6fda56e0d20d08a9","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.476167 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182dc26aeb6a9ce926732076deb","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.953042 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182e6071126d6ca7dc16696ac47","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.94225 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182ffb0a187acf92102a58db516","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.952125 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182d35dd3305b1006e1fac0880b","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.718666 asyncStarted=false failed=false"}
+{"traceId":"6a9ff18270a43382a1bf6b9c18107fbb","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.188 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182033e125e20814957566ea5dd","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.513167 asyncStarted=false failed=false"}
+{"traceId":"6a9ff18206e256ef00058795aeceb851","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=7.537958 asyncStarted=false failed=false"}
+{"traceId":"6a9ff182ec14b0dde9fc1e235966bd8e","message":"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=8.380375 asyncStarted=false failed=false"}

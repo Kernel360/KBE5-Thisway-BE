@@ -1,0 +1,267 @@
+{
+  "measuredAt": "2026-09-08T11:09:14.842942+00:00",
+  "alertFiring": {
+    "receiver": "local-evidence",
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "ThiswayLocalBacklog",
+          "instance": "receiver:8080",
+          "job": "isolated-fault",
+          "severity": "warning"
+        },
+        "annotations": {
+          "summary": "Isolated synthetic backlog delivery test"
+        },
+        "startsAt": "2026-09-08T11:09:18.33Z",
+        "endsAt": "0001-01-01T00:00:00Z",
+        "generatorURL": "http://36e157e3f620:9090/graph?g0.expr=thisway_evidence_backlog+%3E+0&g0.tab=1",
+        "fingerprint": "aa26ce66d0ac393d"
+      }
+    ],
+    "groupLabels": {
+      "alertname": "ThiswayLocalBacklog"
+    },
+    "commonLabels": {
+      "alertname": "ThiswayLocalBacklog",
+      "instance": "receiver:8080",
+      "job": "isolated-fault",
+      "severity": "warning"
+    },
+    "commonAnnotations": {
+      "summary": "Isolated synthetic backlog delivery test"
+    },
+    "externalURL": "http://58cc58a2f09b:9093",
+    "version": "4",
+    "groupKey": "{}:{alertname=\"ThiswayLocalBacklog\"}",
+    "truncatedAlerts": 0
+  },
+  "alertResolved": {
+    "receiver": "local-evidence",
+    "status": "resolved",
+    "alerts": [
+      {
+        "status": "resolved",
+        "labels": {
+          "alertname": "ThiswayLocalBacklog",
+          "instance": "receiver:8080",
+          "job": "isolated-fault",
+          "severity": "warning"
+        },
+        "annotations": {
+          "summary": "Isolated synthetic backlog delivery test"
+        },
+        "startsAt": "2026-09-08T11:09:18.33Z",
+        "endsAt": "2026-09-08T11:09:21.33Z",
+        "generatorURL": "http://36e157e3f620:9090/graph?g0.expr=thisway_evidence_backlog+%3E+0&g0.tab=1",
+        "fingerprint": "aa26ce66d0ac393d"
+      }
+    ],
+    "groupLabels": {
+      "alertname": "ThiswayLocalBacklog"
+    },
+    "commonLabels": {
+      "alertname": "ThiswayLocalBacklog",
+      "instance": "receiver:8080",
+      "job": "isolated-fault",
+      "severity": "warning"
+    },
+    "commonAnnotations": {
+      "summary": "Isolated synthetic backlog delivery test"
+    },
+    "externalURL": "http://58cc58a2f09b:9093",
+    "version": "4",
+    "groupKey": "{}:{alertname=\"ThiswayLocalBacklog\"}",
+    "truncatedAlerts": 0
+  },
+  "correlationQuery": {
+    "status": "success",
+    "data": {
+      "resultType": "streams",
+      "result": [
+        {
+          "stream": {
+            "app": "thisway",
+            "detected_level": "unknown",
+            "event": "http_dispatch",
+            "service_name": "thisway"
+          },
+          "values": [
+            [
+              "1788865762189725000",
+              "{\"traceId\": \"6a9fecb241ee70c427366d585e1138ca\", \"message\": \"event=http_dispatch method=POST route=/api/logs/gps status=200 durationMs=196.694333 asyncStarted=false failed=false\"}"
+            ]
+          ]
+        }
+      ],
+      "stats": {
+        "summary": {
+          "bytesProcessedPerSecond": 321,
+          "linesProcessedPerSecond": 1,
+          "totalBytesProcessed": 2951,
+          "totalLinesProcessed": 16,
+          "execTime": 9.188734,
+          "queueTime": 6.9e-05,
+          "subqueries": 0,
+          "totalEntriesReturned": 1,
+          "splits": 0,
+          "shards": 1,
+          "totalPostFilterLines": 1,
+          "totalStructuredMetadataBytesProcessed": 128
+        },
+        "querier": {
+          "store": {
+            "totalChunksRef": 0,
+            "totalChunksDownloaded": 0,
+            "chunksDownloadTime": 0,
+            "queryReferencedStructuredMetadata": false,
+            "chunk": {
+              "headChunkBytes": 0,
+              "headChunkLines": 0,
+              "decompressedBytes": 0,
+              "decompressedLines": 0,
+              "compressedBytes": 0,
+              "totalDuplicates": 0,
+              "postFilterLines": 0,
+              "headChunkStructuredMetadataBytes": 0,
+              "decompressedStructuredMetadataBytes": 0
+            },
+            "chunkRefsFetchTime": 0,
+            "congestionControlLatency": 0,
+            "pipelineWrapperFilteredLines": 0
+          }
+        },
+        "ingester": {
+          "totalReached": 1,
+          "totalChunksMatched": 1,
+          "totalBatches": 2,
+          "totalLinesSent": 1,
+          "store": {
+            "totalChunksRef": 0,
+            "totalChunksDownloaded": 0,
+            "chunksDownloadTime": 0,
+            "queryReferencedStructuredMetadata": false,
+            "chunk": {
+              "headChunkBytes": 2951,
+              "headChunkLines": 16,
+              "decompressedBytes": 0,
+              "decompressedLines": 0,
+              "compressedBytes": 0,
+              "totalDuplicates": 0,
+              "postFilterLines": 1,
+              "headChunkStructuredMetadataBytes": 128,
+              "decompressedStructuredMetadataBytes": 0
+            },
+            "chunkRefsFetchTime": 113834,
+            "congestionControlLatency": 0,
+            "pipelineWrapperFilteredLines": 0
+          }
+        },
+        "cache": {
+          "chunk": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "index": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "result": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "statsResult": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "volumeResult": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "seriesResult": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "labelResult": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          },
+          "instantMetricResult": {
+            "entriesFound": 0,
+            "entriesRequested": 0,
+            "entriesStored": 0,
+            "bytesReceived": 0,
+            "bytesSent": 0,
+            "requests": 0,
+            "downloadTime": 0,
+            "queryLengthServed": 0
+          }
+        },
+        "index": {
+          "totalChunks": 0,
+          "postFilterChunks": 0,
+          "shardsDuration": 0,
+          "usedBloomFilters": false
+        }
+      }
+    }
+  },
+  "ingestedRealHttpCompletions": 16,
+  "permissions": {
+    "anonymousRead": 401,
+    "writerRead": 401,
+    "readerWrite": 401,
+    "configRead": 403
+  },
+  "retention": {
+    "configuredHours": 24,
+    "25HourOldIngestion": 400,
+    "configVerification": "passed",
+    "physicalDeletionAfter24Hours": "not observed"
+  },
+  "scope": "Disposable local services, synthetic fault exporter, actual Spring HTTP completion logs. No external recipient or production deployment."
+}

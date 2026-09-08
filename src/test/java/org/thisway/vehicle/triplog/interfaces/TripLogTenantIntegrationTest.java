@@ -208,7 +208,34 @@ class TripLogTenantIntegrationTest {
         mockMvc.perform(get("/api/trip-log/detail/{id}", companyATrip.getId())
                         .header(AUTHORIZATION, bearer(companyAToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.carNumber").value("11가1111"));
+                .andExpect(jsonPath("$.carNumber").value("11가1111"))
+                .andExpect(jsonPath("$.tripMeter").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.distanceStatus").value("LEGACY_UNVERIFIED"));
+    }
+
+    @Test
+    void 신규운행의_HTTP_거리는_누적값이_아닌_차이이고_ON누락은_null이다() throws Exception {
+        Vehicle owned = vehicleRepository.save(vehicle(companyA,
+                vehicleModelRepository.findAll().getFirst(), "11가1111", false));
+        var start = LocalDateTime.of(2020, 1, 1, 10, 0);
+        for (boolean missingOn : List.of(false, true)) {
+            var time = missingOn ? start.plusDays(1) : start;
+            TripLog trip = TripLog.observed(owned, time);
+            if (!missingOn) trip.observe(new org.thisway.vehicle.triplog.domain.TripLogSaveInput(
+                    owned, "fixture", time, null, 37.5, 127.0, 1000));
+            trip.observe(new org.thisway.vehicle.triplog.domain.TripLogSaveInput(
+                    owned, "fixture", time, time.plusHours(1), 37.5, 127.0, 1500));
+            tripLogRepository.save(trip);
+            var result = mockMvc.perform(get("/api/trip-log/detail/{id}", trip.getId())
+                    .header(AUTHORIZATION, bearer(companyAToken))).andExpect(status().isOk());
+            if (missingOn) {
+                result.andExpect(jsonPath("$.tripMeter").value(org.hamcrest.Matchers.nullValue()))
+                        .andExpect(jsonPath("$.distanceStatus").value("MISSING_ON"));
+            } else {
+                result.andExpect(jsonPath("$.tripMeter").value(500))
+                        .andExpect(jsonPath("$.distanceStatus").value("KNOWN"));
+            }
+        }
     }
 
     @Test

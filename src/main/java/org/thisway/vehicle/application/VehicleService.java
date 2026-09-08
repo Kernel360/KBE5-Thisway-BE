@@ -96,6 +96,11 @@ public class VehicleService {
         );
     }
 
+    public Vehicle getVehicleForPowerUpdate(Long id) {
+        return vehicleRepository.lockActiveById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
+    }
+
     @Transactional(readOnly = true)
     public Boolean getVehiclePowerState(Long id) {
         Vehicle vehicle = vehicleRepository.findById(id).orElseThrow(

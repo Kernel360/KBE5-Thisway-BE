@@ -23,6 +23,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ActuatorApiSecurityTest {
 
+    private static final String TOKEN = java.util.UUID.randomUUID().toString().replace("-", "")
+            + java.util.UUID.randomUUID().toString().replace("-", "");
+    @org.springframework.test.context.DynamicPropertySource
+    static void credential(org.springframework.test.context.DynamicPropertyRegistry properties) {
+        properties.add("thisway.metrics.token-sha256", () -> {
+            try { return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(TOKEN.getBytes(java.nio.charset.StandardCharsets.US_ASCII))); }
+            catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException("SHA-256 unavailable"); }
+        });
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -35,9 +46,9 @@ class ActuatorApiSecurityTest {
     }
 
     @Test
-    void prometheus는_인증없이_조회할수있다() throws Exception {
+    void prometheus는_인증없이_조회할수없다() throws Exception {
         mockMvc.perform(get("/actuator/prometheus"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -58,4 +69,28 @@ class ActuatorApiSecurityTest {
         mockMvc.perform(get("/actuator/env"))
                 .andExpect(status().isNotFound());
     }
+    @Test
+    void 수집키로만_prometheus를_읽을수있다() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus").header("Authorization", "Bearer " + TOKEN))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/actuator/prometheus").header("Authorization", "Bearer " + "0".repeat(64)))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/actuator/prometheus").param("token", TOKEN))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles="ADMIN")
+    void 사람_ADMIN_인증도_수집키를_대체하지_못한다() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 수집키는_업무_API나_쓰기_권한을_주지_않는다() throws Exception {
+        mockMvc.perform(get("/api/vehicles").header("Authorization", "Bearer " + TOKEN))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/actuator/prometheus").header("Authorization", "Bearer " + TOKEN))
+                .andExpect(status().isUnauthorized());
+    }
+
 }

@@ -48,3 +48,6 @@ out/
 
 ### Apple ###
 .DS_Store
+
+# Locally generated monitoring credential (never commit).
+infra/observability/.secrets/

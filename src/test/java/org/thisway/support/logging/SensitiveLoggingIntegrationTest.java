@@ -82,7 +82,7 @@ class SensitiveLoggingIntegrationTest {
                 .collect(Collectors.joining("\n"));
 
         assertThat(logMessages)
-                .contains("Request [POST /api/auth/login]")
+                .contains("event=http_dispatch method=POST route=/api/auth/login")
                 .doesNotContain(PASSWORD)
                 .doesNotContain(ACCESS_TOKEN)
                 .doesNotContain(REFRESH_TOKEN);
@@ -116,7 +116,7 @@ class SensitiveLoggingIntegrationTest {
                 .collect(Collectors.joining("\n"));
 
         assertThat(logMessages)
-                .contains("Request [PUT /api/auth/password]")
+                .contains("event=http_dispatch method=PUT route=/api/auth/password")
                 .doesNotContain(VERIFICATION_CODE)
                 .doesNotContain(NEW_PASSWORD);
     }

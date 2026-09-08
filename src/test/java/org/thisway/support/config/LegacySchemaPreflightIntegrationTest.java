@@ -88,9 +88,115 @@ class LegacySchemaPreflightIntegrationTest {
         jdbc.update("INSERT INTO gps_log(vehicle_id,mdn,occurred_time) VALUES "
                 + "(1,'legacy','2026-09-05 00:00:00'),(1,'legacy','2026-09-05 00:00:00')");
         var before = jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id");
-        assertThat(Flyway.configure().dataSource(source).load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(Flyway.configure().dataSource(source).target("3").load().migrate().migrationsExecuted).isEqualTo(1);
         assertThat(jdbc.queryForList("SELECT id,vehicle_id,mdn,occurred_time FROM gps_log ORDER BY id")).isEqualTo(before);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM gps_log WHERE event_key IS NULL", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void V4는_과거_동일회사_동일일자_중복이_있으면_삭제없이_중단한다() {
+        var source = database("v4_duplicate_fixture");
+        Flyway.configure().dataSource(source).target("3").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        for (String time : java.util.List.of("2020-01-01 00:00:00", "2020-01-01 12:00:00")) {
+            jdbc.update("""
+                    INSERT INTO statistics(active,created_at,company_id,date,power_on_count,
+                    hour00,hour01,hour02,hour03,hour04,hour05,hour06,hour07,hour08,hour09,hour10,hour11,
+                    hour12,hour13,hour14,hour15,hour16,hour17,hour18,hour19,hour20,hour21,hour22,hour23)
+                    VALUES(1,NOW(),1,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+                    """, time);
+        }
+        var before = jdbc.queryForList("SELECT * FROM statistics ORDER BY id");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> Flyway.configure().dataSource(source).load().migrate())
+                .isInstanceOf(org.flywaydb.core.api.FlywayException.class);
+        assertThat(jdbc.queryForList("SELECT * FROM statistics ORDER BY id")).isEqualTo(before);
+    }
+
+    @Test
+    void V5는_기존_GPS기반_숫자를_보존하고_이전버전으로_표시한다() {
+        var source = database("v5_legacy_formula");
+        Flyway.configure().dataSource(source).target("4").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("""
+                INSERT INTO statistics(active,created_at,company_id,date,power_on_count,average_operation_rate,
+                hour00,hour01,hour02,hour03,hour04,hour05,hour06,hour07,hour08,hour09,hour10,hour11,
+                hour12,hour13,hour14,hour15,hour16,hour17,hour18,hour19,hour20,hour21,hour22,hour23)
+                VALUES(1,NOW(),1,'2020-01-01',7,88,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+                """);
+        var before = jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics");
+        assertThat(Flyway.configure().dataSource(source).target("5").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,company_id,date,power_on_count,average_operation_rate FROM statistics")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT formula_version FROM statistics", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT calculated_at FROM statistics", String.class)).isNull();
+    }
+
+    @Test
+    void V6는_기존_차량상태를_보존하고_이벤트시각을_추측하지_않는다() {
+        var source = database("v6_power_watermark");
+        Flyway.configure().dataSource(source).target("5").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,latitude,longitude,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1234,1,37.5,127,1,1)");
+        var before = jdbc.queryForList("SELECT id,mileage,power_on,latitude,longitude FROM vehicle");
+        assertThat(Flyway.configure().dataSource(source).target("6").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,mileage,power_on,latitude,longitude FROM vehicle")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT last_power_event_time FROM vehicle", String.class)).isNull();
+    }
+
+    @Test
+    void V7는_과거_중복운행과_혼합거리값을_보존하고_신규거리로_추정하지_않는다() {
+        var source = database("v7_legacy_trips");
+        Flyway.configure().dataSource(source).target("6").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1000,1,1,1)");
+        jdbc.update("INSERT INTO trip_log(vehicle_id,active,created_at,start_time,total_trip_meter) VALUES "
+                + "(1,0,NOW(),'2020-01-01 10:00:00',1000),(1,0,NOW(),'2020-01-01 10:00:00',0)");
+        var before = jdbc.queryForList("SELECT id,vehicle_id,start_time,total_trip_meter,active FROM trip_log ORDER BY id");
+        assertThat(Flyway.configure().dataSource(source).target("7").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT id,vehicle_id,start_time,total_trip_meter,active FROM trip_log ORDER BY id")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM trip_log WHERE identity_start_time IS NULL "
+                + "AND start_odometer IS NULL AND end_odometer IS NULL AND distance_meters IS NULL", Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void V8는_기존_장치에_자동_키를_발급하거나_정보를_바꾸지_않는다() {
+        var source = database("v8_credentials");
+        Flyway.configure().dataSource(source).target("7").load().migrate();
+        var jdbc = new JdbcTemplate(source);
+        jdbc.update("INSERT INTO company(id,active,created_at,addr_detail,addr_road,contact,crn,gps_cycle,memo,name) "
+                + "VALUES(1,1,NOW(),'fixture','fixture','000','fixture',60,'fixture','fixture')");
+        jdbc.update("INSERT INTO vehicle_model(id,active,created_at,manufacturer,model_year,name) "
+                + "VALUES(1,1,NOW(),'fixture',2026,'fixture')");
+        jdbc.update("INSERT INTO vehicle(id,active,created_at,car_number,color,mileage,power_on,company_id,vehicle_model_id) "
+                + "VALUES(1,1,NOW(),'fixture','white',1000,1,1,1)");
+        jdbc.update("INSERT INTO emulator(id,vehicle_id,mdn,terminal_id,manufacture_id,packet_version,device_id,device_firmware_version) "
+                + "VALUES(1,1,'fixture','fixture',1,1,1,'1')");
+        var before = jdbc.queryForList("SELECT * FROM emulator");
+        assertThat(Flyway.configure().dataSource(source).target("8").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForList("SELECT * FROM emulator")).isEqualTo(before);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM device_credential_event", Integer.class)).isZero();
+        jdbc.update("INSERT INTO device_credential(emulator_id,key_hash,bound_vehicle_id,bound_company_id,bound_mdn,issued_at,expires_at) "
+                + "VALUES(1,REPEAT('a',64),1,1,'fixture','2026-01-01','2026-01-31')");
+        var credential = jdbc.queryForMap("SELECT * FROM device_credential");
+        assertThat(Flyway.configure().dataSource(source).target("9").load().migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(jdbc.queryForMap("SELECT * FROM device_credential")).containsAllEntriesOf(credential)
+                .containsEntry("bound_assignment_revision", 0L);
+        assertThat(jdbc.queryForMap("SELECT * FROM emulator")).containsAllEntriesOf(before.getFirst())
+                .containsEntry("assignment_revision", 0L);
     }
 
     private Map<String, String> audit(JdbcTemplate jdbc) throws Exception {

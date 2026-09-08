@@ -1,0 +1,487 @@
+{
+  "recordedAt": "2026-09-07T11:11:18.251614+00:00",
+  "scope": "Current source and configuration; HEAD plus uncommitted work. No secrets or runtime credentials.",
+  "repositories": [
+    {
+      "repository": "KBE5-Thisway-BE",
+      "branch": "codex/statistics-batch-restart",
+      "head": "ef74fcf31159c9ab52577247010d8ecb20474fa7",
+      "files": [
+        {
+          "path": ".github/workflows/cd.yml",
+          "sha256": "fa8b28b68185115e1d98202b724d4b5711fc3b24f9931a67e6bd7b34c6a74132"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "sha256": "6b532fd80a4f9d10c44bda2e006a36a82d2ab4f7eb9077b5be260d3bfbdba40c"
+        },
+        {
+          "path": "build.gradle",
+          "sha256": "ac68920debff954534fd7ca6536490937b976d0586dd89ccbcf22b5896dc8965"
+        },
+        {
+          "path": "infra/prod/monitoring/prometheus/Dockerfile",
+          "sha256": "57ea1084d0f715e3d9e0c8def4dcf7b66fe21f1e080f302a828d01d9bdb9d5ce"
+        },
+        {
+          "path": "infra/prod/monitoring/prometheus/prometheus.prod.yml",
+          "sha256": "da9cc8cf5d3942681e56ac04f0d4b8cc7032aeb5a662bdb710cd0ecc62064c5b"
+        },
+        {
+          "path": "infra/prod/monitoring/prometheus/rules/tests/thisway.test.yml",
+          "sha256": "bd2e0ae674381d66a2ce9ef43153486f4e87bb77b1af41aa4934f8ef86276f6f"
+        },
+        {
+          "path": "infra/prod/monitoring/prometheus/rules/thisway.yml",
+          "sha256": "7c0affc81642f65a90b0afba199ad90031e1623378345bfe3c38efb06539d4be"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/application/StatisticService.java",
+          "sha256": "21f270c50b5d79dc9177c5eabbd305d9ddd11b0ec7bc92f9830bb03995c9d282"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/application/StatisticsCorrectionRequests.java",
+          "sha256": "4732a46df1c64d03c6a09d7ecd616cf297efe82c8d210ce4393e6e212fc3bd6a"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/application/StatisticsCorrectionScheduler.java",
+          "sha256": "ebc630b8e402a4aa300759c16e52e4b2c42b91e571320b9accf4e22b5d137b4e"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/application/StatisticsCorrectionWorker.java",
+          "sha256": "f21e58788d744caa8778f641a714eb9ba59f9d8fe91bf675ef783418b1e77e3b"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/application/StatisticsSourceChanged.java",
+          "sha256": "2f23043651154ee0733f662513b4893827d6f00d9bfd4f676a344f4fd64af018"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticCalculationService.java",
+          "sha256": "4f5c64d32912cd51ba0833e18fb8e27ece89be77b274146b95e47b23befe6ccc"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticPersistenceService.java",
+          "sha256": "67f21dd8f1b04c8e1a5aabcd9163de7e16acdb1aa5abf2b8346f39c14ac74b77"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticQueryService.java",
+          "sha256": "dcbd0fcbb0f0bc57f7b0491a687f21972bcd9a7bea136c52e1b06bb26f091ec9"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/Statistics.java",
+          "sha256": "e6d5ee023643a1d91ca844d15d859fab34c163b8f85fa9230dcfa356b00f4814"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsCorrectionRequest.java",
+          "sha256": "bd64b568e0d65d676fae336693c12bb49dffd35e644d18ffe9772d1f465a1c38"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsFleetMember.java",
+          "sha256": "072be0c0900566856425c07cf4d0266964220af9157c5aa4199a6cf91c018862"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsFleetSnapshot.java",
+          "sha256": "ad346232fe910d435d45f5fa9c070a009f5d9fb777265ed359a960f18214b278"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsFleetSnapshots.java",
+          "sha256": "0ef7db1d453fe56f24ff6101109e0e10c693bf8f52a1b64f782a9fb5400a4e2d"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsRevision.java",
+          "sha256": "230ee4056391daee6d16e6b79628058f1e5a18d0633c7d77c936d4ff78096c39"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsRevisionRecorder.java",
+          "sha256": "dc256d35f8144bd342d90dfee8011cbdd08dd4c78d964a650e4f65f64a1b0382"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/domain/StatisticsSourceReader.java",
+          "sha256": "4ae9ecfd8751474d1d66c0bbbca5d02d3cad82302754363981613b1b95f7f4d2"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/infrastructure/StatisticsRevisionAudit.java",
+          "sha256": "4f763ab7b7ab1caf677c08cacc48ca5ee7821925029b575e9fc6893d8409342f"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/infrastructure/StatisticsSnapshotSourceRepository.java",
+          "sha256": "661f3553beda049d7397f9a7c7ddf36d04b267181601b6552d57ede97d5ae0ea"
+        },
+        {
+          "path": "src/main/java/org/thisway/company/statistics/interfaces/StatisticController.java",
+          "sha256": "2909e1c29c3dc18c397be0cd5002e3a17d71200ee2166bf08b042a00c9741cec"
+        },
+        {
+          "path": "src/main/java/org/thisway/emulator/credential/DeviceAuthenticationService.java",
+          "sha256": "f2dd002ab7ac36ce9ca7785feb164d171501070fd6e36000b51ccf20f7ab514b"
+        },
+        {
+          "path": "src/main/java/org/thisway/emulator/credential/DeviceBindingGuard.java",
+          "sha256": "b9d6f130c2363627d44be673807a26f85457fc0570e79cd1834d983c3e92239e"
+        },
+        {
+          "path": "src/main/java/org/thisway/emulator/credential/DeviceCredentialRepository.java",
+          "sha256": "9fb7ce791021f4f76fd2ad22709a241ab94ee0aa45f94954f101ff7bedf29578"
+        },
+        {
+          "path": "src/main/java/org/thisway/emulator/credential/DeviceIdentity.java",
+          "sha256": "c562ff66654f1750b3d3589ba999c0c7c40230a717f935ef65123dc0b0b7e7d4"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/common/ApiErrorResponse.java",
+          "sha256": "2167e8e7c459298f41e7113c7bd0101a72b62c147d670b56eb2c7d9bdde46897"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/common/ErrorCode.java",
+          "sha256": "142a8788888a8f182268ad7f9f5518c38df659c922c6f9105f18f6b27099128c"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/common/GlobalExceptionHandler.java",
+          "sha256": "d7c3caa43632f8b9da3648745af5e14e41c05a343662ea5fe3244deee57cd31f"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/config/RabbitMQConfig.java",
+          "sha256": "3de91c79db6998d8377ed6ac937fc8f6b002f6661261a1016ce6c5fd2ccd5ecd"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/security/config/policy/CorsPolicy.java",
+          "sha256": "ace52248fd6c11324a392a4cd7da777fca973bdc3050942eb74d9e15c11bb0dc"
+        },
+        {
+          "path": "src/main/java/org/thisway/support/security/config/policy/auth/AuthAuthorizationPolicy.java",
+          "sha256": "3ea1dd20a34516f84c9ee2e0f096fd3d8a09a60e36e9ea23fd0986d7341e7814"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicl_consumer/log/SaveGpsLogConsumer.java",
+          "sha256": "d851f92aedfdbba969a3f483555683efe1afd292af903e7f4c179945a1cb0a48"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicl_consumer/log/StreamGpsLogConsumer.java",
+          "sha256": "32587a6e94f69c84927d3e7bb85b7048e6ed66e8ee4e812adc2758a0e01acb28"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/DeviceTelemetryService.java",
+          "sha256": "1c6fed6e679c0b5585cab4c85d1fbfb644e33eb7d51903ec26927d254fba9b81"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/DirectGpsLogService.java",
+          "sha256": "242ab54b6e6254ac02b9b608aac91b7b8c4dc52cc4f0d009e71c7ae760ffa6b6"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/GpsLogSaveService.java",
+          "sha256": "2cc572bd83cbfcc689b8ef1613b5d5070110984611f19c499a255ff6c35beaf2"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/GpsLogService.java",
+          "sha256": "e5c86ee13e29859233e18197b0be0be608fcd6c34c72efb61479a83a3f8fd3aa"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/LogServiceImpl.java",
+          "sha256": "a0969e6657629ef9dfdc40e58b9cab675e76c02aeaa85986035a545be812a207"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/RabbitMqGpsLogService.java",
+          "sha256": "ab698f9c711fab9ef3c6be460b51d1ea7e5be332606cb6a899c554fc8f7e619d"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/application/TelemetryRequestGuard.java",
+          "sha256": "e475d8771d5e3d12ba4b8c955e678fe883a21353e116740d3ec5854de173889b"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/infrastructure/GpsLogProducer.java",
+          "sha256": "19885fda736392788c7703b6046141350ae935eb766bf402f0a7a0ea4fdd6c98"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/infrastructure/GpsMessageIdentity.java",
+          "sha256": "11c8a37e3184db3b1e3a521ee6b9f37f933d3709f9c4146a7b9e8c7de36b30fd"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/interfaces/GeofenceLogRequestValidator.java",
+          "sha256": "1a13a34adea93d4e93990694b679d4a1e3ef5f231cd49e8e2830a17849d0979f"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/interfaces/GpsLogRequestValidator.java",
+          "sha256": "3ffb850262def811f52feb0f6036900764c0a1ca794ae815556a35674aba9e1d"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/interfaces/LogController.java",
+          "sha256": "27f944170d547f9aa296e5b0616fb7378d4d08083b8ef34ac1be3d9fd8847318"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/log/interfaces/TelemetryBodyLimitFilter.java",
+          "sha256": "ac379662c97b13215d26a21d3482e1b5e5924c9b02bf96c1b4b9e8d290b47107"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/triplog/application/StreamCoordinatesService.java",
+          "sha256": "1be8a43589da05ec57fac7c012eae2107f81faa7b7aa39c34e84a9a00748756e"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/triplog/application/TripAddressEnrichment.java",
+          "sha256": "1078645f54f3873380cd85963c094e6e37eefd46b0d0ff002e0c2fedb37963d0"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/triplog/application/TripAddressWorker.java",
+          "sha256": "5a25983f24f528b9a5fb684109491237dbc490a4a3496ec813e7bedd7d2f4fea"
+        },
+        {
+          "path": "src/main/java/org/thisway/vehicle/triplog/application/TripLogServiceImpl.java",
+          "sha256": "1f79c4a6eeb9d53bf4ef3c9fd31e393005cd66597bce8ebbeb984b6bda3d491a"
+        },
+        {
+          "path": "src/main/resources/db/migration/V10__trip_address_retry_state.sql",
+          "sha256": "b11ceedacbb050bd1790d61316e81315048805b1f4c38a077338c877fb6aaa5f"
+        },
+        {
+          "path": "src/main/resources/db/migration/V11__statistics_correction_queue.sql",
+          "sha256": "f10ae5033c8399d7e7ca46e36ebc3912fd0a5c000ca08654ffd9e543678e6682"
+        },
+        {
+          "path": "src/main/resources/db/migration/V12__statistics_revision_audit.sql",
+          "sha256": "75f078f728f4ce69d7300f2bee1c793421fef4e5a7a2067059952e89031ed7fa"
+        },
+        {
+          "path": "src/main/resources/db/migration/V13__statistics_fleet_snapshot.sql",
+          "sha256": "7d62d1b06daa3fb0e67b71f84c6e9a78263b9fc93936aed812ba5b141434190b"
+        },
+        {
+          "path": "src/main/resources/db/migration/V14__statistics_orphan_recovery_audit.sql",
+          "sha256": "fb3882f6e96bdcf69128170c33623ade1f6db2cab350b6dc4a1c0c62aa38aa70"
+        },
+        {
+          "path": "src/replay/java/org/thisway/ops/GpsDlqReplay.java",
+          "sha256": "1b199f84ab96ad5ebecbc541f03c1d64e9f1d93581b183871084a829f50668b4"
+        },
+        {
+          "path": "src/replay/java/org/thisway/ops/StatisticsOrphanRecovery.java",
+          "sha256": "eccdd513409d2979beec4b401a6bce73e2ae8e8fb4576a8acfe863a4e1130298"
+        },
+        {
+          "path": "src/test/java/org/thisway/company/statistics/StatisticsCorrectionIntegrationTest.java",
+          "sha256": "dcbec49a4ab9bbe239b583be266b24632ebc1e2bfba85dc61a1d467011b4253e"
+        },
+        {
+          "path": "src/test/java/org/thisway/emulator/credential/DeviceAuthenticationServiceTest.java",
+          "sha256": "a8ec5287a073e96b22f86bf2972fc91fc4fd16f1e273f0f4aa792994d869815c"
+        },
+        {
+          "path": "src/test/java/org/thisway/emulator/credential/DeviceCredentialIntegrationTest.java",
+          "sha256": "d27af1680d25fee69cf892b509f72cbca6463845d896b3c54808da8f78c17ea7"
+        },
+        {
+          "path": "src/test/java/org/thisway/evidence/FleetBrowserIntegrationTest.java",
+          "sha256": "30b6963e88edb4bf745c2acdaa1b5b2057cee25a422fde4915e51f89a63091eb"
+        },
+        {
+          "path": "src/test/java/org/thisway/evidence/FleetEvidenceIntegrationTest.java",
+          "sha256": "85f4e619cb9d3c6a412036cf1de1cef553d94e57328eb100762dec96f335542d"
+        },
+        {
+          "path": "src/test/java/org/thisway/member/interfaces/PasswordControllerTest.java",
+          "sha256": "b37c246ce0e0fca11c7b4125d47c38cd1989fcea67d607f8a01f7b3841efd687"
+        },
+        {
+          "path": "src/test/java/org/thisway/support/batch/StatisticsCrashRecoveryIntegrationTest.java",
+          "sha256": "87239c4c120dfdeb8272323e72ac49fe0be1197dc2d2a227a1e69b20d9a79253"
+        },
+        {
+          "path": "src/test/java/org/thisway/support/config/GpsDlqReplayTest.java",
+          "sha256": "08af1b931e7bf2a36fa50405f431290e7d3b5b0a844863a57218f220b07d34d7"
+        },
+        {
+          "path": "src/test/java/org/thisway/support/config/MySqlMigrationIntegrationTest.java",
+          "sha256": "93f29b954e03c991be2bd44720314ff7a618d3d7beac49d82d86c6d394653f58"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/application/GpsLogSaveServiceTest.java",
+          "sha256": "e319c343faf8d943ca89aed55e1380dbb7f117cc99c73ec6da5cf7b9cff95cfc"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/application/TelemetryRequestGuardTest.java",
+          "sha256": "b296cf448312b7c86b4d2703edf169953fdcaf1c48e1099cf9841adb4466d889"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/infrastructure/GpsLogProducerIntegrationTest.java",
+          "sha256": "f46f502d1782547d9971815d7a70f5dc518276fef64d0afb36a65683f2902326"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/infrastructure/GpsLogProducerTest.java",
+          "sha256": "a398abc50b09d2ad21ebaa44ef168b1b1ce3dab4f17300aa0d2383e0fb4be665"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/interfaces/GpsLogValidationTest.java",
+          "sha256": "83771ce02dd853fc76f588a00830672c7e0820196a290cdb5d26c6e39195703f"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/interfaces/PowerLogValidationTest.java",
+          "sha256": "0a6fc3e57155dc72f70fad8a8595e374bfc620f7a4c86c3315556bd76aa3dd0c"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/interfaces/TelemetryBodyLimitFilterTest.java",
+          "sha256": "d3c85614266dd7f23272118fed9b48247207d2be0d0bba0ba10c412a1cdcff25"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/log/interfaces/TelemetryTimeValidationTest.java",
+          "sha256": "3c1281951002d691e6c1742d82cf9ffabecb0b3c67a94b152322160a57a9fa70"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/triplog/application/TripAddressWorkerIntegrationTest.java",
+          "sha256": "aea0dc6b10a80444d1d7434c6f62f1a3bc484723d0999d2aab8e9431dc809056"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/triplog/application/TripLogServiceTest.java",
+          "sha256": "baa58d73e3e813f2389234c220a03442249b3cf5f93fdcdb7133323517763576"
+        },
+        {
+          "path": "src/test/java/org/thisway/vehicle/triplog/interfaces/TripLogSseErrorResponseTest.java",
+          "sha256": "cbbb88cb8c896f9c31f92f200a80c5f9386e2fafaf3bb7ec4aafdcd97f6a8d42"
+        },
+        {
+          "path": "src/test/resources/application.yml",
+          "sha256": "fc0bb659560d3845d1b838b837c109b7a97fec178638c9160021079175fdfcbe"
+        }
+      ]
+    },
+    {
+      "repository": "KBE5-Thisway-FE",
+      "branch": "codex/frontend-dependency-security",
+      "head": "8fbd0da118bf3d7172f54e7f2a38057af1177ad7",
+      "files": [
+        {
+          "path": "playwright.production.config.mjs",
+          "sha256": "f141de406c93dfc4056ee72aa79768a53457a0abe41d52ca7855899c20fac48f"
+        },
+        {
+          "path": "src/App.jsx",
+          "sha256": "6b5531320b6ae471859b12311e38e504eede1066f73497a30d29d32a50d18ca6"
+        },
+        {
+          "path": "src/pages/company/CompanyStatisticsPage.jsx",
+          "sha256": "f825fd6573d9db72f2bc5694155f5bf09a7c6c37d90d9f3de07eefec9d197fe0"
+        },
+        {
+          "path": "src/pages/emulator/EmulatorPage.jsx",
+          "sha256": "3cc0a944a0613621f390a6ade066ba9a024ec03883cbfc6385ad918ec2b49061"
+        },
+        {
+          "path": "src/pages/trip/TripDetailViewPage.jsx",
+          "sha256": "3cf494195b46ec5689f4abeb1fa78ecec7d164edc53cb1b8334e087be795c90b"
+        },
+        {
+          "path": "src/utils/statisticsPresentation.mjs",
+          "sha256": "dcb7c4789c11e600461672d1ecda1029c13b8086b4162284615480ccd6a84239"
+        },
+        {
+          "path": "src/utils/statisticsPresentation.test.mjs",
+          "sha256": "e3a8729e6090147a11d1f53b2353969d36b8211d6246bf14bd51eb5e2a36eaf8"
+        },
+        {
+          "path": "tests/browser/emulator-auth.spec.mjs",
+          "sha256": "a4944735bc8afde1f56210f38c0674108eec74c052949d31486ab03646b529d6"
+        },
+        {
+          "path": "tests/browser/emulator.html",
+          "sha256": "224b037402dc3d89233320d4b544d1fee8482a7c59d66fa4a590aa3ad2957cc8"
+        },
+        {
+          "path": "tests/browser/emulator.jsx",
+          "sha256": "b3e8b687aed152749ccdfd5f67ffa42b1f9b17a5330cf96688bbf2a0223b7628"
+        },
+        {
+          "path": "tests/browser/statistics-contract.spec.mjs",
+          "sha256": "008dab918c682b4511edc5b5c44914ca8d9d1d4d97d68eb8872dc1829bd42a46"
+        },
+        {
+          "path": "tests/live-fleet/MapFixture.jsx",
+          "sha256": "8616ca938401e2c128f2cdddbef9abda91e3e976e2cee62f9300416c49c563b3"
+        },
+        {
+          "path": "tests/live-fleet/map-utils.mjs",
+          "sha256": "09f5ab1005c334c72f421e90bfac613289cf74be8ff79a9dd507ee0f8b6c858d"
+        },
+        {
+          "path": "tests/live-fleet/workflow.mjs",
+          "sha256": "8465c245581954c04fbc379acd1e0e10f764228ff614b18534457dd1b36c5ede"
+        },
+        {
+          "path": "tests/production/lazy-routes.spec.mjs",
+          "sha256": "8bd25bf6b6d781eb9f8489fba928efda21bf6fa7f28f25bd5677553dde7d166c"
+        }
+      ]
+    },
+    {
+      "repository": "KBE5-Thisway-Emulator",
+      "branch": "main",
+      "head": "594c3d096d9c957fa16941836c36eccadb199b0c",
+      "files": [
+        {
+          "path": "main.py",
+          "sha256": "bca625d0a0029cb9c16617945ca4e750dca357464fdc67b00f6105280e291768"
+        },
+        {
+          "path": "models/emulator_data.py",
+          "sha256": "c1bb5c0091e6fcc8161294fbb354e58374644e6e55fb82cdd8263d2010152506"
+        },
+        {
+          "path": "services/data_generator.py",
+          "sha256": "c89376b5ae0948dd51e602b2a336a0f5fd10e0f69ce76f9d245d9e1d0a76da9e"
+        },
+        {
+          "path": "services/device_credentials.py",
+          "sha256": "19589eed665fec3ff58bfbe55a84884e22aad7a4870c3117a4d9a69d5c46c1da"
+        },
+        {
+          "path": "services/emulator_manager.py",
+          "sha256": "d702d75d911103a87fbafb54dec6875ed4740d51333a94a7e56d5bf1934f98cd"
+        },
+        {
+          "path": "services/log_generators/geofence_log_generator.py",
+          "sha256": "e14aa234ae98c55272491bce4aad257d523d6c20250db92840b18ca54f156200"
+        },
+        {
+          "path": "services/log_generators/gps_log_generator.py",
+          "sha256": "05d3297b7bf2704108922b7d64f1cc9f4eb88c7dd785015f50948cad79999324"
+        },
+        {
+          "path": "services/log_generators/power_log_generator.py",
+          "sha256": "1a003888e2d32e6dc79458110b6e988033efa11a60c465bd43abfd23cc1c1af4"
+        },
+        {
+          "path": "services/log_handlers/base_log_handler.py",
+          "sha256": "863e46ab6020093c31c9fafdf206a046b757019a336ecdbe0463678c340762a7"
+        },
+        {
+          "path": "services/log_handlers/geofence_log_handler.py",
+          "sha256": "c02d5538c4dd76c861166f6c149ace3b7e9699f3893ba7e304f5918a005afc48"
+        },
+        {
+          "path": "services/log_handlers/gps_log_handler.py",
+          "sha256": "749e624c8c23ab5eb33d0e177ad82089ff49d6bed50cac9eac351a42af3b59cd"
+        },
+        {
+          "path": "services/log_handlers/power_log_handler.py",
+          "sha256": "ecb11abc94d1a60af7085fb364e6d557a709491173d60a97cd59a6001d4a9e46"
+        },
+        {
+          "path": "services/log_storage_manager.py",
+          "sha256": "5825f9563a705bd20e57eb6fc70e61b9cded72051c8fadd9beb913b4c66169b9"
+        },
+        {
+          "path": "test_emulator.py",
+          "sha256": "693f05dc935143268e10b0d725ce9ce09b55f8c6222d60b4a7fbadcd5176941a"
+        },
+        {
+          "path": "tests/live_device_contract.py",
+          "sha256": "68c8d14e14e016575bf6372cb2db69129c1d4692f293ef5da688dcc3559a8875"
+        },
+        {
+          "path": "tests/test_device_auth.py",
+          "sha256": "b4a3818da4dd8dd245751700af1ee6a7c19a3cb1103b9313674e3720816d5e00"
+        },
+        {
+          "path": "tests/test_gps_time_grouping.py",
+          "sha256": "94c68fab4951aa28fd67621b73d02b178b57b4cb220f0e9f31294b9bd0dc1d03"
+        }
+      ]
+    }
+  ]
+}

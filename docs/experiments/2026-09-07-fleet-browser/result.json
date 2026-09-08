@@ -1,0 +1,145 @@
+{
+  "change": "CHANGE-045",
+  "verifiedAt": "2026-09-07T11:08:36.063Z",
+  "passed": true,
+  "actualApplication": "src/main.jsx -> App.jsx",
+  "actualBackend": "Boot + MySQL + RabbitMQ + Redis Testcontainers",
+  "apiResponses": [
+    {
+      "company": "A",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/vehicles/dashboard",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/vehicles/track",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/vehicles",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/trip-log/1",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/trip-log",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/trip-log/detail/stream/1",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/trip-log/detail/1",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/trip-log/detail/stream/1",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/statistics",
+      "status": 200
+    },
+    {
+      "company": "A",
+      "method": "GET",
+      "path": "/api/statistics",
+      "status": 200
+    },
+    {
+      "company": "B",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/vehicles/track",
+      "status": 200
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/vehicles/dashboard",
+      "status": 200
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/vehicles",
+      "status": 200
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/trip-log/current/stream/1",
+      "status": 404
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/trip-log/1",
+      "status": 404
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/trip-log/detail/stream/1",
+      "status": 404
+    },
+    {
+      "company": "B",
+      "method": "GET",
+      "path": "/api/trip-log/detail/1",
+      "status": 404
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "checks": [
+    "Two real company logins",
+    "Company-scoped vehicle list and vehicle detail",
+    "Trip detail 2 hours and 500 meters",
+    "Statistics 120 minutes, 2 GPS observations and initial fleet snapshot",
+    "Foreign vehicle/trip UI errors with actual 404 responses"
+  ],
+  "screenshots": [
+    "01-company-dashboard.png",
+    "02-company-vehicles.png",
+    "03-trip-detail.png",
+    "04-company-statistics.png",
+    "05-foreign-trip-denied.png"
+  ],
+  "limitations": [
+    "Map provider components/helpers and reverse geocoding are stubbed; map rendering is not verified.",
+    "The external Google Fonts stylesheet is removed by the test server; local fallback fonts are used.",
+    "Synthetic accounts, vehicles and locations only; no deployment or production data.",
+    "Independent human explanation and manual replay are not verified."
+  ]
+}

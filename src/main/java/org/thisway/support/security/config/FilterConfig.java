@@ -29,4 +29,24 @@ public class FilterConfig {
     ) {
         return new JwtAuthenticationFilter(jwtTokenUtil);
     }
+    // These filters belong to the application SecurityFilterChain only. Automatic servlet
+    // registration would run the JWT parser on valid opaque Prometheus credentials.
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<LoggingFilter> loggingRegistration(LoggingFilter filter) {
+        return disabled(filter);
+    }
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<JwtAuthenticationFilter> jwtRegistration(JwtAuthenticationFilter filter) {
+        return disabled(filter);
+    }
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<GlobalExceptionHandlerFilter> errorRegistration(GlobalExceptionHandlerFilter filter) {
+        return disabled(filter);
+    }
+    private static <T extends jakarta.servlet.Filter> org.springframework.boot.web.servlet.FilterRegistrationBean<T> disabled(T filter) {
+        var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
 }

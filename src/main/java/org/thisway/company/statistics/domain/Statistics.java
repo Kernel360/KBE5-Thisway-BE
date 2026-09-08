@@ -14,6 +14,29 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class Statistics extends BaseEntity {
+    public static final int CURRENT_FORMULA_VERSION = 2;
+
+    @Column(nullable = false)
+    private long revision;
+
+    @Column(nullable = false)
+    private int formulaVersion = 1;
+    @Column(nullable = false)
+    private long fleetVehicleCount;
+    @Column(nullable = false)
+    private long gpsObservationCount;
+    @Column(nullable = false)
+    private long unclosedTripCount;
+    private LocalDateTime calculatedAt;
+
+    public void markCalculated(long fleetSize, long gpsCount, long unclosedCount, LocalDateTime at) {
+        revision = Math.addExact(revision, 1);
+        formulaVersion = CURRENT_FORMULA_VERSION;
+        fleetVehicleCount = fleetSize;
+        gpsObservationCount = gpsCount;
+        unclosedTripCount = unclosedCount;
+        calculatedAt = at;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)

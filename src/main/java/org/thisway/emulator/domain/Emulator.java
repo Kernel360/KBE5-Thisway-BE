@@ -25,6 +25,9 @@ public class Emulator {
     @Column(unique = true, nullable = false)
     private String mdn;
 
+    @Column(nullable = false)
+    private long assignmentRevision;
+
     @ManyToOne
     @JoinColumn(name = "vehicle_id", nullable = false)
     private Vehicle vehicle;
@@ -74,6 +77,10 @@ public class Emulator {
             Integer deviceId,
             String deviceFirmwareVersion
     ) {
+        if ((mdn != null && !mdn.equals(this.mdn)) ||
+                (vehicle != null && !vehicle.getId().equals(this.vehicle.getId()))) {
+            assignmentRevision = Math.incrementExact(assignmentRevision);
+        }
         if (mdn != null) {
             this.mdn = mdn;
         }

@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +59,7 @@ class GpsLogSaveServiceTest {
         setupMocks();
         var request = new GpsLogRequest(VALID_MDN, "A001", "6", "5", "1", "202609051220", "1",
                 List.of(new GpsLogEntry(null, "33", "A", "37000000", "127000000", "90", "20", "100", "12")));
-        new GpsLogSaveService(emulatorRepository, logRepository, new LogDataConverter()).saveGpsLog(request);
+        new GpsLogSaveService(emulatorRepository, logRepository, new LogDataConverter(), mock(org.thisway.emulator.credential.DeviceBindingGuard.class), mock(org.springframework.context.ApplicationEventPublisher.class)).saveGpsLog(request);
         verify(logRepository).saveGpsLogs(argThat(rows -> rows.size() == 1
                 && rows.getFirst().occurredTime().equals(LocalDateTime.of(2026, 9, 5, 12, 20, 33))));
     }

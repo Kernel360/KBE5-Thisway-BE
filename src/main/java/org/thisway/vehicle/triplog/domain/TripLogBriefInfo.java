@@ -10,7 +10,8 @@ public record TripLogBriefInfo(
         LocalDateTime startTime,
         LocalDateTime endTime,
         Integer tripMeter,
-        String address
+        String address,
+        TripDistanceStatus distanceStatus
 ) {
     public static TripLogBriefInfo from(TripLog tripLog) {
         return new TripLogBriefInfo(
@@ -19,9 +20,10 @@ public record TripLogBriefInfo(
                 tripLog.getVehicle().getCarNumber(),
                 tripLog.getStartTime(),
                 tripLog.getEndTime(),
-                tripLog.getTotalTripMeter(),
+                tripLog.getDistanceMeters(),
                 Optional.ofNullable(tripLog.getOnAddr()).orElse("") +
-                        Optional.ofNullable(tripLog.getOnAddrDetail()).orElse("")
+                        Optional.ofNullable(tripLog.getOnAddrDetail()).orElse(""),
+                tripLog.getDistanceStatus()
         );
     }
 }

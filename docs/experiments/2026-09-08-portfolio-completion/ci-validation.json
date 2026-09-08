@@ -1,0 +1,24 @@
+{
+  "frontend": {
+    "baseline": "2a29252",
+    "node": "24.19.0",
+    "unitTests": 14,
+    "browserFixtureTests": 26,
+    "productionChunkTests": 3,
+    "build": "passed",
+    "lockfileInstall": "npm ci --no-audit --no-fund passed; unit/build/browser suites passed again after install",
+    "commit": "94dc5f1"
+  },
+  "emulator": {
+    "baseline": "8d017d6",
+    "python": "3.11.16",
+    "tests": 32,
+    "requirements": {
+      "pydantic": "2.4.2",
+      "python-dotenv": "1.0.0",
+      "requests": "2.31.0"
+    },
+    "commit": "fa7242f"
+  },
+  "remoteActions": "Not run for these new local workflows; existing draft PRs do not yet include this change."
+}

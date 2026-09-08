@@ -15,6 +15,27 @@ import java.util.Optional;
 public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     @Query("""
+            SELECT t FROM TripLog t JOIN FETCH t.vehicle v
+            WHERE v.company.id=:companyId AND v.active=true AND t.active=true
+              AND t.endTime>t.startTime AND t.startTime<:to AND t.endTime>:from
+            """)
+    List<TripLog> findCompletedOverlapping(@Param("companyId") Long companyId,
+            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("""
+            SELECT COUNT(t) FROM TripLog t WHERE t.vehicle.company.id=:companyId
+              AND t.vehicle.active=true AND t.endTime IS NULL AND t.startTime<:to
+            """)
+    long countUnclosedBefore(@Param("companyId") Long companyId, @Param("to") LocalDateTime to);
+
+    @Query(value = """
+            SELECT COUNT(DISTINCT t.vehicle_id, t.start_time) FROM trip_log t JOIN vehicle v ON v.id=t.vehicle_id
+            WHERE v.company_id=:companyId AND v.active=true AND t.start_time>=:from AND t.start_time<:to
+            """, nativeQuery = true)
+    long countDistinctStarts(@Param("companyId") Long companyId,
+            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("""
                 SELECT new org.thisway.vehicle.triplog.domain.TripLocationRaw(t.onAddr, COUNT(t))
                 FROM TripLog t
                 WHERE t.vehicle.company.id = :companyId
@@ -43,13 +64,13 @@ public interface TripLogRepository extends JpaRepository<TripLog, Long> {
 
     Optional<TripLog> findByIdAndVehicleCompanyIdAndActiveTrue(Long id, Long companyId);
 
-    TripLog findByVehicleIdAndStartTime(Long vehicleId, LocalDateTime startTime);
+    List<TripLog> findTop2ByVehicleIdAndStartTimeOrderByIdAsc(Long vehicleId, LocalDateTime startTime);
 
 
     // 특정 회사의 날짜 범위에 대한 시동 횟수
     @Query("SELECT COUNT(t) FROM TripLog t " +
-            "WHERE t.vehicle.company.id = :companyId " +
-            "AND t.startTime >= :startDate AND t.startTime <= :endDate")
+            "WHERE t.vehicle.company.id = :companyId AND t.vehicle.active = true " +
+            "AND t.startTime >= :startDate AND t.startTime < :endDate")
     Long countPowerOnByCompanyAndDateRange(
             @Param("companyId") Long companyId,
             @Param("startDate") LocalDateTime startDate,
