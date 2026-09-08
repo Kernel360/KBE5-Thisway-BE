@@ -23,6 +23,7 @@ public class SaveGpsLogConsumer {
 
     private final GpsLogSaveService gpsLogSaveService;
     private final io.micrometer.core.instrument.MeterRegistry meters;
+    private final org.thisway.support.logging.GpsCommitLatency commitLatency;
 
     @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5",
             containerFactory = "gpsSaveListenerContainerFactory")
@@ -35,6 +36,7 @@ public class SaveGpsLogConsumer {
             gpsLogSaveService.saveGpsLog(request,
                     GpsMessageIdentity.read(headers, request.mdn()));
             outcome = "committed"; // Transactional service proxy returned after commit.
+            commitLatency.committed(headers);
         } finally {
             io.micrometer.core.instrument.Timer.builder("gps.consumer.processing")
                     .tag("outcome", outcome).publishPercentileHistogram()

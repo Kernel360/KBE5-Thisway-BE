@@ -26,11 +26,13 @@ class ConsumerObservabilityTest {
             }).when(service).saveGpsLog(request, identity);
             var meters = new SimpleMeterRegistry();
             try {
-                var consumer = new SaveGpsLogConsumer(service, meters);
+                var latency = mock(GpsCommitLatency.class);
+                var consumer = new SaveGpsLogConsumer(service, meters, latency);
                 MDC.put("traceId", "outer");
                 try {
                     if (fails) assertThatThrownBy(() -> consumer.receiveGpsLog(request, headers)).isInstanceOf(IllegalStateException.class);
                     else consumer.receiveGpsLog(request, headers);
+                    verify(latency, times(fails ? 0 : 1)).committed(headers);
                     assertThat(MDC.get("traceId")).isEqualTo("outer");
                     assertThat(meters.get("gps.consumer.processing").tag("outcome", fails ? "failed" : "committed").timer().count()).isEqualTo(1);
                     assertThat(meters.getMeters()).allSatisfy(meter -> assertThat(meter.getId().getTags()).hasSize(1));

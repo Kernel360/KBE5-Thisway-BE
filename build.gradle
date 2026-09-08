@@ -216,6 +216,7 @@ tasks.register('observabilityEvidenceTest', Test) {
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform { includeTags 'fleet-evidence' }
     systemProperty 'fleet.observability', 'true'
+    systemProperty 'fleet.stageSeconds', providers.gradleProperty('evidenceStageSeconds').getOrElse('30')
     inputs.files(fileTree('infra/observability'), fileTree('infra/prod/monitoring/prometheus/rules'), fileTree('scripts/observability'), file('../KBE5-Thisway-FE/package.json'), file('../KBE5-Thisway-FE/package-lock.json'))
             .withPropertyName('monitoringContracts').withPathSensitivity(PathSensitivity.RELATIVE)
     shouldRunAfter tasks.test

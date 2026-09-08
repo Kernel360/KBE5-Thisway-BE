@@ -133,6 +133,25 @@ class FleetEvidenceIntegrationTest {
     @Autowired RabbitListenerEndpointRegistry listeners;
     @Autowired MeterRegistry meters;
     @MockitoBean ReverseGeocodingConverter geocoding;
+    @org.springframework.boot.test.context.TestConfiguration
+    static class LatencyConfig {
+        @org.springframework.context.annotation.Bean LatencySamples latencySamples() { return new LatencySamples(); }
+    }
+    static class LatencySamples {
+        final java.util.concurrent.ConcurrentLinkedQueue<org.thisway.support.logging.GpsCommitLatency.Measurement> samples = new java.util.concurrent.ConcurrentLinkedQueue<>();
+        @org.springframework.context.event.EventListener
+        public void measured(org.thisway.support.logging.GpsCommitLatency.Measurement event) { samples.add(event); }
+        Map<String, Object> drain(int expected) {
+            await().atMost(Duration.ofSeconds(30)).until(() -> samples.size() == expected);
+            var all = new ArrayList<>(samples); samples.clear();
+            var values = all.stream().filter(v -> v.outcome().equals("measured")).mapToLong(v -> v.millis()).sorted().toArray();
+            assertThat(values.length).isEqualTo(expected);
+            return Map.of("attempts", all.size(), "unmeasured", all.size() - values.length,
+                    "p95Ms", values[(int)Math.ceil(values.length * .95) - 1],
+                    "p99Ms", values[(int)Math.ceil(values.length * .99) - 1], "rawMs", values);
+        }
+    }
+    @Autowired LatencySamples latencySamples;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     // Credentials never become report fields or assertion values.
@@ -438,14 +457,36 @@ class FleetEvidenceIntegrationTest {
                 assertThat(up.path("data").path("result").size()).isEqualTo(2);
                 up.path("data").path("result").forEach(item -> assertThat(item.path("value").get(1).asText()).as(item.path("metric").path("job").asText()).isEqualTo("1"));
             });
-            gpsBatch("warmup", devices, 0, 2, 16);
+            var httpLogger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(org.thisway.support.logging.filter.LoggingFilter.class);
+            var capturedLogs = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>() {
+                @Override protected void append(ch.qos.logback.classic.spi.ILoggingEvent event) {
+                    event.prepareForDeferredProcessing(); super.append(event);
+                }
+            };
+            capturedLogs.start();
+            var previousLevel = httpLogger.getLevel();
+            httpLogger.setLevel(ch.qos.logback.classic.Level.INFO);
+            httpLogger.addAppender(capturedLogs);
+            try { gpsBatch("warmup", devices, 0, 2, 16); }
+            finally { httpLogger.detachAppender(capturedLogs); httpLogger.setLevel(previousLevel); capturedLogs.stop(); }
+            List<String> safeLogs = new ArrayList<>();
+            for (var event : capturedLogs.list) {
+                // MDC is prepared on the logging thread; capture only the fixed completion event.
+                if (event.getFormattedMessage().startsWith("event=http_dispatch ")) safeLogs.add(json.writeValueAsString(Map.of(
+                        "traceId", event.getMDCPropertyMap().getOrDefault("traceId", ""),
+                        "message", event.getFormattedMessage())));
+            }
+            assertThat(safeLogs).hasSize(16);
+            Files.write(output.resolve("http-completion.jsonl"), safeLogs);
+            latencySamples.drain(16);
+            int stageSeconds = Integer.getInteger("fleet.stageSeconds", 30);
             List<Map<String, Object>> stages = new ArrayList<>();
             List<Sample> allSamples = new ArrayList<>();
             List<Map<String, Object>> resources = new ArrayList<>();
             RabbitAdmin admin = new RabbitAdmin(rabbit);
             int index = 16;
             for (int targetRps : new int[]{20, 40, 80}) {
-                int seconds = 30, requests = seconds * targetRps;
+                int seconds = stageSeconds, requests = seconds * targetRps;
                 long started = System.nanoTime();
                 List<java.util.concurrent.Future<Sample>> pending = new ArrayList<>();
                 try (var workers = new java.util.concurrent.ThreadPoolExecutor(8, 8, 0, java.util.concurrent.TimeUnit.SECONDS,
@@ -468,7 +509,8 @@ class FleetEvidenceIntegrationTest {
                     double wall = elapsedMs(started);
                     allSamples.addAll(samples);
                     stages.add(Map.of("targetRps", targetRps, "scheduledSeconds", seconds,
-                            "maxClientWorkers", 8, "http", summary(samples, wall)));
+                            "maxClientWorkers", 8, "http", summary(samples, wall),
+                            "admittedToCommit", latencySamples.drain(requests)));
                 }
             }
             final int expectedBeforePause = index;
@@ -494,9 +536,11 @@ class FleetEvidenceIntegrationTest {
             await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(20))
                     .until(() -> gpsCount() == expectedAfterRecovery && ready(admin, RabbitMQConfig.GPS_LOG_QUEUE) == 0);
             double recoveryMs = elapsedMs(recoveryStarted);
+            var recoveryLatency = latencySamples.drain(80);
             List<Sample> duplicates = new ArrayList<>();
             for (int i = 16; i < 40; i++) duplicates.add(sendObservation("duplicate", devices, i));
             await().atMost(Duration.ofSeconds(30)).until(() -> ready(admin, RabbitMQConfig.GPS_LOG_QUEUE) == 0);
+            var duplicateLatency = latencySamples.drain(24);
             listeners.stop();
             assertThat(gpsCount()).isEqualTo(expectedAfterRecovery);
             Map<String, Object> queries = new LinkedHashMap<>();
@@ -519,7 +563,7 @@ class FleetEvidenceIntegrationTest {
             report.put("measuredAt", Instant.now().toString());
             report.put("compiledClassesSha256", compiledClassesDigest());
             report.put("fixture", Map.of("seed", SEED, "devices", DEVICES, "warmupRequests", 16,
-                    "stageSeconds", 30, "admissionLimitPerDevicePerMinute", 10000));
+                    "stageSeconds", stageSeconds, "admissionLimitPerDevicePerMinute", 10000));
             report.put("environment", Map.of("java", System.getProperty("java.runtime.version"), "os", System.getProperty("os.name"),
                     "architecture", System.getProperty("os.arch"), "maxHeapBytes", Runtime.getRuntime().maxMemory(),
                     "mysql", MYSQL.getDockerImageName(), "rabbitmq", RABBIT.getDockerImageName(), "redis", REDIS.getDockerImageName(),
@@ -528,13 +572,16 @@ class FleetEvidenceIntegrationTest {
             report.put("recovery", Map.of("pausedConsumerAccepted", outageSamples.size(), "readyBeforeRestart", backlog,
                     "recoveryMs", recoveryMs, "expectedUniqueRows", expectedAfterRecovery, "actualUniqueRows", gpsCount(),
                     "duplicateRequests", duplicates.size(), "deadLetters", ready(admin, RabbitMQConfig.GPS_LOG_DLQ)));
+            report.put("recoveryAdmittedToCommit", recoveryLatency);
+            report.put("duplicateAdmittedToCommit", duplicateLatency);
+            report.put("queryComparison", queryComparison(jdbc.queryForObject("SELECT MIN(vehicle_id) FROM gps_log", Long.class)));
             report.put("backlogObservedByPrometheus", backlogProof.get());
             report.put("prometheusQueries", queries); report.put("dashboardPanels", 18); report.put("grafanaDatasourceProxy", "success");
             report.put("limitations", List.of("Local synthetic baseline, no before/after performance claim or production SLA.",
                     "Client worker queue bounded at 256; -1 status means generator saturation. HTTP times exclude client executor wait.",
                     "HTTP timing is broker acceptance, consumer timer excludes queue wait, recovery is batch-level polling upper bound.",
                     "Same host generates load and runs Docker; CPU/memory quotas and background activity not pinned.",
-                    "90 second stepped run, not long-duration soak or maximum capacity. No per-observation end-to-end latency.",
+                    "Configurable stepped local run; not maximum capacity. Commit latency counts consumer attempts, including duplicates; server wall clocks require synchronization.",
                     "Consumer pause is controlled stop, not broker/process crash. Prometheus and Grafana API verified, screenshots separate.",
                     "No remote write, external alerts or production changes. Geocoding mocked; all coordinates synthetic."));
             Files.writeString(output.resolve("result.json"), json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
@@ -549,6 +596,33 @@ class FleetEvidenceIntegrationTest {
             assertThat(outageSamples).allMatch(sample -> sample.status() == 200);
             assertThat(duplicates).allMatch(sample -> sample.status() == 200);
         } finally { Files.deleteIfExists(config); Files.deleteIfExists(tokenFile); }
+    }
+
+    private Map<String, Object> queryComparison(long vehicleId) {
+        // Disposable fixture only: assess a candidate index before proposing production migration.
+        String suffix = " WHERE vehicle_id = ? AND occurred_time >= ? ORDER BY occurred_time DESC LIMIT 100";
+        String before = "SELECT * FROM gps_log IGNORE INDEX (idx_evidence_vehicle_time)" + suffix;
+        String after = "SELECT * FROM gps_log FORCE INDEX (idx_evidence_vehicle_time)" + suffix;
+        jdbc.execute("CREATE INDEX idx_evidence_vehicle_time ON gps_log(vehicle_id, occurred_time)");
+        Object[] args = {vehicleId, DATE.atTime(10, 0)};
+        var beforePlan = jdbc.queryForList("EXPLAIN ANALYZE " + before, args);
+        var afterPlan = jdbc.queryForList("EXPLAIN ANALYZE " + after, args);
+        for (int i = 0; i < 10; i++) { jdbc.queryForList(before, args); jdbc.queryForList(after, args); }
+        List<Double> b = new ArrayList<>(), a = new ArrayList<>();
+        for (int i = 0; i < 60; i++) {
+            for (boolean candidate : i % 2 == 0 ? new boolean[]{false,true} : new boolean[]{true,false}) {
+                long start = System.nanoTime();
+                var rows = jdbc.queryForList(candidate ? after : before, args);
+                (candidate ? a : b).add(elapsedMs(start));
+                assertThat(rows).hasSize(100);
+            }
+        }
+        var bRows = jdbc.queryForList(before, args); var aRows = jdbc.queryForList(after, args);
+        assertThat(aRows).usingRecursiveComparison().isEqualTo(bRows);
+        jdbc.execute("DROP INDEX idx_evidence_vehicle_time ON gps_log");
+        return Map.of("baselinePlan", beforePlan, "candidatePlan", afterPlan,
+                "baselineRawMs", b, "candidateRawMs", a, "rows", gpsCount(),
+                "scope", "Warm-cache query microbenchmark; alternating 60 pairs, same rows and parameters; candidate index only in disposable DB. Not end-to-end API speedup.");
     }
 
     private Sample sendObservation(String phase, List<Device> devices, int index) {

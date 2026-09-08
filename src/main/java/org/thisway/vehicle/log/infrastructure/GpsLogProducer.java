@@ -48,7 +48,9 @@ public class GpsLogProducer {
 
 
     public void sendGpsLog(GpsLogRequest request, DeviceIdentity identity) {
+        long admittedAt = System.currentTimeMillis();
         var properties = new MessageProperties();
+        properties.setHeader(org.thisway.support.logging.GpsCommitLatency.HEADER, admittedAt);
         properties.getHeaders().putAll(GpsMessageIdentity.headers(identity));
         if (!identity.mdn().equals(request.mdn())) throw new CustomException(ErrorCode.DEVICE_AUTHENTICATION_FAILED);
         long deadline = System.nanoTime() + BUDGET_NANOS;

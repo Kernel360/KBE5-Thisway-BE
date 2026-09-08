@@ -586,7 +586,7 @@ class DeviceCredentialIntegrationTest {
             admin.declareBinding(new org.springframework.amqp.core.Binding(liveQueue, org.springframework.amqp.core.Binding.DestinationType.QUEUE,
                     org.thisway.support.config.RabbitMQConfig.BROADCAST_GPS_LOG_EXCHANGE, "", null));
             producer = new org.thisway.vehicle.log.infrastructure.GpsLogProducer(template, converter, mock(io.micrometer.tracing.Tracer.class), meters);
-            var consumer = new org.thisway.vehicl_consumer.log.SaveGpsLogConsumer(gpsSave, new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
+            var consumer = new org.thisway.vehicl_consumer.log.SaveGpsLogConsumer(gpsSave, new io.micrometer.core.instrument.simple.SimpleMeterRegistry(), org.mockito.Mockito.mock(org.thisway.support.logging.GpsCommitLatency.class));
             var endpoint = new org.springframework.amqp.rabbit.config.SimpleRabbitListenerEndpoint();
             endpoint.setId("authenticated-fixture");
             endpoint.setQueueNames(org.thisway.support.config.RabbitMQConfig.GPS_LOG_QUEUE);
