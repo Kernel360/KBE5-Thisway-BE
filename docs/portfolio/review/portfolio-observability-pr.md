@@ -8,4 +8,4 @@
 
 리뷰 순서: MetricsSecurityConfig의 chain/filter 경계 → GpsCommitLatency와 consumer transaction 경계 → FleetEvidenceIntegrationTest의 raw sample/동일 조건 → operations-evidence.py의 임시 환경과 접근 분리.
 
-원격 반영 대상은 현재 로컬 `codex/observability-evidence`다. 기존 BE PR235는 다른 head인 `codex/statistics-batch-restart`이므로 새 변경이 포함돼 있다고 표시하지 않는다. 공개 push·PR 생성은 이 준비본과 로컬 commit을 검토한 뒤 별도 반영한다. FE84/Emulator22도 현재 원격 head에는 새 CI workflow가 없다.
+원격 반영 완료: 기존 PR235의 codex/statistics-batch-restart에 fast-forward하여 cdd5493을 반영했다. 중복 PR은 만들지 않았다. FE84/Emulator22도 새 CI를 포함하며 세 저장소의 원격 CI 성공을 확인했다. 정확한 head와 실행 링크는 최신 작업 기록에 있다. Merge/배포는 수행하지 않았다.

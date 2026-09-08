@@ -19,6 +19,6 @@
 - 1단계 완료: 전용 endpoint 보안 chain·수집 credential·Prometheus 설정. 전체473개 및 실제 관측성 실험1개 성공. [작업 기록](work-logs/2026-09-08-metrics-access.md).
 - 2~4단계: 저장 지연·3회 반복(각5분)·조회 후보 비교 검증 완료. 측정 당시 코드 `69f34cd`.
 - 5단계: 로컬 경보 발생/해제·실제 HTTP 로그 검색·권한·retention 정책 검증 완료. 지속 collector/물리 삭제 관찰은 운영 후속 범위.
-- 6단계: FE/Emulator CI 및 로컬 검증·commit·제출본 마련. BE 전체475개·fleet1개·관측성1개 및20패널 실제 화면 확인 완료. 공개 PR 반영/원격 CI는 별도.
+- 6단계: FE/Emulator CI 및 로컬 검증·commit·제출본 마련. BE 전체475개·fleet1개·관측성1개 및20패널 실제 화면 확인 완료. 기존 PR235/84/22에 반영하고 BE/FE/Emulator 원격 CI 성공 확인. Merge/배포는 별도. [기록](work-logs/2026-09-08-remote-ci-frontend-readiness.md).
 - [제출 요약과 근거](portfolio-evidence-summary.md), [전체 작업 기록](work-logs/2026-09-08-portfolio-completion.md).
 - 사용자의 독립 설명은 AI가 대신 완료 표시할 수 없다. 단계별로 핵심 실패 시나리오를 직접 실행하고 결과를 설명하는 체크포인트를 둔다.

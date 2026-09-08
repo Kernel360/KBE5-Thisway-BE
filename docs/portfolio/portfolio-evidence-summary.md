@@ -29,12 +29,14 @@ consumer 정지 후 복구 구간의 저장 p95는2.321~3.322초, 중복 소비 
 
 BE 전체 회귀475개·기존 fleet 통합1개·최종 관측성 통합1개 모두 성공(4분36초). Grafana20패널과 저장 지연/미측정 화면을 실제 Chromium에서 확인했다. [최종 검증 기록](../experiments/2026-09-08-portfolio-completion/final/validation.json), [실제 대시보드](../experiments/2026-09-08-portfolio-completion/final/dashboard-commit.png). 실제 DB rollback이 성공 지연에 섞이지 않는 negative test를 포함한다.
 
-FE 로컬: npm ci→단위14→build→Chromium fixture26→production chunk3 성공. Emulator: Python3.11.16에서32개 성공. 새 workflow는 PR/read-only 권한/timeout을 사용한다. 로컬 commit은 FE `94dc5f1`, Emulator `fa7242f`다.
+FE 로컬: npm ci→단위14→build→Chromium fixture26→production8 성공(세션/404/접근성 보강 포함). Emulator: Python3.11.16에서32개 성공. 새 workflow는 PR/read-only 권한/timeout을 사용한다. 로컬 commit은 FE `438f03a`, Emulator `fa7242f`다.
 
-기존 공개 draft PR은 [BE235](https://github.com/Kernel360/KBE5-Thisway-BE/pull/235), [FE84](https://github.com/Kernel360/KBE5-Thisway-FE/pull/84), [Emulator22](https://github.com/Kernel360/KBE5-Thisway-Emulator/pull/22)이다. 이번 추가 commit은 아직 원격에 반영하지 않았으며 새 workflow의 GitHub runner green도 아직 없다. [BE PR 준비본](review/portfolio-observability-pr.md)과 로컬 diff로 검토할 수 있다.
+기존 공개 draft PR은 [BE235](https://github.com/Kernel360/KBE5-Thisway-BE/pull/235), [FE84](https://github.com/Kernel360/KBE5-Thisway-FE/pull/84), [Emulator22](https://github.com/Kernel360/KBE5-Thisway-Emulator/pull/22)이다. 이번 변경은 기존 PR에 fast-forward로 반영했고 BE cdd5493·FE438f03a·Emulatorfa7242f의 원격 CI 성공을 확인했다. [CI와 프론트 감사 기록](work-logs/2026-09-08-remote-ci-frontend-readiness.md). [BE PR 준비본](review/portfolio-observability-pr.md)과 공개 PR diff로 검토할 수 있다.
 
 ## 면접에서 보여 줄 흐름
 
 회사별 차량 관제 문제와 기존 개인 담당을 소개한다. 이어 “HTTP200인데 consumer가 멈춰 DB에 저장되지 않는 경우”를 보여 준다. 저장 지연/큐/DB행을 함께 읽고, 복구 후 중복행이 생기지 않는 이유를 설명한다. 마지막으로 수치의 조건·한계와 선택하지 않은 설계를 말한다.
 
-운영에서 별도인 항목: TLS/ingress/secret 회전, 지속 로그 collector와24시간 경과 후 물리 삭제, 실제 알림 수신자·HA·용량 검증, 원격 CI·merge·배포. 사용자의 독립 이해·설명은 작업 로그의 질문을 직접 재현하며 확인해야 한다. 이 문서는 사용자에게 없는 운영 경험을 대신 주장하지 않는다.
+운영에서 별도인 항목: TLS/ingress/secret 회전, 지속 로그 collector와24시간 경과 후 물리 삭제, 실제 알림 수신자·HA·용량 검증, merge·배포. 사용자의 독립 이해·설명은 작업 로그의 질문을 직접 재현하며 확인해야 한다. 이 문서는 사용자에게 없는 운영 경험을 대신 주장하지 않는다.
+
+프론트 범위: 회사 관리자 중심 시연과 전체 역할 제품 완성도를 구분한다. ADMIN 대시보드/통계·회사 설정 및 MEMBER6개 업무 화면은 placeholder다. 미구현 화면을 완료 기능으로 제출하지 않는다.
