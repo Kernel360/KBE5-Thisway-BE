@@ -42,6 +42,7 @@ class DeviceCredentialIntegrationTest {
             new org.testcontainers.containers.GenericContainer<>("mysql:8.0.40")
                     .withEnv("MYSQL_DATABASE", "credentials_test").withEnv("MYSQL_USER", "test")
                     .withEnv("MYSQL_PASSWORD", "test").withEnv("MYSQL_ROOT_PASSWORD", "test-root")
+                    .withCommand("--log-bin-trust-function-creators=1") // Disposable rollback trigger fixture only.
                     .withExposedPorts(3306).waitingFor(org.testcontainers.containers.wait.strategy.Wait
                             .forLogMessage(".*ready for connections.*port: 3306.*", 1));
     @org.testcontainers.junit.jupiter.Container
@@ -435,6 +436,24 @@ class DeviceCredentialIntegrationTest {
                     .andExpect(status().isUnauthorized());
             assertThat(logCount(kind)).isZero();
         }
+    }
+
+    @Test
+    void 실제_DB_insert_rollback은_commit_지연으로_기록되지_않는다() throws Exception {
+        var identity = authentication.authenticate(device.getId(), issue(device.getId(), token), device.getMdn());
+        var registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+        var latency = new org.thisway.support.logging.GpsCommitLatency(registry, event -> { });
+        var consumer = new org.thisway.vehicl_consumer.log.SaveGpsLogConsumer(gpsSave, registry, latency);
+        var headers = new java.util.HashMap<String,Object>(org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.headers(identity));
+        headers.put(org.thisway.support.logging.GpsCommitLatency.HEADER, System.currentTimeMillis());
+        jdbc.execute("CREATE TRIGGER evidence_commit_rollback AFTER INSERT ON gps_log FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fixture rollback'");
+        try {
+            assertThatThrownBy(() -> consumer.receiveGpsLog(gpsPacket(), headers)).isInstanceOf(org.springframework.dao.DataAccessException.class);
+            assertThat(logCount("gps")).isZero();
+            assertThat(registry.find("gps.admitted.to.commit").timer()).isNull();
+            assertThat(registry.find("gps.commit.latency.observations").counter()).isNull();
+            assertThat(registry.get("gps.consumer.processing").tag("outcome", "failed").timer().count()).isEqualTo(1);
+        } finally { jdbc.execute("DROP TRIGGER evidence_commit_rollback"); registry.close(); }
     }
 
     @Test

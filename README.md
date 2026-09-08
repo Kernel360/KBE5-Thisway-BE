@@ -215,3 +215,7 @@ V10 주소 retry worker, V11 통계 correction queue, V12 수정 revision, V13 �
 ### 관측성과 재현 실험
 
 로그의 민감정보 제외·HTTP/RabbitMQ correlation, consumer transaction timer, publisher queue 지표와 Grafana18개 패널을 추가했다. [실행계획](docs/portfolio/observability-execution-plan.md)과 [실행 절차](docs/runbooks/observability-evidence.md)를 참고한다. 실제 격리 Prometheus/Grafana 수집과90초 단계 부하·consumer pause/recovery는 `./gradlew observabilityEvidenceTest --console=plain`으로 재현한다. [CHANGE-050](docs/portfolio/work-logs/2026-09-07-observability-evidence.md)의 원시 자료와 한계를 함께 읽는다. 운영 지속 수집/알림 수신, 최대 처리량이나 개선율을 검증한 결과는 아니다.
+
+## 취업 포트폴리오 증거 업데이트 (2026-09-08)
+
+[제출 요약](docs/portfolio/portfolio-evidence-summary.md)에 전용 metrics 권한, DB commit 지연,5분씩3회42,000건 반복 부하, 조회 인덱스 후보 비교, 로컬 경보·중앙 로그, FE/Emulator CI 근거를 모았다. 운영 SLA·전체 API 개선율·실제 배포 완료를 주장하지 않는다. [재현 절차](docs/runbooks/portfolio-completion-evidence.md)와 기여·AI 사용 경계를 함께 확인한다.

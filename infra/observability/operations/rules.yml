@@ -1,0 +1,10 @@
+groups:
+  - name: local-delivery-evidence
+    rules:
+      - alert: ThiswayLocalBacklog
+        expr: thisway_evidence_backlog > 0
+        for: 2s
+        labels:
+          severity: warning
+        annotations:
+          summary: Isolated synthetic backlog delivery test

@@ -1,0 +1,47 @@
+{
+  "command": "./gradlew test fleetEvidenceTest observabilityEvidenceTest --console=plain",
+  "duration": "4m36s",
+  "tasks": {
+    "test": {
+      "tests": 475,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "fleetEvidenceTest": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "observabilityEvidenceTest": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "loadBaselineCommit": "69f34cd",
+  "frontendCommit": "94dc5f1",
+  "emulatorCommit": "fa7242f",
+  "secretScan": "Gitleaks scan of changed files and raw load artifacts: 0 findings",
+  "dashboard": "20 panels; actual Chromium commit-latency and unmeasured panels visually verified. Statistics/address panels show no data because these scenarios did not execute.",
+  "artifacts": [
+    {
+      "path": "docs/experiments/2026-09-08-portfolio-completion/final/browser.json",
+      "sha256": "3b925a6a70523a2a795b230d336ed108e16221ccf742568078d463419204aec1"
+    },
+    {
+      "path": "docs/experiments/2026-09-08-portfolio-completion/final/dashboard-commit.png",
+      "sha256": "e743cd5edf04cf5f229c7ae145c81c426fdb065439f7c1de1f7066d68449aa38"
+    },
+    {
+      "path": "docs/experiments/2026-09-08-portfolio-completion/final/http-completion.jsonl",
+      "sha256": "c200c3cdec5ecb94e9a0f7620850d5456258eb801badb9f083c729f5d1298790"
+    },
+    {
+      "path": "docs/experiments/2026-09-08-portfolio-completion/final/result.json",
+      "sha256": "41d6b7d36c708b6e3a4375b2d56dde3c71468eacf789732f8b3a636718ced238"
+    }
+  ]
+}

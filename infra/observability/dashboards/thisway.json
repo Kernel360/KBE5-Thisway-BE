@@ -1,6 +1,6 @@
 {
   "uid": "thisway-reliability",
-  "title": "Thisway — ingestion, storage and recovery",
+  "title": "Thisway \u2014 ingestion, storage and recovery",
   "schemaVersion": 39,
   "version": 1,
   "editable": false,
@@ -248,7 +248,7 @@
     {
       "id": 9,
       "type": "timeseries",
-      "title": "RabbitMQ ready messages — 1m peak",
+      "title": "RabbitMQ ready messages \u2014 1m peak",
       "description": "Per-exported-series maximum over the last minute, not instantaneous backlog. Keeps short scraped spikes visible at dashboard query resolution.",
       "datasource": {
         "type": "prometheus",
@@ -530,6 +530,64 @@
           "refId": "A",
           "expr": "sum by (outcome) (increase(thisway_trip_address_worker_total[5m]))",
           "legendFormat": "{{outcome}}{{status}}{{pool}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Admitted to DB commit p95 / consumer attempt",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thisway-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 72,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gps_admitted_to_commit_seconds_bucket[1m])))",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Unmeasured commit attempts / outcome",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thisway-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 72,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (gps_commit_latency_observations_total{outcome!=\"measured\"}) or vector(0)",
+          "legendFormat": "{{outcome}}"
         }
       ],
       "fieldConfig": {

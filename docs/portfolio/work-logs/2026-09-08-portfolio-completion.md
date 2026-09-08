@@ -56,3 +56,9 @@ AI가 구현·실험·분석·문서화를 수행했고 사용자는 포트폴�
 CI 추가 검증: npm ci 후 단위14/browser26/production3을 다시 통과했다. 선택적 YAML 검증 시 js-yaml이 없어 Node validator가 실패했으며 새 의존성을 추가하지 않고 Ruby 표준 YAML parser로 두 workflow의 trigger·contents:read를 확인했다. FE94dc5f1/Emulatorfa7242f 로컬 commit을 보존했다.
 
 반복 실험3회가 모두 성공했다. 각5분, 정상 요청 합계42,000건 오류0. 세 실행의 compiledClassesSha256·fixture·runtime 환경이 같음을 summary 생성기에서 확인했다. 이후 변경은 rollback 검증과 dashboard 보강이며 이 반복 측정 소스는 별도 commit으로 고정한다.
+
+최종 기본 회귀475개와 기존 fleetEvidenceTest1개가 실패/오류/skipped0으로 통과했다. disposable MySQL의 AFTER INSERT trigger가 오류를 발생시키게 하여 실제 rollback·GPS행0·성공 commit timer 미생성·consumer failed1을 검증했다. 이 fixture에만 trigger 생성을 허용하는 MySQL 설정을 적용했다.
+
+최종 `./gradlew test fleetEvidenceTest observabilityEvidenceTest --console=plain`은4분36초 성공.475+1+1개 모두 실패/오류/skipped0. 실제 Prometheus 새 commit 지표 존재와 Grafana20패널을 검증하고 Chromium 화면에서 p95 곡선과 미측정0 표시를 확인했다. 통계/주소 panel의 No data는 이번 GPS fixture가 해당 시나리오를 실행하지 않았기 때문이며0으로 바꾸지 않았다. [최종 검증/이미지 hash](../../experiments/2026-09-08-portfolio-completion/final/validation.json).
+
+반복 실험 결과의 정확한 재현 기준선은69f34cd이다. 이후에는 실제 rollback negative test, 로그 캡처의 동시 append 보호, 새 timer의 Prometheus/Grafana 확인만 보강했고 production 지연 계측 코드는 바꾸지 않았다. 전체 변경/원시 자료 Gitleaks0건, 문서 상대 링크와 git diff --check를 확인했다.

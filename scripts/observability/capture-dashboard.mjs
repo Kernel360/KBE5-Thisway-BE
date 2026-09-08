@@ -19,6 +19,9 @@ try {
   await page.screenshot({path:resolve(output,'dashboard-middle.png')});
   await page.mouse.wheel(0,1400); await page.waitForTimeout(1500);
   await page.screenshot({path:resolve(output,'dashboard-bottom.png')});
+  await page.mouse.wheel(0,2500); await page.waitForTimeout(1500);
+  await page.getByText('Admitted to DB commit p95 / consumer attempt',{exact:true}).waitFor();
+  await page.screenshot({path:resolve(output,'dashboard-commit.png')});
   await writeFile(resolve(output,'browser.json'),JSON.stringify({capturedAt:new Date().toISOString(),pageErrors:errors,viewport:{width:1440,height:1100}},null,2));
   if (errors.length) throw new Error('Grafana page errors recorded');
 } finally {await browser.close();}

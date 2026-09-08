@@ -459,7 +459,7 @@ class FleetEvidenceIntegrationTest {
             });
             var httpLogger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(org.thisway.support.logging.filter.LoggingFilter.class);
             var capturedLogs = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>() {
-                @Override protected void append(ch.qos.logback.classic.spi.ILoggingEvent event) {
+                @Override protected synchronized void append(ch.qos.logback.classic.spi.ILoggingEvent event) {
                     event.prepareForDeferredProcessing(); super.append(event);
                 }
             };
@@ -547,7 +547,8 @@ class FleetEvidenceIntegrationTest {
             for (String expr : List.of("up", "sum(rate(http_server_requests_seconds_count[1m]))",
                     "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[1m])))",
                     "sum(gps_consumer_processing_seconds_count{outcome=\"committed\"})", "gps_publisher_queued",
-                    "jvm_memory_used_bytes{area=\"heap\"}", "hikaricp_connections_active", "rabbitmq_queue_messages_ready")) {
+                    "jvm_memory_used_bytes{area=\"heap\"}", "hikaricp_connections_active", "rabbitmq_queue_messages_ready", "gps_admitted_to_commit_seconds_count",
+                    "gps_commit_latency_observations_total")) {
                 JsonNode result = promQuery(promUrl, expr);
                 assertThat(result.path("status").asText()).isEqualTo("success");
                 assertThat(result.path("data").path("result").isEmpty()).as("metric available: " + expr).isFalse();
@@ -555,7 +556,7 @@ class FleetEvidenceIntegrationTest {
             }
             JsonNode dashboard = json.readTree(http.send(HttpRequest.newBuilder(URI.create(grafanaUrl
                     + "/api/dashboards/uid/thisway-reliability")).GET().build(), HttpResponse.BodyHandlers.ofString()).body());
-            assertThat(dashboard.path("dashboard").path("panels").size()).isEqualTo(18);
+            assertThat(dashboard.path("dashboard").path("panels").size()).isEqualTo(20);
             JsonNode proxy = json.readTree(http.send(HttpRequest.newBuilder(URI.create(grafanaUrl
                     + "/api/datasources/proxy/uid/thisway-prometheus/api/v1/query?query=up")).GET().build(), HttpResponse.BodyHandlers.ofString()).body());
             assertThat(proxy.path("status").asText()).isEqualTo("success");
@@ -576,7 +577,7 @@ class FleetEvidenceIntegrationTest {
             report.put("duplicateAdmittedToCommit", duplicateLatency);
             report.put("queryComparison", queryComparison(jdbc.queryForObject("SELECT MIN(vehicle_id) FROM gps_log", Long.class)));
             report.put("backlogObservedByPrometheus", backlogProof.get());
-            report.put("prometheusQueries", queries); report.put("dashboardPanels", 18); report.put("grafanaDatasourceProxy", "success");
+            report.put("prometheusQueries", queries); report.put("dashboardPanels", 20); report.put("grafanaDatasourceProxy", "success");
             report.put("limitations", List.of("Local synthetic baseline, no before/after performance claim or production SLA.",
                     "Client worker queue bounded at 256; -1 status means generator saturation. HTTP times exclude client executor wait.",
                     "HTTP timing is broker acceptance, consumer timer excludes queue wait, recovery is batch-level polling upper bound.",
