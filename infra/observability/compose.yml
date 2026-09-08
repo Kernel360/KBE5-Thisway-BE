@@ -5,6 +5,7 @@ services:
     ports: ["127.0.0.1:19090:9090"]
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
+      - ./.secrets/metrics-token:/run/secrets/metrics-token:ro
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ../prod/monitoring/prometheus/rules/thisway.yml:/etc/prometheus/rules/thisway.yml:ro
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=24h"]

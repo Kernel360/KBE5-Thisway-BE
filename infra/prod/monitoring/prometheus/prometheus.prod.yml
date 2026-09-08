@@ -16,6 +16,9 @@ scrape_configs:
   # Spring Boot ECS 서비스 (Cloud Map DNS 기반)
   - job_name: "spring-boot-application"
     metrics_path: "/actuator/prometheus"
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/metrics-token
     scrape_interval: 15s
     dns_sd_configs:
       - names:

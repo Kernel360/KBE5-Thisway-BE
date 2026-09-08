@@ -2,7 +2,7 @@
 
 ## 로컬 대시보드
 
-기존 개발 DB/queue/volume과 별도인 모니터링 전용 Compose다. 외부 `remote_write`와 알림 전송은 없다. 기존 개발 앱 8080, RabbitMQ Prometheus plugin 15692가 실행 중일 때:
+먼저 [metrics 수집키 설정](metrics-access.md)에 따라 backend hash와 수집기 파일을 준비한다. 키가 없으면 수집이 거부된다. 기존 개발 DB/queue/volume과 별도인 모니터링 전용 Compose다. 외부 `remote_write`와 알림 전송은 없다. 기존 개발 앱 8080, RabbitMQ Prometheus plugin 15692가 실행 중일 때:
 
 ```sh
 docker compose -f infra/observability/compose.yml config --quiet
@@ -50,7 +50,7 @@ consumer를 정지한 상태에서80개 요청을 수락시키고 DB 증가0/rea
 
 ## 운영 전 남은 gate
 
-- `/actuator/prometheus`는 기존 security policy상 공개 허용이다. 운영 ingress 차단·별도 management listener/보안그룹·수집기 인증을 실제 배포 구조와 함께 확정해야 한다. 로컬 loopback 바인딩은 운영 보안을 검증하지 않는다.
+- CHANGE-051부터 `/actuator/prometheus`는 전용 수집키가 필요하다. 운영 ingress 차단·별도 management listener/보안그룹은 실제 배포 구조와 함께 확정해야 한다. 로컬 loopback 바인딩은 운영 보안을 검증하지 않는다.
 - production Prometheus에는 기존 AWS remote_write가 있으나 이번 실험은 그 설정을 사용하지 않는다.
 - 에러 예산/SLO는 측정 구간·분모·허용오류를 먼저 합의한다. 이번 목표 부하는 합격 성능 약속이 아니다.
 - 후속 실험: 장기 soak, 동일환경 반복, 개선 전후 A/B, DB commit까지 개별 observation 지연, process/broker 장애, 실제 알림 수신·해제. 이번 baseline 수치로 개선율을 만들지 않는다.

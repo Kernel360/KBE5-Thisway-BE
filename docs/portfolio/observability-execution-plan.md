@@ -12,7 +12,7 @@
 
 ## 운영 적용 전 우선순위
 
-- P0: 실제 ingress/보안그룹 기준의 metrics endpoint 접근 격리. 현재 public policy를 운영 안전성으로 표현하지 않는다.
+- P0: 실제 ingress/보안그룹 기준의 metrics endpoint 접근 격리. CHANGE-051에서 application 수집 권한을 분리하며 실제 운영 네트워크 격리 여부는 별도로 확인한다.
 - P1: 관측 시점→수집 접수→DB commit의 시간 경계를 나눠 개별 저장 지연 측정, 장기 soak와 반복 A/B. 이번 단계 부하를 최대 용량으로 표현하지 않는다.
 - P1: 실제 경보 수신자·중앙 로그 보존기간/접근 권한·비용·삭제 정책 확정 후 장애 알림 훈련.
 - P2: 필요한 경우 trace backend와 로그 저장소를 연결한다. correlation ID가 있다는 사실만으로 분산 tracing 완성을 주장하지 않는다.

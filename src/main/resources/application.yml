@@ -16,3 +16,6 @@ management:
         http.server.requests: 1ms
       maximum-expected-value:
         http.server.requests: 10s
+
+# Empty means all Prometheus requests are denied. Store only the digest on the application.
+thisway.metrics.token-sha256: ${THISWAY_METRICS_TOKEN_SHA256:}

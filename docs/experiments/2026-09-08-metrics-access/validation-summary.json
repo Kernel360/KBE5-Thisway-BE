@@ -1,0 +1,82 @@
+{
+  "baselineCommit": "10edce3",
+  "command": "./gradlew test observabilityEvidenceTest --console=plain",
+  "duration": "4m20s",
+  "unitAndIntegration": {
+    "tests": 473,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "observabilityEvidence": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "securityEvidence": "Anonymous and incorrect bearer HTTP 401 are assertions in sustainedObservability; JUnit success proves these assertions passed. This is not a saved HTTP traffic capture.",
+  "resultSha256": "4c31a250b8fdbb9a048fb9168cec738a1b4dd5e0df543b541b247c1689b3eba2",
+  "sourceSha256": [
+    {
+      "path": "infra/dev/docker-compose.yml",
+      "sha256": "596b7f84f969c0e15fedf3da494680382a02c68141f2396be1cd9a54ac4946c1"
+    },
+    {
+      "path": "infra/dev/monitoring/prometheus.dev.yml",
+      "sha256": "08a7626f1c2fad88b06ac5c6519f97a463bcd4e4bebf80212da10a284c5672e6"
+    },
+    {
+      "path": "infra/observability/compose.yml",
+      "sha256": "901ce49ed63da0ff9899f267c15a16acb3f5929f32627a9157b0f44d86225ef4"
+    },
+    {
+      "path": "infra/observability/prometheus.yml",
+      "sha256": "ba026dea3df350e3376d446e4621ffcd608f791fcd3a10be7b5ad82df93450bd"
+    },
+    {
+      "path": "infra/prod/monitoring/prometheus/prometheus.prod.yml",
+      "sha256": "56932a9cfbf26deafa543503c7f79ae8d88d6afb4d2545617b2b86335445673a"
+    },
+    {
+      "path": "scripts/observability/init-metrics-credential.py",
+      "sha256": "9705d4bcbad89a693bde023ee875399d482ebda547cebc9fa88b96d53acd2b82"
+    },
+    {
+      "path": "src/main/java/org/thisway/support/security/config/FilterConfig.java",
+      "sha256": "3b35af2886b7ff213ac08f8ecdccc8df5b44e60de803744a54f7eb13fd57fb31"
+    },
+    {
+      "path": "src/main/java/org/thisway/support/security/config/MetricsSecurityConfig.java",
+      "sha256": "5e975c3d8fb950af68a027f2ddfd24726ac1dd4aec5d20e19f8f766814875d8d"
+    },
+    {
+      "path": "src/main/java/org/thisway/support/security/config/SecurityConfig.java",
+      "sha256": "423b61b79baabf7e027518edd1b8851ea51cc2ebf039ab9a495dfde463cf557a"
+    },
+    {
+      "path": "src/main/java/org/thisway/support/security/config/policy/ActuatorAuthorizationPolicy.java",
+      "sha256": "52a2d692d7601ab63487cff386295715e08d11d45c38c3a8e65d9937a7a997ce"
+    },
+    {
+      "path": "src/main/resources/application.yml",
+      "sha256": "9f3ceb09a3edef49c7734cec338225d3aed7d3dde4a87d65aa7a62ea033ea067"
+    },
+    {
+      "path": "src/test/java/org/thisway/evidence/FleetEvidenceIntegrationTest.java",
+      "sha256": "c93b0f0a6a7734fc2a9b41a4e028636708629a3ce9fd5435a41f41858cd24402"
+    },
+    {
+      "path": "src/test/java/org/thisway/support/security/ActuatorApiSecurityTest.java",
+      "sha256": "c30104a2393540b3759ae5dceddf822cfcbac29f0da202d7c62068f7067fbfdc"
+    },
+    {
+      "path": "src/test/java/org/thisway/support/security/MetricsUnconfiguredSecurityTest.java",
+      "sha256": "69db8feae2322d796a8f57d81afb8aaa12ee1e2b077b164a0baa4aacca39e5b5"
+    },
+    {
+      "path": "src/test/java/org/thisway/support/security/config/MetricsCredentialTest.java",
+      "sha256": "5bd114ddbd85c62e4a934c7cf462b40b7b804b4495cf934e00943024e6fef8d5"
+    }
+  ],
+  "scope": "Local isolated Testcontainers only; no production network or deployment verification."
+}

@@ -81,6 +81,13 @@ import static org.mockito.Mockito.when;
         "thisway.statistics.correction-cron=-", "thisway.trip-address.worker.cron=-",
         "logging.level.org.thisway=WARN", "logging.level.org.hibernate.SQL=OFF"})
 class FleetEvidenceIntegrationTest {
+    private static final String METRICS_TOKEN = java.util.UUID.randomUUID().toString().replace("-", "")
+            + java.util.UUID.randomUUID().toString().replace("-", "");
+    private static String metricsDigest() {
+        try { return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(METRICS_TOKEN.getBytes(java.nio.charset.StandardCharsets.US_ASCII))); }
+        catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException("SHA-256 unavailable"); }
+    }
     private static final long SEED = 20260907L;
     private static final int DEVICES = 8, CONCURRENCY = 4, EXPECTED_GPS = 256;
     private static final LocalDate DATE = LocalDate.of(2026, 9, 1);
@@ -98,6 +105,7 @@ class FleetEvidenceIntegrationTest {
 
     @DynamicPropertySource
     static void isolatedServices(DynamicPropertyRegistry registry) {
+        registry.add("thisway.metrics.token-sha256", FleetEvidenceIntegrationTest::metricsDigest);
         registry.add("spring.datasource.url", () -> "jdbc:mysql://" + MYSQL.getHost() + ":"
                 + MYSQL.getMappedPort(3306) + "/fleet_evidence?allowPublicKeyRetrieval=true&useSSL=false");
         registry.add("spring.datasource.username", () -> "test");
@@ -391,17 +399,22 @@ class FleetEvidenceIntegrationTest {
     }
     private void sustainedObservability(List<Device> devices) throws Exception {
         assertThat(RABBIT.execInContainer("rabbitmq-plugins", "enable", "rabbitmq_prometheus").getExitCode()).isZero();
+        assertThat(http.send(base("/actuator/prometheus").GET().build(), HttpResponse.BodyHandlers.discarding()).statusCode()).isEqualTo(401);
+        assertThat(http.send(base("/actuator/prometheus").header("Authorization", "Bearer " + "0".repeat(64)).GET().build(), HttpResponse.BodyHandlers.discarding()).statusCode()).isEqualTo(401);
         org.testcontainers.Testcontainers.exposeHostPorts(port, RABBIT.getMappedPort(15692));
         Path output = Path.of("build/reports/observability-evidence");
         Files.createDirectories(output);
         Path config = Files.createTempFile("thisway-prometheus-", ".yml");
+        Path tokenFile = Files.createTempFile("thisway-metrics-token-", ".txt");
+        Files.writeString(tokenFile, METRICS_TOKEN);
         String scrape = "global:\n  scrape_interval: 1s\nscrape_configs:\n"
-                + "  - job_name: spring-boot-application\n    metrics_path: /actuator/prometheus\n"
+                + "  - job_name: spring-boot-application\n    metrics_path: /actuator/prometheus\n    authorization:\n      type: Bearer\n      credentials_file: /run/secrets/metrics-token\n"
                 + "    static_configs:\n      - targets: ['host.testcontainers.internal:" + port + "']\n"
                 + "  - job_name: RabbitMQ\n    static_configs:\n      - targets: ['host.testcontainers.internal:"
                 + RABBIT.getMappedPort(15692) + "']\n";
         Files.writeString(config, scrape);
         try (var prom = new GenericContainer<>("prom/prometheus:v3.4.1")
+                    .withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath(tokenFile, 0644), "/run/secrets/metrics-token")
                     .withCopyFileToContainer(org.testcontainers.utility.MountableFile.forHostPath(config, 0644), "/etc/prometheus/prometheus.yml")
                     .withExposedPorts(9090).waitingFor(Wait.forHttp("/-/ready"));
              var grafana = new GenericContainer<>("grafana/grafana:12.0.2")
@@ -535,7 +548,7 @@ class FleetEvidenceIntegrationTest {
             assertThat(allSamples).allMatch(sample -> sample.status() == 200);
             assertThat(outageSamples).allMatch(sample -> sample.status() == 200);
             assertThat(duplicates).allMatch(sample -> sample.status() == 200);
-        } finally { Files.deleteIfExists(config); }
+        } finally { Files.deleteIfExists(config); Files.deleteIfExists(tokenFile); }
     }
 
     private Sample sendObservation(String phase, List<Device> devices, int index) {
