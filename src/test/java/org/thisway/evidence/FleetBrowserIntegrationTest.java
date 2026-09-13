@@ -117,7 +117,8 @@ class FleetBrowserIntegrationTest {
         Vehicle vehicleA = vehicle(a, model, "FLEET-A"), vehicleB = vehicle(b, model, "FLEET-B");
         Emulator emulator = emulators.save(Emulator.builder().vehicle(vehicleA).mdn("browser-device-a")
                 .terminalId("fixture").manufactureId(1).packetVersion(1).deviceId(1).deviceFirmwareVersion("1").build());
-        String adminToken = tokens.generateAccessToken(memberA.getEmail(), Map.of("companyId", a.getId(), "roles", List.of("COMPANY_ADMIN")));
+        String adminToken = tokens.generateAccessToken(memberA.getEmail(), Map.of(
+                "companyId", a.getId(), "roles", List.of("COMPANY_ADMIN"), "memberId", memberA.getId()));
         var issued = http.send(HttpRequest.newBuilder(URI.create(base() + "/api/emulators/" + emulator.getId() + "/device-key"))
                 .header("Authorization", "Bearer " + adminToken).POST(HttpRequest.BodyPublishers.noBody()).build(),
                 HttpResponse.BodyHandlers.ofString());

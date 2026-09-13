@@ -42,6 +42,8 @@ class SecurityServiceTest {
         // given
         String email = "email@example.com";
         MemberDetails user = MemberDetails.builder()
+                .memberId(7L)
+                .companyId(11L)
                 .username(email)
                 .role(MemberRole.MEMBER)
                 .build();
@@ -77,6 +79,8 @@ class SecurityServiceTest {
         // given
         String email = "email@example.com";
         MemberDetails user = MemberDetails.builder()
+                .memberId(7L)
+                .companyId(11L)
                 .username(email)
                 .role(MemberRole.MEMBER)
                 .build();
@@ -86,7 +90,7 @@ class SecurityServiceTest {
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())
         );
 
-        given(memberRepository.findByEmailAndActiveTrue(email))
+        given(memberRepository.findByIdAndCompanyIdAndActiveTrue(7L, 11L))
                 .willReturn(Optional.of(member));
 
         // when
@@ -94,7 +98,8 @@ class SecurityServiceTest {
 
         // then
         assertThat(result).isEqualTo(member);
-        verify(memberRepository).findByEmailAndActiveTrue(email);
+        verify(memberRepository).findByIdAndCompanyIdAndActiveTrue(7L, 11L);
+        verify(memberRepository, never()).findByEmailAndActiveTrue(anyString());
     }
 
     @Test
@@ -103,6 +108,8 @@ class SecurityServiceTest {
         // given
         String email = "email@example.com";
         MemberDetails user = MemberDetails.builder()
+                .memberId(7L)
+                .companyId(11L)
                 .username(email)
                 .role(MemberRole.MEMBER)
                 .build();
@@ -111,7 +118,7 @@ class SecurityServiceTest {
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())
         );
 
-        when(memberRepository.findByEmailAndActiveTrue(email)).thenReturn(Optional.empty());
+        when(memberRepository.findByIdAndCompanyIdAndActiveTrue(7L, 11L)).thenReturn(Optional.empty());
 
         // when & then
         CustomException exception = assertThrows(CustomException.class, () ->

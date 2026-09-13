@@ -37,7 +37,7 @@ class SensitiveLoggingIntegrationTest {
     private static final String ACCESS_TOKEN = "secret-access-token";
     private static final String REFRESH_TOKEN = "secret-refresh-token";
     private static final String VERIFICATION_CODE = "839201";
-    private static final String NEW_PASSWORD = "NewSecretPassword!456";
+    private static final String NEW_PASSWORD = "NewSecretPass!456";
 
     @Autowired
     private MockMvc mockMvc;

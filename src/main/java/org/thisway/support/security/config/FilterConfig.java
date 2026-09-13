@@ -2,6 +2,7 @@ package org.thisway.support.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.thisway.member.domain.MemberReader;
 import org.thisway.support.logging.filter.LoggingFilter;
 import org.thisway.support.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.support.security.filter.JwtAuthenticationFilter;
@@ -25,9 +26,10 @@ public class FilterConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(
-            JwtTokenProvider jwtTokenUtil
+            JwtTokenProvider jwtTokenUtil,
+            MemberReader memberReader
     ) {
-        return new JwtAuthenticationFilter(jwtTokenUtil);
+        return new JwtAuthenticationFilter(jwtTokenUtil, memberReader);
     }
     // These filters belong to the application SecurityFilterChain only. Automatic servlet
     // registration would run the JWT parser on valid opaque Prometheus credentials.

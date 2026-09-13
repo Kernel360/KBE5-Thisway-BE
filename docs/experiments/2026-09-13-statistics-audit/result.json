@@ -1,0 +1,17 @@
+{
+  "source": "local synthetic demo DB; read-only; formula v2 only",
+  "results": [
+    {
+      "date": "2026-09-08",
+      "fleet": 2,
+      "merged_seconds": 3721.0,
+      "stored_minutes": 62,
+      "expected_minutes": 62,
+      "stored_average_rate": 2.1533564814814814,
+      "expected_average_rate": 2.1533564814814814,
+      "starts": 34,
+      "gps_observations": 737,
+      "matches": true
+    }
+  ]
+}

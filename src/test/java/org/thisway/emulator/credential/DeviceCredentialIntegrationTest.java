@@ -162,7 +162,7 @@ class DeviceCredentialIntegrationTest {
     @Test
     void JWT가_관리자여도_DB에서_권한이_낮아졌으면_발급을_막는다() throws Exception {
         jdbc.update("UPDATE member SET role='MEMBER' WHERE id=?", admin.getId());
-        mvc.perform(post(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isForbidden());
+        mvc.perform(post(path(device.getId())).header("Authorization", "Bearer " + token)).andExpect(status().isUnauthorized());
         assertThat(events()).isZero();
     }
 
@@ -799,7 +799,16 @@ class DeviceCredentialIntegrationTest {
     private String hash() { return jdbc.queryForObject("SELECT key_hash FROM device_credential WHERE emulator_id=?", String.class, device.getId()); }
     private int events() { return jdbc.queryForObject("SELECT COUNT(*) FROM device_credential_event WHERE emulator_id=?", Integer.class, device.getId()); }
     private String path(long id) { return "/api/emulators/" + id + "/device-key"; }
-    private String token(String role) { return tokens.generateAccessToken(admin.getEmail(), Map.of("roles", List.of(role), "companyId", company.getId())); }
+    private String token(String role) {
+        Member actor = admin;
+        if (!admin.getRole().name().equals(role)) {
+            actor = members.save(Member.builder().company(company).role(MemberRole.valueOf(role)).name("fixture")
+                    .email(UUID.randomUUID() + "@example.test").password("fixture-unused-password")
+                    .phone("01000000000").memo("fixture").build());
+        }
+        return tokens.generateAccessToken(actor.getEmail(), Map.of("memberId", actor.getId(),
+                "roles", List.of(role), "companyId", company.getId()));
+    }
     private Company company() {
         return companies.save(Company.builder().name("fixture").crn(UUID.randomUUID().toString()).contact("000")
                 .addrRoad("fixture").addrDetail("fixture").memo("fixture").gpsCycle(60).build());

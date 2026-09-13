@@ -127,4 +127,33 @@ public class PasswordControllerTest {
         assertThat(response.code()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE.getCode());
     }
 
+    @Test
+    void 코드형식과_빈_입력은_서비스호출전에_400으로_거부한다() throws Exception {
+        for (String body : new String[]{"{}",
+                "{\"email\":\"abc@example.com\",\"code\":\"12345a\",\"newPassword\":\"Password123!\"}",
+                "{\"email\":\"abc@example.com\",\"code\":\"123456\",\"newPassword\":\"short\"}"}) {
+            mockMvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+        org.mockito.Mockito.verifyNoInteractions(passwordService);
+    }
+
+    @Test
+    void 발송과_변경_한도는_고정_429코드로_응답한다() throws Exception {
+        doThrow(new CustomException(ErrorCode.AUTH_VERIFICATION_RATE_LIMITED)).when(passwordService)
+                .sendVerificationCode(anyString());
+        doThrow(new CustomException(ErrorCode.AUTH_VERIFICATION_RATE_LIMITED)).when(passwordService)
+                .changePassword(anyString(), anyString(), anyString());
+        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"abc@example.com\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value("13006"));
+        mockMvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"abc@example.com\",\"code\":\"123456\",\"newPassword\":\"Password123!\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value("13006"));
+    }
+
 }

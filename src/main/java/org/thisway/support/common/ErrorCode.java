@@ -58,6 +58,7 @@ public enum ErrorCode {
     AUTH_UNAUTHORIZED("13003", "접근 권한이 없습니다.", HttpStatus.UNAUTHORIZED),
     AUTH_MEMBER_NOT_FOUND("13004", "사용자 정보를 찾을 수 없습니다.", HttpStatus.UNAUTHORIZED),
     AUTH_PASSWORD_NOT_MATCH("13005", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    AUTH_VERIFICATION_RATE_LIMITED("13006", "인증 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.TOO_MANY_REQUESTS),
 
     // 차량 x4xxx
     VEHICLE_NOT_FOUND("14000", "차량 정보를 조회할 수 없습니다.", HttpStatus.NOT_FOUND),

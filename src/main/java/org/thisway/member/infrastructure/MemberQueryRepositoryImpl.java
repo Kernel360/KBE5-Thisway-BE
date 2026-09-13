@@ -3,7 +3,8 @@ package org.thisway.member.infrastructure;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.PathBuilder;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -47,15 +48,21 @@ public class MemberQueryRepositoryImpl implements MemberQueryRepository {
                 .selectFrom(m)
                 .where(builder);
 
+        if (pageable.getPageSize() > 100) throw new CustomException(ErrorCode.PAGE_INVALID_PAGE_SIZE);
         pageable.getSort().forEach(order -> {
             Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-            PathBuilder<Member> path = new PathBuilder<>(Member.class, m.getMetadata());
-            OrderSpecifier<String> spec = new OrderSpecifier<>(
-                    direction,
-                    path.get(order.getProperty(), String.class)
-            );
+            OrderSpecifier<?> spec = switch (order.getProperty()) {
+                case "id" -> new OrderSpecifier<>(direction, m.id);
+                case "name" -> new OrderSpecifier<>(direction, m.name);
+                case "email" -> new OrderSpecifier<>(direction, m.email);
+                case "role" -> new OrderSpecifier<>(direction, m.role);
+                case "phone" -> new OrderSpecifier<>(direction, m.phone.value);
+                case "createdAt" -> new OrderSpecifier<>(direction, m.createdAt);
+                default -> throw new CustomException(ErrorCode.PAGE_INVALID_SORT_PROPERTY);
+            };
             query.orderBy(spec);
         });
+        if (pageable.getSort().getOrderFor("id") == null) query.orderBy(m.id.asc());
 
         List<Member> content = query
                 .offset(pageable.getOffset())

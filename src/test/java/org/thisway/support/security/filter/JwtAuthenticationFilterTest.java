@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -22,6 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.thisway.member.domain.MemberReader;
+import org.thisway.member.domain.MemberRole;
+import org.thisway.support.security.dto.request.MemberDetails;
 import org.thisway.support.security.utils.JwtTokenProvider;
 
 import io.jsonwebtoken.Claims;
@@ -31,11 +35,13 @@ import jakarta.servlet.ServletException;
 class JwtAuthenticationFilterTest {
     private MockMvc mockMvc;
     private JwtTokenProvider jwtTokenProvider;
+    private MemberReader memberReader;
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @BeforeEach
     void setUp() {
         jwtTokenProvider = Mockito.mock(JwtTokenProvider.class);
+        memberReader = Mockito.mock(MemberReader.class);
 
         // 더미 컨트롤러: 필터 통과 시 200 OK
         @RestController
@@ -48,10 +54,10 @@ class JwtAuthenticationFilterTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new DummyController())
-                .addFilter(new JwtAuthenticationFilter(jwtTokenProvider))
+                .addFilter(new JwtAuthenticationFilter(jwtTokenProvider, memberReader))
                 .build();
 
-        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider);
+        jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtTokenProvider, memberReader);
 
         // 매 테스트 전 컨텍스트 초기화
         SecurityContextHolder.clearContext();
@@ -75,19 +81,10 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void 유효한_토큰이면_SecurityContext에_Authentication이_세팅되고_컨트롤러_실행() throws Exception {
-        // given
-        Claims claims = Mockito.mock(Claims.class);
-        given(claims.getSubject())
-                .willReturn("alice");
-        given(claims.get(
-                "roles",
-                List.class))
-                .willReturn(List.of("MEMBER"));
-        given(claims.get("companyId", Long.class))
-                .willReturn(1L);
-
-        given(jwtTokenProvider.validateTokenAndGetClaims("valid-token"))
-                .willReturn(claims);
+        // This unit suite verifies filter orchestration with mocked signature and
+        // identity results; the current-account DB predicate has integration tests.
+        validSignedClaims();
+        given(memberReader.isCurrentIdentity(1L, "alice", 1L, MemberRole.MEMBER)).willReturn(true);
 
         // when & then
         mockMvc.perform(get("/dummy")
@@ -104,6 +101,7 @@ class JwtAuthenticationFilterTest {
 
                     assertThat(auth).isNotNull();
                     assertThat(auth.getName()).isEqualTo("alice");
+                    assertThat(((MemberDetails) auth.getPrincipal()).getMemberId()).isEqualTo(1L);
                     assertThat(auth.getAuthorities())
                             .extracting("authority")
                             .containsExactly("ROLE_MEMBER");
@@ -130,6 +128,38 @@ class JwtAuthenticationFilterTest {
         assertThatThrownBy(() -> jwtAuthenticationFilter.doFilterInternal(req, res, chain))
                 .isInstanceOf(BadCredentialsException.class)
                 .hasMessageContaining("Invalid JWT");
+        Mockito.verifyNoInteractions(memberReader);
+    }
+
+    @Test
+    void 서명이_유효해도_현재_DB주체가_아니면_인증과_후속체인을_허용하지_않는다() {
+        validSignedClaims();
+        given(memberReader.isCurrentIdentity(1L, "alice", 1L, MemberRole.MEMBER)).willReturn(false);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid-token");
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        assertThatThrownBy(() -> jwtAuthenticationFilter.doFilterInternal(request, new MockHttpServletResponse(),
+                (req, res) -> chainCalled.set(true)))
+                .isInstanceOf(BadCredentialsException.class);
+        assertThat(chainCalled.get()).isFalse();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void 현재주체_DB조회_장애는_인증실패로_바꾸지_않고_후속체인을_막는다() {
+        validSignedClaims();
+        var failure = new DataAccessResourceFailureException("fixture database unavailable");
+        given(memberReader.isCurrentIdentity(1L, "alice", 1L, MemberRole.MEMBER)).willThrow(failure);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer valid-token");
+        AtomicBoolean chainCalled = new AtomicBoolean(false);
+
+        assertThatThrownBy(() -> jwtAuthenticationFilter.doFilterInternal(request, new MockHttpServletResponse(),
+                (req, res) -> chainCalled.set(true)))
+                .isSameAs(failure);
+        assertThat(chainCalled.get()).isFalse();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test
@@ -148,5 +178,15 @@ class JwtAuthenticationFilterTest {
         assertThat(response.getStatus()).isEqualTo(200); // 상태 코드는 기본값(200) 유지
         assertThat(SecurityContextHolder.getContext().getAuthentication()) // 인증 정보는 세팅되지 않음
                 .isNull();
+        Mockito.verifyNoInteractions(memberReader);
+    }
+
+    private void validSignedClaims() {
+        Claims claims = Mockito.mock(Claims.class);
+        given(claims.getSubject()).willReturn("alice");
+        given(claims.get("roles", List.class)).willReturn(List.of("MEMBER"));
+        given(claims.get("companyId", Long.class)).willReturn(1L);
+        given(claims.get("memberId", Long.class)).willReturn(1L);
+        given(jwtTokenProvider.validateTokenAndGetClaims("valid-token")).willReturn(claims);
     }
 }
