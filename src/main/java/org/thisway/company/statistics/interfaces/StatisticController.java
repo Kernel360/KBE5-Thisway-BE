@@ -53,12 +53,17 @@ public class StatisticController {
     @PostMapping("/save")
     public ResponseEntity<String> saveStatistics(
             @RequestParam Long companyId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate,
+            @RequestParam(defaultValue = "false") boolean captureCurrentFleet
     ) {
         log.info("=== 통계 저장 API 호출 ===");
         log.info("회사 ID: {}, 대상 날짜: {}", companyId, targetDate);
 
-        statisticService.saveStatistics(companyId, targetDate);
+        if (captureCurrentFleet) {
+            statisticService.saveStatistics(companyId, targetDate, "REVIEWED_FLEET_SNAPSHOT");
+        } else {
+            statisticService.saveStatistics(companyId, targetDate);
+        }
         return ResponseEntity.status(HttpStatus.OK).body("통계 저장이 완료되었습니다.");
     }
 }

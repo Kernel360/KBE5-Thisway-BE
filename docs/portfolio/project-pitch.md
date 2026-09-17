@@ -4,7 +4,9 @@
 
 ## 프로젝트 이름과 한 문장
 
-**Thisway — 차량 관제 백엔드의 데이터 정합성·장애 복구 개선 프로젝트**
+**Thisway — 기업용 차량 운영 관리 서비스**
+
+개인 개선 주제는 **차량 데이터 정합성·장애 복구**다. 기업 RFP를 기반으로 진행했다는 배경은 참여자의 경험에 근거하며 원문은 현재 미보유다. 현재 기능으로 정리한 데모 흐름을 당시 RFP 원문이나 기업 납품·운영 실적으로 표현하지 않는다.
 
 > 차량 위치와 운행 정보를 수집하고, 회사별 차량 조회·실시간 위치 확인·운행 통계를 제공하는 차량 관제 서비스입니다. 팀 프로젝트 이후 개인 개선 단계에서 GPS 중복 저장과 메시지 소비 실패, 회사 간 접근 권한을 테스트하고 개선하고 있습니다.
 
@@ -30,9 +32,13 @@
 | --- | --- | --- |
 | 동시성·트랜잭션 이해 | [CHANGE-020](work-logs/2026-09-05-gps-idempotent-persistence.md), MySQL integration test | full observation identity이며 legacy NULL key/장치 재할당은 별도 |
 | 메시징 실패 설계 | [CHANGE-021](work-logs/2026-09-05-gps-broker-redelivery.md), [CHANGE-022](work-logs/2026-09-05-gps-retry-dlq.md) | exactly-once·무유실·실제 운영 장애 복구를 주장하지 않음 |
-| tenant 경계 | [Vehicle](work-logs/2026-09-05-vehicle-tenant-boundary.md), [TripLog](work-logs/2026-09-05-triplog-tenant-boundary.md), [Emulator](work-logs/2026-09-05-emulator-tenant-boundary.md) | 테스트한 API 범위이며 device 인증은 미완료 |
+| tenant 경계 | [Vehicle](work-logs/2026-09-05-vehicle-tenant-boundary.md), [TripLog](work-logs/2026-09-05-triplog-tenant-boundary.md), [Emulator](work-logs/2026-09-05-emulator-tenant-boundary.md) | 관리 API 경계. device 수집 인증은 CHANGE-037에서 별도 검증 |
 | 운영 작업의 안전성 | [DLQ runbook](../runbooks/gps-dlq-replay.md), [CHANGE-023](work-logs/2026-09-06-gps-replay-tool-and-pitch.md) | 제한적 로컬/터널 CLI, 조직 승인 검증·중앙 감사 시스템은 아님 |
 | 기존 코드 개선 | [기준선](baseline-audit.md) → 개별 work log·commit·회귀 테스트 | 테스트 개수 증가 자체를 성능/신뢰성 개선율로 바꾸지 않음 |
+| 원래 개인 Batch의 현대화 | [CHANGE-025](work-logs/2026-09-06-company-statistics-checkpoint.md): 회사별 commit/checkpoint·직접 저장 동시성 | 회사 목록 snapshot·통계 공식 완성·JVM kill 복구는 별도 |
+| 외부 API 장애 경계 | [CHANGE-026](work-logs/2026-09-06-trip-address-enrichment.md): commit 이후 주소 보정 | CHANGE-039에서 bounded 자동 retry를 추가했으며 운영 Kakao quota 검증은 별도 |
+| 차량 누적값 계약 검토 | [CHANGE-027](work-logs/2026-09-06-cumulative-odometer.md): 누적 m 중복 가산 교정 | 기존 오염 데이터 자동 보정·Trip 거리 분리는 별도 |
+| 운행 관측의 정합성 | [CHANGE-032](work-logs/2026-09-06-trip-observation-distance.md): 신규 Trip 중복/역순·거리 분리·MySQL 검증 | legacy 자동 변환/장치 sequence/전체 exactly-once는 아님 |
 
 ## 원래 역할과 이후 개선을 나누기
 
@@ -58,7 +64,7 @@ AI 기능이 없다는 이유로 임의 챗봇을 붙이지 않는다. 백엔드
 2. 원래 본인 담당: 차량 도메인과 통계/배치. 팀 MQ 흐름과 내 후속 변경을 구분.
 3. 대표 장애 하나: DB commit 뒤 ack 누락 → 재전달 → unique key로 동일 관측값 1행.
 4. 설계 대안: 선조회만 하는 방식의 race와 DB constraint의 역할, DLQ 무한 loop를 만들지 않은 이유.
-5. 실패 테스트 실행 결과와 남은 한계: producer dual-publish/장치 인증/운영 HA·성능은 아직 미완료.
+5. 실패 테스트 실행 결과와 남은 한계: 원자적 dual-publish/장치 인증의 운영 전환/운영 HA·성능은 아직 미완료. producer confirm/return의 보장 범위는 CHANGE-028로 확인한다.
 
 데모는 처음부터 전체 테스트를 오래 실행하기보다 핵심 test method와 준비된 실행 결과를 보여 주고 재현 명령을 제공한다. 테스트 숫자는 제출 시점 결과로 갱신한다.
 
@@ -73,4 +79,6 @@ AI 기능이 없다는 이유로 임의 챗봇을 붙이지 않는다. 백엔드
 
 ## 다음 개발 우선순위에 대한 판단
 
-메시징 범위를 계속 넓히는 것만이 최선은 아니다. 제한적 replay 도구 정리 후에는 **원래 본인 담당인 Statistics/Batch의 재시작·동일 날짜 중복·부분 실패**를 개선하는 것이 개인 기여 서사를 연결하기 좋다. 실제 부하 수치는 이후 동일 조건 before/after 실험으로 확보한다. 검증되지 않은 “대규모 실서비스”, “15,000대 처리”, “성능 N% 개선”은 사용하지 않는다.
+원래 개인 담당인 Statistics/Batch의 재시작·회사별 부분 성공은 CHANGE-024/025, V2 공식은 CHANGE-030으로 개선했다. CHANGE-040은 지연 Trip/GPS와 보정 요청의 원자성, 수정 감사, 최초 fleet ID 목록 보존을 다룬다. CHANGE-042는 실제 JVM 종료와 명시적 offline 복구의 경계를 보여 준다. 수집 인증과 요청 방어는 CHANGE-037/038, 주소 worker는 CHANGE-039, 발행 대기 예산은 CHANGE-043이다.
+
+로컬 고정 fixture 수치는 [실험](../experiments/2026-09-07-fleet-evidence.md), 실제 UI 시나리오는 CHANGE-045, 번들 분리는 CHANGE-044를 따른다. 작은 격리 fixture를 운영 SLA나 "15,000대 처리"로 일반화하지 않는다. 실제 운영/legacy 데이터 전환과 사용자 본인의 독립 설명은 [체크리스트](submission-checklist.md)에서 별도 확인한다.

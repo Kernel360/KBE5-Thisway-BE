@@ -18,7 +18,9 @@ public final class GpsLogRequestValidator {
 
     private GpsLogRequestValidator() {}
 
-    public static void validate(GpsLogRequest request) {
+    public static void validate(GpsLogRequest request) { validate(request, java.time.Clock.systemUTC()); }
+
+    public static void validate(GpsLogRequest request, java.time.Clock clock) {
         try {
             require(request != null);
             text(request.mdn(), 20);
@@ -30,11 +32,17 @@ public final class GpsLogRequestValidator {
                     && request.cList().size() <= MAX_ENTRIES);
             require(integer(request.cCnt(), 1, MAX_ENTRIES) == request.cList().size());
             require(request.oTime() != null && request.oTime().matches("[0-9]{12}([0-9]{2})?"));
-            LocalDateTime.parse(request.oTime(), request.oTime().length() == 14 ? SECONDS : MINUTES);
+            LocalDateTime base = LocalDateTime.parse(request.oTime(), request.oTime().length() == 14 ? SECONDS : MINUTES);
+            LocalDateTime upper = LocalDateTime.ofInstant(clock.instant(), java.time.ZoneId.of("Asia/Seoul")).plusMinutes(5);
+            require(base.getYear() >= 1000 && !base.isAfter(upper));
             for (GpsLogEntry entry : request.cList()) {
                 require(entry != null);
                 optionalTime(entry.min());
                 optionalTime(entry.sec());
+                LocalDateTime occurred = base;
+                if (entry.min() != null && !entry.min().isEmpty()) occurred = occurred.withMinute(Integer.parseInt(entry.min()));
+                if (entry.sec() != null && !entry.sec().isEmpty()) occurred = occurred.withSecond(Integer.parseInt(entry.sec()));
+                require(!occurred.isAfter(upper));
                 GpsStatus.fromCode(entry.gcd());
                 coordinate(entry.lat(), 90_000_000);
                 coordinate(entry.lon(), 180_000_000);

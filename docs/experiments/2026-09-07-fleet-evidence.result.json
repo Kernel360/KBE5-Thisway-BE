@@ -1,0 +1,1342 @@
+{
+  "schemaVersion" : 1,
+  "change" : "CHANGE-041",
+  "measuredAt" : "2026-09-07T11:06:51.606876Z",
+  "compiledClassesSha256" : "61184855d0d47d292cd3d6810ecc5560ab3fdba69bc837db1ce320f99c8d72f5",
+  "fixture" : {
+    "concurrency" : 4,
+    "warmupRequests" : 16,
+    "observationsPerRequest" : 1,
+    "devices" : 8,
+    "date" : "2026-09-01",
+    "companies" : 2,
+    "measuredRequests" : 240,
+    "seed" : 20260907,
+    "duplicateRequests" : 24,
+    "requestsPerDevicePerMinuteLimit" : 10000
+  },
+  "environment" : {
+    "java" : "21.0.7+6-LTS",
+    "architecture" : "aarch64",
+    "os" : "Mac OS X 26.6.2",
+    "mysql" : "mysql:8.0.40",
+    "availableProcessors" : 14,
+    "redis" : "redis:7.4.2-alpine",
+    "jvmMaxHeapBytes" : 536870912,
+    "rabbitmq" : "rabbitmq:3.13.7-alpine"
+  },
+  "http" : {
+    "wallMs" : 527.627,
+    "p50Ms" : 8.58125,
+    "p95Ms" : 10.624875,
+    "requests" : 240,
+    "p99Ms" : 12.380709,
+    "errorRate" : 0.0,
+    "errors" : 0,
+    "requestsPerSecond" : 454.8667903651633
+  },
+  "rounds" : [ {
+    "actualGpsRows" : 96,
+    "http" : {
+      "wallMs" : 195.776875,
+      "p50Ms" : 9.620416,
+      "p95Ms" : 11.557125,
+      "requests" : 80,
+      "p99Ms" : 12.619,
+      "errorRate" : 0.0,
+      "errors" : 0,
+      "requestsPerSecond" : 408.6284450091463
+    },
+    "drainAfterRequestsMs" : 67.134458
+  }, {
+    "actualGpsRows" : 176,
+    "http" : {
+      "wallMs" : 171.156375,
+      "p50Ms" : 8.434,
+      "p95Ms" : 9.502875,
+      "requests" : 80,
+      "p99Ms" : 9.923917,
+      "errorRate" : 0.0,
+      "errors" : 0,
+      "requestsPerSecond" : 467.40882424040586
+    },
+    "drainAfterRequestsMs" : 43.656667
+  }, {
+    "actualGpsRows" : 256,
+    "http" : {
+      "wallMs" : 160.69375,
+      "p50Ms" : 7.986,
+      "p95Ms" : 9.050417,
+      "requests" : 80,
+      "p99Ms" : 9.845375,
+      "errorRate" : 0.0,
+      "errors" : 0,
+      "requestsPerSecond" : 497.84139084438567
+    },
+    "drainAfterRequestsMs" : 67.987875
+  } ],
+  "warmup" : {
+    "actualGpsRows" : 16,
+    "http" : {
+      "wallMs" : 226.97325,
+      "p50Ms" : 10.166167,
+      "p95Ms" : 197.015667,
+      "requests" : 16,
+      "p99Ms" : 197.015667,
+      "errorRate" : 0.0,
+      "errors" : 0,
+      "requestsPerSecond" : 70.49288847914897
+    },
+    "drainAfterRequestsMs" : 53.073625
+  },
+  "duplicates" : {
+    "actualGpsRows" : 256,
+    "http" : {
+      "wallMs" : 53.468667,
+      "p50Ms" : 8.602916,
+      "p95Ms" : 9.472834,
+      "requests" : 24,
+      "p99Ms" : 10.804583,
+      "errorRate" : 0.0,
+      "errors" : 0,
+      "requestsPerSecond" : 448.86101237571523
+    },
+    "drainAfterRequestsMs" : 23.319417
+  },
+  "final" : {
+    "storageConfirmed" : 280.0,
+    "actualGpsRows" : 256,
+    "broadcastUnconfirmed" : 0.0,
+    "consumerRejected" : 0.0,
+    "expectedGpsRows" : 256,
+    "storageUnconfirmed" : 0.0,
+    "extraRowsFrom24DuplicateObservations" : 0,
+    "deadLetters" : 0,
+    "readyMessages" : 0,
+    "listenerStopAndAckWaitMs" : 966.6425
+  },
+  "workflow" : {
+    "frontendScreensVerified" : false,
+    "companyBDrivingMinutes" : 0,
+    "gpsObservationsPerCompany" : 128,
+    "tripDistanceMeters" : 500,
+    "companyATrips" : 1,
+    "companyAVehicles" : 4,
+    "realLoginCompanies" : 2,
+    "foreignVehicleHttpStatus" : 404,
+    "foreignTripHttpStatus" : 404,
+    "companyADrivingMinutes" : 120
+  },
+  "gpsObservationCountQuery" : {
+    "p50Ms" : 0.363084,
+    "p95Ms" : 0.474209,
+    "sampleCount" : 30,
+    "p99Ms" : 0.543833,
+    "jdbcRoundTripSamplesMs" : [ 0.409042, 0.438166, 0.354959, 0.324583, 0.420708, 0.430125, 0.446417, 0.34275, 0.427083, 0.543833, 0.474209, 0.364667, 0.359459, 0.372834, 0.461, 0.471625, 0.425625, 0.363792, 0.346292, 0.332083, 0.342084, 0.38325, 0.322792, 0.305208, 0.332041, 0.298375, 0.315417, 0.294417, 0.363084, 0.358166 ],
+    "explainAnalyze" : [ "-> Aggregate: count(0)  (cost=81 rows=1) (actual time=0.075..0.075 rows=1 loops=1)\n    -> Nested loop inner join  (cost=41.6 rows=394) (actual time=0.0185..0.0717 rows=128 loops=1)\n        -> Filter: (v.`active` = true)  (cost=0.7 rows=2) (actual time=0.00579..0.00692 rows=4 loops=1)\n            -> Index lookup on v using FK8l9m1j8m30mdmdcbbt1c4trkd (company_id=1)  (cost=0.7 rows=4) (actual time=0.00513..0.00596 rows=4 loops=1)\n        -> Filter: ((g.occurred_time >= TIMESTAMP'2026-09-01 00:00:00') and (g.occurred_time < TIMESTAMP'2026-09-02 00:00:00'))  (cost=10.6 rows=197) (actual time=0.00857..0.0141 rows=32 loops=4)\n            -> Index lookup on g using idx_gps_log_vehicle_id (vehicle_id=v.id)  (cost=10.6 rows=197) (actual time=0.00842..0.0121 rows=32 loops=4)\n" ],
+    "sql" : "SELECT COUNT(*) FROM gps_log g JOIN vehicle v ON v.id=g.vehicle_id WHERE v.company_id=? AND v.active=true AND g.occurred_time>=? AND g.occurred_time<?",
+    "warmupCount" : 5
+  },
+  "samples" : [ {
+    "phase" : "measured-1",
+    "requestIndex" : 94,
+    "status" : 200,
+    "latencyMs" : 10.521209
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 81,
+    "status" : 200,
+    "latencyMs" : 10.502583
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 56,
+    "status" : 200,
+    "latencyMs" : 10.453917
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 24,
+    "status" : 200,
+    "latencyMs" : 10.397792
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 27,
+    "status" : 200,
+    "latencyMs" : 9.573292
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 31,
+    "status" : 200,
+    "latencyMs" : 9.924
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 74,
+    "status" : 200,
+    "latencyMs" : 9.496459
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 93,
+    "status" : 200,
+    "latencyMs" : 9.612292
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 45,
+    "status" : 200,
+    "latencyMs" : 8.249083
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 44,
+    "status" : 200,
+    "latencyMs" : 8.492125
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 39,
+    "status" : 200,
+    "latencyMs" : 8.392708
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 79,
+    "status" : 200,
+    "latencyMs" : 8.103292
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 42,
+    "status" : 200,
+    "latencyMs" : 9.901583
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 29,
+    "status" : 200,
+    "latencyMs" : 9.306667
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 18,
+    "status" : 200,
+    "latencyMs" : 9.474208
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 41,
+    "status" : 200,
+    "latencyMs" : 9.691833
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 57,
+    "status" : 200,
+    "latencyMs" : 9.620416
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 19,
+    "status" : 200,
+    "latencyMs" : 9.481042
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 34,
+    "status" : 200,
+    "latencyMs" : 9.291709
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 28,
+    "status" : 200,
+    "latencyMs" : 9.261292
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 36,
+    "status" : 200,
+    "latencyMs" : 9.971542
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 87,
+    "status" : 200,
+    "latencyMs" : 9.939667
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 86,
+    "status" : 200,
+    "latencyMs" : 9.946834
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 43,
+    "status" : 200,
+    "latencyMs" : 9.868084
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 76,
+    "status" : 200,
+    "latencyMs" : 10.846666
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 50,
+    "status" : 200,
+    "latencyMs" : 10.111625
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 16,
+    "status" : 200,
+    "latencyMs" : 10.109875
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 17,
+    "status" : 200,
+    "latencyMs" : 10.728958
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 73,
+    "status" : 200,
+    "latencyMs" : 10.671459
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 51,
+    "status" : 200,
+    "latencyMs" : 10.584125
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 77,
+    "status" : 200,
+    "latencyMs" : 9.028708
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 63,
+    "status" : 200,
+    "latencyMs" : 9.030375
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 20,
+    "status" : 200,
+    "latencyMs" : 11.557125
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 69,
+    "status" : 200,
+    "latencyMs" : 11.421625
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 52,
+    "status" : 200,
+    "latencyMs" : 10.026041
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 46,
+    "status" : 200,
+    "latencyMs" : 9.454709
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 78,
+    "status" : 200,
+    "latencyMs" : 10.230458
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 75,
+    "status" : 200,
+    "latencyMs" : 10.942041
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 67,
+    "status" : 200,
+    "latencyMs" : 10.300791
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 84,
+    "status" : 200,
+    "latencyMs" : 10.321375
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 83,
+    "status" : 200,
+    "latencyMs" : 12.029791
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 35,
+    "status" : 200,
+    "latencyMs" : 9.64625
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 91,
+    "status" : 200,
+    "latencyMs" : 10.96475
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 70,
+    "status" : 200,
+    "latencyMs" : 10.907375
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 37,
+    "status" : 200,
+    "latencyMs" : 10.173375
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 72,
+    "status" : 200,
+    "latencyMs" : 8.935542
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 30,
+    "status" : 200,
+    "latencyMs" : 8.832084
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 85,
+    "status" : 200,
+    "latencyMs" : 10.335417
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 55,
+    "status" : 200,
+    "latencyMs" : 9.086833
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 26,
+    "status" : 200,
+    "latencyMs" : 9.147834
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 66,
+    "status" : 200,
+    "latencyMs" : 9.161166
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 89,
+    "status" : 200,
+    "latencyMs" : 8.731167
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 80,
+    "status" : 200,
+    "latencyMs" : 8.966334
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 88,
+    "status" : 200,
+    "latencyMs" : 9.006042
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 60,
+    "status" : 200,
+    "latencyMs" : 8.912625
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 82,
+    "status" : 200,
+    "latencyMs" : 9.948791
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 58,
+    "status" : 200,
+    "latencyMs" : 10.203959
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 59,
+    "status" : 200,
+    "latencyMs" : 10.143041
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 48,
+    "status" : 200,
+    "latencyMs" : 10.440709
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 65,
+    "status" : 200,
+    "latencyMs" : 9.059584
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 32,
+    "status" : 200,
+    "latencyMs" : 9.748666
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 92,
+    "status" : 200,
+    "latencyMs" : 9.834541
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 90,
+    "status" : 200,
+    "latencyMs" : 9.329125
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 22,
+    "status" : 200,
+    "latencyMs" : 8.622417
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 61,
+    "status" : 200,
+    "latencyMs" : 12.619
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 33,
+    "status" : 200,
+    "latencyMs" : 9.525958
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 95,
+    "status" : 200,
+    "latencyMs" : 12.537125
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 68,
+    "status" : 200,
+    "latencyMs" : 12.380709
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 23,
+    "status" : 200,
+    "latencyMs" : 10.624875
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 54,
+    "status" : 200,
+    "latencyMs" : 8.527959
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 62,
+    "status" : 200,
+    "latencyMs" : 8.367542
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 49,
+    "status" : 200,
+    "latencyMs" : 8.63925
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 53,
+    "status" : 200,
+    "latencyMs" : 9.596417
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 40,
+    "status" : 200,
+    "latencyMs" : 8.712666
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 64,
+    "status" : 200,
+    "latencyMs" : 8.761666
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 25,
+    "status" : 200,
+    "latencyMs" : 8.606208
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 47,
+    "status" : 200,
+    "latencyMs" : 8.854459
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 71,
+    "status" : 200,
+    "latencyMs" : 8.639084
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 38,
+    "status" : 200,
+    "latencyMs" : 8.73775
+  }, {
+    "phase" : "measured-1",
+    "requestIndex" : 21,
+    "status" : 200,
+    "latencyMs" : 8.593125
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 143,
+    "status" : 200,
+    "latencyMs" : 9.541375
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 137,
+    "status" : 200,
+    "latencyMs" : 9.462083
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 160,
+    "status" : 200,
+    "latencyMs" : 9.459375
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 147,
+    "status" : 200,
+    "latencyMs" : 9.456125
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 123,
+    "status" : 200,
+    "latencyMs" : 8.91
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 153,
+    "status" : 200,
+    "latencyMs" : 8.860375
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 146,
+    "status" : 200,
+    "latencyMs" : 8.794541
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 111,
+    "status" : 200,
+    "latencyMs" : 8.776292
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 138,
+    "status" : 200,
+    "latencyMs" : 8.552458
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 144,
+    "status" : 200,
+    "latencyMs" : 8.338875
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 152,
+    "status" : 200,
+    "latencyMs" : 8.312416
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 164,
+    "status" : 200,
+    "latencyMs" : 9.717333
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 124,
+    "status" : 200,
+    "latencyMs" : 9.328
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 104,
+    "status" : 200,
+    "latencyMs" : 8.85225
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 133,
+    "status" : 200,
+    "latencyMs" : 8.57975
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 139,
+    "status" : 200,
+    "latencyMs" : 9.497583
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 121,
+    "status" : 200,
+    "latencyMs" : 9.450459
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 100,
+    "status" : 200,
+    "latencyMs" : 9.082792
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 122,
+    "status" : 200,
+    "latencyMs" : 8.630625
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 175,
+    "status" : 200,
+    "latencyMs" : 8.876625
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 166,
+    "status" : 200,
+    "latencyMs" : 9.273
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 134,
+    "status" : 200,
+    "latencyMs" : 9.25875
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 148,
+    "status" : 200,
+    "latencyMs" : 9.502875
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 135,
+    "status" : 200,
+    "latencyMs" : 8.435542
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 154,
+    "status" : 200,
+    "latencyMs" : 9.519
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 149,
+    "status" : 200,
+    "latencyMs" : 9.323584
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 105,
+    "status" : 200,
+    "latencyMs" : 8.797
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 112,
+    "status" : 200,
+    "latencyMs" : 8.300708
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 171,
+    "status" : 200,
+    "latencyMs" : 8.442583
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 174,
+    "status" : 200,
+    "latencyMs" : 8.552208
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 173,
+    "status" : 200,
+    "latencyMs" : 8.125459
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 159,
+    "status" : 200,
+    "latencyMs" : 8.4025
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 140,
+    "status" : 200,
+    "latencyMs" : 9.195833
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 109,
+    "status" : 200,
+    "latencyMs" : 8.647083
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 99,
+    "status" : 200,
+    "latencyMs" : 9.219792
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 110,
+    "status" : 200,
+    "latencyMs" : 8.931833
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 145,
+    "status" : 200,
+    "latencyMs" : 8.83725
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 141,
+    "status" : 200,
+    "latencyMs" : 8.434
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 126,
+    "status" : 200,
+    "latencyMs" : 8.345375
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 96,
+    "status" : 200,
+    "latencyMs" : 7.94275
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 107,
+    "status" : 200,
+    "latencyMs" : 8.34925
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 150,
+    "status" : 200,
+    "latencyMs" : 8.23225
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 158,
+    "status" : 200,
+    "latencyMs" : 8.161667
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 169,
+    "status" : 200,
+    "latencyMs" : 8.167084
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 157,
+    "status" : 200,
+    "latencyMs" : 7.926875
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 119,
+    "status" : 200,
+    "latencyMs" : 7.921584
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 103,
+    "status" : 200,
+    "latencyMs" : 7.868958
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 131,
+    "status" : 200,
+    "latencyMs" : 7.85975
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 129,
+    "status" : 200,
+    "latencyMs" : 7.804083
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 127,
+    "status" : 200,
+    "latencyMs" : 8.272916
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 102,
+    "status" : 200,
+    "latencyMs" : 8.359333
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 172,
+    "status" : 200,
+    "latencyMs" : 7.804709
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 163,
+    "status" : 200,
+    "latencyMs" : 8.996833
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 170,
+    "status" : 200,
+    "latencyMs" : 8.994
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 132,
+    "status" : 200,
+    "latencyMs" : 8.520458
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 116,
+    "status" : 200,
+    "latencyMs" : 7.778542
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 167,
+    "status" : 200,
+    "latencyMs" : 7.818125
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 168,
+    "status" : 200,
+    "latencyMs" : 8.116208
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 114,
+    "status" : 200,
+    "latencyMs" : 7.130333
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 161,
+    "status" : 200,
+    "latencyMs" : 8.213
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 115,
+    "status" : 200,
+    "latencyMs" : 8.925583
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 162,
+    "status" : 200,
+    "latencyMs" : 8.454583
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 125,
+    "status" : 200,
+    "latencyMs" : 7.511667
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 117,
+    "status" : 200,
+    "latencyMs" : 7.375125
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 98,
+    "status" : 200,
+    "latencyMs" : 8.029958
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 142,
+    "status" : 200,
+    "latencyMs" : 9.923917
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 155,
+    "status" : 200,
+    "latencyMs" : 8.3735
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 113,
+    "status" : 200,
+    "latencyMs" : 7.567667
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 118,
+    "status" : 200,
+    "latencyMs" : 9.06725
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 108,
+    "status" : 200,
+    "latencyMs" : 8.8035
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 136,
+    "status" : 200,
+    "latencyMs" : 8.017208
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 151,
+    "status" : 200,
+    "latencyMs" : 8.070625
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 106,
+    "status" : 200,
+    "latencyMs" : 7.5585
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 165,
+    "status" : 200,
+    "latencyMs" : 7.080667
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 128,
+    "status" : 200,
+    "latencyMs" : 6.787042
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 120,
+    "status" : 200,
+    "latencyMs" : 7.503166
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 130,
+    "status" : 200,
+    "latencyMs" : 7.72075
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 101,
+    "status" : 200,
+    "latencyMs" : 8.409
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 97,
+    "status" : 200,
+    "latencyMs" : 7.548166
+  }, {
+    "phase" : "measured-2",
+    "requestIndex" : 156,
+    "status" : 200,
+    "latencyMs" : 7.535458
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 216,
+    "status" : 200,
+    "latencyMs" : 8.084208
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 223,
+    "status" : 200,
+    "latencyMs" : 8.005042
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 228,
+    "status" : 200,
+    "latencyMs" : 7.999333
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 244,
+    "status" : 200,
+    "latencyMs" : 7.986
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 192,
+    "status" : 200,
+    "latencyMs" : 7.516375
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 204,
+    "status" : 200,
+    "latencyMs" : 7.569416
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 248,
+    "status" : 200,
+    "latencyMs" : 7.548916
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 214,
+    "status" : 200,
+    "latencyMs" : 7.466
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 187,
+    "status" : 200,
+    "latencyMs" : 7.166083
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 233,
+    "status" : 200,
+    "latencyMs" : 7.160834
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 217,
+    "status" : 200,
+    "latencyMs" : 7.108125
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 235,
+    "status" : 200,
+    "latencyMs" : 7.120209
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 242,
+    "status" : 200,
+    "latencyMs" : 8.585916
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 253,
+    "status" : 200,
+    "latencyMs" : 7.785292
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 206,
+    "status" : 200,
+    "latencyMs" : 8.544291
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 182,
+    "status" : 200,
+    "latencyMs" : 8.555708
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 197,
+    "status" : 200,
+    "latencyMs" : 7.787333
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 188,
+    "status" : 200,
+    "latencyMs" : 7.038041
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 183,
+    "status" : 200,
+    "latencyMs" : 6.704917
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 220,
+    "status" : 200,
+    "latencyMs" : 6.709334
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 240,
+    "status" : 200,
+    "latencyMs" : 8.58125
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 249,
+    "status" : 200,
+    "latencyMs" : 8.546375
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 231,
+    "status" : 200,
+    "latencyMs" : 9.050417
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 179,
+    "status" : 200,
+    "latencyMs" : 8.244958
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 210,
+    "status" : 200,
+    "latencyMs" : 9.037209
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 196,
+    "status" : 200,
+    "latencyMs" : 9.03725
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 243,
+    "status" : 200,
+    "latencyMs" : 8.944333
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 246,
+    "status" : 200,
+    "latencyMs" : 8.112959
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 254,
+    "status" : 200,
+    "latencyMs" : 8.212083
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 219,
+    "status" : 200,
+    "latencyMs" : 7.191542
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 245,
+    "status" : 200,
+    "latencyMs" : 7.127291
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 185,
+    "status" : 200,
+    "latencyMs" : 7.08325
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 229,
+    "status" : 200,
+    "latencyMs" : 8.165666
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 193,
+    "status" : 200,
+    "latencyMs" : 8.071916
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 238,
+    "status" : 200,
+    "latencyMs" : 8.934917
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 178,
+    "status" : 200,
+    "latencyMs" : 7.077291
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 208,
+    "status" : 200,
+    "latencyMs" : 9.521
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 177,
+    "status" : 200,
+    "latencyMs" : 8.436666
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 255,
+    "status" : 200,
+    "latencyMs" : 8.373209
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 225,
+    "status" : 200,
+    "latencyMs" : 8.649167
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 230,
+    "status" : 200,
+    "latencyMs" : 8.493959
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 190,
+    "status" : 200,
+    "latencyMs" : 8.251291
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 209,
+    "status" : 200,
+    "latencyMs" : 7.225417
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 213,
+    "status" : 200,
+    "latencyMs" : 7.170666
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 222,
+    "status" : 200,
+    "latencyMs" : 7.593584
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 181,
+    "status" : 200,
+    "latencyMs" : 7.7255
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 203,
+    "status" : 200,
+    "latencyMs" : 7.631791
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 241,
+    "status" : 200,
+    "latencyMs" : 7.381083
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 198,
+    "status" : 200,
+    "latencyMs" : 8.504458
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 250,
+    "status" : 200,
+    "latencyMs" : 8.5255
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 215,
+    "status" : 200,
+    "latencyMs" : 8.617792
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 239,
+    "status" : 200,
+    "latencyMs" : 8.4075
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 176,
+    "status" : 200,
+    "latencyMs" : 7.664417
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 221,
+    "status" : 200,
+    "latencyMs" : 7.638292
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 218,
+    "status" : 200,
+    "latencyMs" : 7.632917
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 186,
+    "status" : 200,
+    "latencyMs" : 7.483958
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 247,
+    "status" : 200,
+    "latencyMs" : 7.964292
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 252,
+    "status" : 200,
+    "latencyMs" : 8.000417
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 251,
+    "status" : 200,
+    "latencyMs" : 8.092333
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 226,
+    "status" : 200,
+    "latencyMs" : 8.039083
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 184,
+    "status" : 200,
+    "latencyMs" : 7.5365
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 234,
+    "status" : 200,
+    "latencyMs" : 7.448833
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 194,
+    "status" : 200,
+    "latencyMs" : 7.350208
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 205,
+    "status" : 200,
+    "latencyMs" : 7.31075
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 200,
+    "status" : 200,
+    "latencyMs" : 9.53375
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 232,
+    "status" : 200,
+    "latencyMs" : 7.858166
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 195,
+    "status" : 200,
+    "latencyMs" : 7.880084
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 201,
+    "status" : 200,
+    "latencyMs" : 9.606541
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 180,
+    "status" : 200,
+    "latencyMs" : 9.845375
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 202,
+    "status" : 200,
+    "latencyMs" : 8.036791
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 199,
+    "status" : 200,
+    "latencyMs" : 8.05575
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 237,
+    "status" : 200,
+    "latencyMs" : 8.037208
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 207,
+    "status" : 200,
+    "latencyMs" : 8.25775
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 191,
+    "status" : 200,
+    "latencyMs" : 6.835917
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 211,
+    "status" : 200,
+    "latencyMs" : 8.937958
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 224,
+    "status" : 200,
+    "latencyMs" : 7.135625
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 227,
+    "status" : 200,
+    "latencyMs" : 8.201209
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 189,
+    "status" : 200,
+    "latencyMs" : 7.929667
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 236,
+    "status" : 200,
+    "latencyMs" : 7.930875
+  }, {
+    "phase" : "measured-3",
+    "requestIndex" : 212,
+    "status" : 200,
+    "latencyMs" : 7.102791
+  } ],
+  "limitations" : [ "Small synthetic local fixture; not production capacity or an SLA.", "Same-run rounds form a baseline, not a before/after optimization comparison.", "Docker Desktop CPU/memory quotas and background host load are not pinned by this test.", "HTTP latency measures broker acceptance, not DB commit latency.", "Drain time is request-batch completion to expected row count and ready-queue zero; it is not per-message lag.", "Redis admission protection limit is raised to 10000 per device/minute for measurement.", "API workflow is verified; full frontend screen workflow and independent human explanation remain separate.", "Reverse geocoding is stubbed; all GPS coordinates are synthetic.", "No application crash, broker restart, saturation or external deployment was performed." ]
+}

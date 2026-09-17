@@ -5,8 +5,7 @@ FROM prom/prometheus:v3.4.1
 USER root
 COPY prometheus.prod.yml /etc/prometheus/prometheus.yml
 
-# 3) (선택) Alert 룰 파일이 있다면 복사
-# COPY rules/ /etc/prometheus/rules/
+COPY rules/*.yml /etc/prometheus/rules/
 
 # 4) 퍼미션 조정 및 EFS 마운트 포인트 준비
 RUN chown -R nobody:nobody /etc/prometheus \

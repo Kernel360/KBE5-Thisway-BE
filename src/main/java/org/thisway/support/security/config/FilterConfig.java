@@ -2,6 +2,7 @@ package org.thisway.support.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.thisway.member.domain.MemberReader;
 import org.thisway.support.logging.filter.LoggingFilter;
 import org.thisway.support.security.filter.GlobalExceptionHandlerFilter;
 import org.thisway.support.security.filter.JwtAuthenticationFilter;
@@ -25,8 +26,29 @@ public class FilterConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(
-            JwtTokenProvider jwtTokenUtil
+            JwtTokenProvider jwtTokenUtil,
+            MemberReader memberReader
     ) {
-        return new JwtAuthenticationFilter(jwtTokenUtil);
+        return new JwtAuthenticationFilter(jwtTokenUtil, memberReader);
     }
+    // These filters belong to the application SecurityFilterChain only. Automatic servlet
+    // registration would run the JWT parser on valid opaque Prometheus credentials.
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<LoggingFilter> loggingRegistration(LoggingFilter filter) {
+        return disabled(filter);
+    }
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<JwtAuthenticationFilter> jwtRegistration(JwtAuthenticationFilter filter) {
+        return disabled(filter);
+    }
+    @Bean
+    org.springframework.boot.web.servlet.FilterRegistrationBean<GlobalExceptionHandlerFilter> errorRegistration(GlobalExceptionHandlerFilter filter) {
+        return disabled(filter);
+    }
+    private static <T extends jakarta.servlet.Filter> org.springframework.boot.web.servlet.FilterRegistrationBean<T> disabled(T filter) {
+        var registration = new org.springframework.boot.web.servlet.FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
 }

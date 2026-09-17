@@ -195,7 +195,8 @@ class EmulatorTenantIntegrationTest {
     private String accessToken(String email, long companyId) {
         return jwtTokenProvider.generateAccessToken(email, Map.of(
                 "roles", List.of(MemberRole.COMPANY_ADMIN.name()),
-                "companyId", companyId
+                "companyId", companyId,
+                "memberId", memberRepository.findByEmailAndActiveTrue(email).orElseThrow().getId()
         ));
     }
 

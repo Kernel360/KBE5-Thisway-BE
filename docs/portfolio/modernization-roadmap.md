@@ -108,8 +108,14 @@ Acceptance criteria:
   - [x] CHANGE-020: 신규 normalized GPS 관측값 SHA-256 unique key, exact duplicate no-op, 4-thread overlap, FK rollback·재시도, V3 기존 row 보존. 전체 277/277. device ID/sequence와 broker ack 장애는 후속 범위.
   - [x] CHANGE-021: 실제 RabbitMQ·MySQL manual-ack harness에서 저장 전/저장 후 ack 전 연결 종료와 재전달 시 최종 1행 검증. 전체 279/279. Spring listener retry/DLQ 및 JVM kill 검증은 미포함. 기록: [broker redelivery](work-logs/2026-09-05-gps-broker-redelivery.md).
 - [ ] P1-01C: device 인증·publisher confirm/return·retry 분류·DLQ/replay·관측 지표.
+  - CHANGE-034: 회사 관리자 전용 credential 발급·교체·폐기와 감사 transaction 기반.
+    CHANGE-035에서 관리 API의 할당 revision과 inactive 차량 폐기를 보강했다.
+    CHANGE-036에서 키·활성 소속·revision 단일 snapshot 인증 검증기를 추가했다.
+    CHANGE-037에서 수집 인증 강제·비동기 identity/소속 재검증·Python/브라우저 Emulator를 연결했다.
+    CHANGE-038에서 nonce/freshness·Redis device budget·256 KiB 상한, GPS/Geofence 시각 검증과 CORS를 추가했다. 운영 전환은 별도 gate다.
   - [x] CHANGE-022: 저장 전용 retry allowlist·backoff, policy 기반 DLQ topology, rejection counter, 실제 Spring container/RabbitMQ/MySQL에서 실패 분류와 제한적 replay 검증. 전체 287/287. [작업 기록](work-logs/2026-09-05-gps-retry-dlq.md), [운영 gate](../runbooks/gps-dlq-replay.md). 운영 policy 적용·replay 도구·device 인증·producer dual-publish/confirm/return·자동 alert는 미완료.
   - [x] CHANGE-023: 한 건 제한 replay CLI, 승인 참조/hash·marker 검사, 신규 0600 audit, mandatory/confirm·audit 실패 후 원본 보존과 DB 중복 복구. 전체 294/294. [작업 기록](work-logs/2026-09-06-gps-replay-tool-and-pitch.md), [포트폴리오 설명](project-pitch.md). 조직 승인 검증·전역 rate limit·중앙 감사·운영 적용은 미완료.
+  - [x] CHANGE-028: producer correlated confirm/mandatory return, 저장 미확인 503용 오류, live best-effort 및 부분 실패 counter. 실제 broker/timeout/nack 테스트, 최종 전체 313/313. [기록](work-logs/2026-09-06-gps-publisher-confirms.md). 원자적 dual publish/DB commit 확인/운영 성능 보장 아님.
 
 설계 질문:
 
@@ -121,6 +127,8 @@ Acceptance criteria:
 
 - device authentication과 request validation
 - idempotency key와 DB unique constraint
+- CHANGE-033: Power 전용 strict 입력과 서버 KST+5분 시각 상한을 service 입구에 적용.
+  [기록](work-logs/2026-09-06-power-request-validation.md). 장치 인증·GPS/Geofence 미래 정책은 별도.
 - publisher confirm/return
 - bounded retry, DLQ, replay command/API와 runbook
 - ingest accepted/rejected/duplicate, consumer lag, DLQ metric
@@ -132,6 +140,17 @@ Acceptance criteria:
 - poison message는 DLQ에서 원인과 trace를 확인하고 안전하게 replay할 수 있다.
 
 ### P1-02 Trip state machine과 enrichment 분리
+
+진행 상태:
+
+- [x] CHANGE-026: 주소 조회 AFTER_COMMIT/NOT_SUPPORTED, 실패 시 좌표·운행 보존, 조건부 주소 update와 내부 재시도. 실제 MySQL/로컬 HTTP timeout 검증, 전체 305/305. [기록](work-logs/2026-09-06-trip-address-enrichment.md).
+- [x] CHANGE-039: durable 주소 retry/lease/scan/backoff·EXHAUSTED worker, 실제 MySQL 관련 25개 통과. 기본 cron 비활성.
+- [ ] legacy 운행의 승인 변환·실제 장치 sequence 규약은 실제 데이터/프로토콜 근거가 필요하다.
+- [x] CHANGE-032: 신규 Trip 관측의 상태표·멱등/충돌·OFF-first 보충, start/end odometer·distance/unknown 분리.
+  V7 legacy duplicate 보존·DB unique/check, HTTP/FE 계약 검증. 전체 BE 349/349, SSE 2/2,
+  FE unit 13/browser 15/build. [기록](work-logs/2026-09-06-trip-observation-distance.md).
+- [x] CHANGE-027: Emulator sum의 누적 m 의미 확인, 차량 mileage 중복 가산 제거, active Vehicle lock/projection, 실제 OFF 4-thread 최댓값 보존. 전체 308/308. Trip 거리 필드 분리는 미완료. [기록](work-logs/2026-09-06-cumulative-odometer.md).
+- [x] CHANGE-031: 현재 차량 Power 이벤트 시각 guard와 V6 watermark, 실제 MySQL 역순/동시성/rollback·legacy 보존, 전체 334/334. [기록](work-logs/2026-09-06-vehicle-power-event-ordering.md). Trip 중복/거리 분리와 FE GPS 기반 상태 추정은 별도다.
 
 범위:
 
@@ -148,6 +167,22 @@ Acceptance criteria:
 - mileage와 trip distance 불변식이 DB 제약·domain test로 보호된다.
 
 ### P1-03 재시작 가능한 Statistics Batch
+
+진행 상태:
+
+- [x] P1-03A / CHANGE-024: identifying targetDate, Asia/Seoul scheduler, fail-fast 및 전체 tasklet rollback/restart, 완료·진행 중 동일 날짜 launch 거부를 실제 MySQL에서 검증. [기록](work-logs/2026-09-06-statistics-job-identity.md).
+- [x] P1-03B / CHANGE-025: 회사별 transaction/checkpoint, 성공 회사 생략, DB calendar-day unique 및 직접 저장 4-thread 동시성, legacy duplicate 보존 검증. 전체 300/300. [기록](work-logs/2026-09-06-company-statistics-checkpoint.md).
+- [ ] P1-03C: 비영 원천 fixture 통계 공식·late event/correction/backfill·다중 JVM 장애 복구.
+  - [x] CHANGE-030: 완료 Trip 시간 V2, 중복/겹침 union·일자 clip, GPS 관측 분리,
+    V5 기존 공식 보존·coverage·명시적 late OFF 보정·구버전 checkpoint 재계산. 실제 MySQL/HTTP 포함 전체 324/324,
+    FE 단위 11/browser 12/build 통과. [기록](work-logs/2026-09-06-statistics-formula-v2.md).
+  - [x] CHANGE-040: Trip/GPS 원천 transaction과 durable correction queue 연결, 수정 revision, 최초 fleet ID snapshot, 기존 unknown fleet의 409/명시적 ADMIN seed. 관련 30개 통과.
+  - CHANGE-042: offline STARTED snapshot CAS 복구와 실제 별도 JVM 종료/restart 검증. 정확한 최종 결과는 해당 work log 참조.
+  - [ ] 실제 과거 fleet 이력 복원과 운영 대량 backfill은 원천 데이터 검토 후 진행한다. 누락 일자는 명시적 날짜 계산/기존 batch로 처리한다.
+
+추가 마무리 변경: CHANGE-041 고정 fixture API/DB 성능 증거, CHANGE-043 발행 공유 deadline/유한 worker, CHANGE-044 FE route chunk 분리/CI Node 런타임 참조, CHANGE-045 실제 브라우저 업무 흐름, CHANGE-046 경보 규칙/배포 rollback 절차. 실행 결과와 운영에서 확인하지 않은 범위는 개별 work log 및 최종 통합 기록을 기준으로 한다.
+
+현재 작업 우선순위와 Git/운영 미완료 범위는 [남은 작업](remaining-work.md)에 정리한다.
 
 이 단계는 기존 개인 기여 [#172](https://github.com/Kernel360/KBE5-Thisway-BE/pull/172), [#213](https://github.com/Kernel360/KBE5-Thisway-BE/pull/213)의 현대화다.
 
@@ -186,6 +221,8 @@ Acceptance criteria:
 - trace propagation과 MDC cleanup
 - test를 포함한 build gate
 - commit SHA image tag, GitHub OIDC, ECS 안정화 wait, health check, rollback
+
+[CHANGE-050](work-logs/2026-09-07-observability-evidence.md)에서 안전한 공통 로그와MDC scope, consumer transaction 지표, 버전 관리 대시보드 및 실제 수집·지속 부하·pause/recovery 검증을 추가한다. 운영 수신·배포와 장기부하/A-B 검증은 별도 gate로 유지한다.
 
 ## Phase 3. 선택적 AI 기능
 

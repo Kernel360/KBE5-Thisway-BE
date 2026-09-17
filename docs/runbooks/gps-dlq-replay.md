@@ -114,3 +114,11 @@ preview는 큐 선두 한 건을 manual get하고 hash/byte 수만 보여 준 �
 - [RabbitMQ: DLX policy와 safety](https://www.rabbitmq.com/docs/dlx)
 
 공식 현재 문서는 프로젝트 버전보다 최신일 수 있다. 구현 API와 실제 동작은 로컬 Spring AMQP 3.2.5 / Spring Retry 2.0.11 및 컨테이너 테스트로 검증한다.
+
+## CHANGE-037 이후 identity 요구사항
+
+새 저장 consumer와 replay CLI는 version/emulatorId/vehicleId/companyId/assignmentRevision header를 요구한다.
+CLI는 해당 allowlist만 보존하며 원문 장치 키를 요구하거나 전달하지 않는다.
+identity 없는 구형 backlog는 publish/ack하지 않고 원본을 보존한다. 현재 MDN으로 identity를 임의 생성하지 않는다.
+연결이 변경된 메시지는 replay하더라도 소비 시 다시 거부된다.
+[장치 수집 인증 전환 runbook](device-ingestion-authentication.md)을 함께 확인한다.

@@ -14,8 +14,18 @@ public record TripLogSaveInput(
         LocalDateTime offTime,
         Double latitude,
         Double longitude,
-        Integer totalTripMeter
+        Integer odometer
 ) {
+    public void validate() {
+        if (vehicle == null || vehicle.getId() == null || onTime == null
+                || (offTime != null && offTime.isBefore(onTime))
+                || odometer == null || odometer < 0
+                || latitude == null || !Double.isFinite(latitude) || Math.abs(latitude) > 90
+                || longitude == null || !Double.isFinite(longitude) || Math.abs(longitude) > 180) {
+            throw new IllegalArgumentException("Invalid trip observation");
+        }
+    }
+
     public static TripLogSaveInput from(
             Vehicle vehicle,
             PowerLogRequest request,

@@ -55,10 +55,6 @@ logging:
     org.springframework.security: INFO
     org.springframework.web: INFO
 
-custom:
-  verification-code-expiration-millis: 600000
-  verification-code-key-prefix: ${CUSTOM_VERIFICATION_CODE_KEY_PREFIX}
-
 security:
   jwt:
     secret-key: ${JWT_SECRET_KEY}

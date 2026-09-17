@@ -1,6 +1,7 @@
 package org.thisway.vehicle.triplog.application;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,20 +31,20 @@ public class TripLogServiceImpl implements TripLogService {
     private final VehicleService vehicleService;
     private final LogService logService;
     private final TripLogRepository tripLogRepository;
-    private final ReverseGeocodingConverter reverseGeocodingConverter;
+    private final ApplicationEventPublisher events;
     private final SecurityService securityService;
 
     public TripLogServiceImpl(
             VehicleService vehicleService,
             @Lazy LogService logService,
             TripLogRepository tripLogRepository,
-            ReverseGeocodingConverter reverseGeocodingConverter,
+            ApplicationEventPublisher events,
             SecurityService securityService
     ) {
         this.vehicleService = vehicleService;
         this.logService = logService;
         this.tripLogRepository = tripLogRepository;
-        this.reverseGeocodingConverter = reverseGeocodingConverter;
+        this.events = events;
         this.securityService = securityService;
     }
 
@@ -126,50 +127,31 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
-        TripLog tripLog;
-        ReverseGeocodeResult address = reverseGeocodingConverter.convertToAddress(tripLogSaveInput.latitude(), tripLogSaveInput.longitude());
-
-        if (tripLogSaveInput.offTime() == null) {
-            tripLog = TripLog.builder()
-                    .vehicle(tripLogSaveInput.vehicle())
-                    .startTime(tripLogSaveInput.onTime())
-                    .totalTripMeter(tripLogSaveInput.totalTripMeter())
-                    .onLatitude(tripLogSaveInput.latitude())
-                    .onLongitude(tripLogSaveInput.longitude())
-                    .onAddress(address.addr())
-                    .onAddrDetail(address.addrDetail())
-                    .active(false)
-                    .build();
-        } else {
-            tripLog = tripLogRepository.findByVehicleIdAndStartTime(tripLogSaveInput.vehicle().getId(), tripLogSaveInput.onTime());
-
-            if (tripLog == null) {
-                tripLog = TripLog.builder()
-                        .vehicle(tripLogSaveInput.vehicle())
-                        .startTime(tripLogSaveInput.onTime())
-                        .endTime(tripLogSaveInput.offTime())
-                        .totalTripMeter(0)
-                        .offLatitude(tripLogSaveInput.latitude())
-                        .offLongitude(tripLogSaveInput.longitude())
-                        .offAddress(address.addr())
-                        .offAddrDetail(address.addrDetail())
-                        .active(true)
-                        .build();
-            } else {
-                tripLog.finishTrip(
-                        tripLogSaveInput.offTime(),
-                        tripLogSaveInput.totalTripMeter(),
-                        tripLogSaveInput.latitude(),
-                        tripLogSaveInput.longitude(),
-                        address.addr(),
-                        address.addrDetail()
-                );
-            }
+        try {
+            tripLogSaveInput.validate();
+        } catch (IllegalArgumentException exception) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        var vehicle = vehicleService.getVehicleForPowerUpdate(tripLogSaveInput.vehicle().getId());
+        var existing = tripLogRepository.findTop2ByVehicleIdAndStartTimeOrderByIdAsc(
+                vehicle.getId(), tripLogSaveInput.onTime());
+        if (existing.size() > 1 || (!existing.isEmpty() && existing.getFirst().getIdentityStartTime() == null)) {
+            throw new CustomException(ErrorCode.TRIP_LEGACY_REVIEW_REQUIRED);
+        }
+        TripLog tripLog = existing.isEmpty() ? TripLog.observed(vehicle, tripLogSaveInput.onTime()) : existing.getFirst();
+        try {
+            if (!tripLog.observe(tripLogSaveInput)) return;
+        } catch (TripObservationConflictException exception) {
+            throw new CustomException(ErrorCode.TRIP_EVENT_CONFLICT);
         }
 
         tripLogRepository.save(tripLog);
+        events.publishEvent(new org.thisway.company.statistics.application.StatisticsSourceChanged(
+                vehicle.getCompany().getId(), tripLogSaveInput.onTime().toLocalDate(),
+                java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(1), "TRIP_OBSERVED"));
+        events.publishEvent(new TripAddressRequested(tripLog.getId(), tripLogSaveInput.offTime() != null));
     }
 
 }

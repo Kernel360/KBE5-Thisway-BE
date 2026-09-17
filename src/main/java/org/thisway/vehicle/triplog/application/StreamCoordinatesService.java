@@ -124,7 +124,10 @@ public class StreamCoordinatesService {
     }
 
     public void sendCurrentCoordinates(String mdn, List<GpsLogEntry> gpsLogs) {
-        VehicleReference vehicle = emulatorService.getVehicleReferenceByMdn(mdn);
+        sendCurrentCoordinates(emulatorService.getVehicleReferenceByMdn(mdn), gpsLogs);
+    }
+
+    public void sendCurrentCoordinates(VehicleReference vehicle, List<GpsLogEntry> gpsLogs) {
 
         sseEventSender.sendToPrefix(
                 getSseKeyToSend("vehicle", vehicle.id().toString()),

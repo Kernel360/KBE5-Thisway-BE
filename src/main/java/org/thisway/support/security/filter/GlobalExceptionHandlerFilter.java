@@ -33,35 +33,35 @@ public class GlobalExceptionHandlerFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(request, response);
         } catch (JwtException ex) {
-            log.error("JWT authentication error", ex);
+            log.warn("event=security_filter_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(ex));
             sendError(
                     response,
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED",
-                    ex.getMessage());
+                    "Request could not be processed");
         } catch (AuthenticationServiceException ex) {
-            log.error("Authentication service error", ex);
+            log.warn("event=security_filter_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(ex));
             sendError(
                     response,
                     HttpStatus.BAD_REQUEST,
                     "BAD_REQUEST",
-                    ex.getMessage());
+                    "Request could not be processed");
 
         } catch (BadCredentialsException ex) {
-            log.error("Bad credentials error", ex);
+            log.warn("event=security_filter_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(ex));
             sendError(
                     response,
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED",
-                    ex.getMessage());
+                    "Request could not be processed");
 
         } catch (Exception ex) {
-            log.error("Unhandled exception occurred", ex);
+            log.error("event=security_filter_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(ex));
             sendError(
                     response,
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "INTERNAL_SERVER_ERROR",
-                    ex.getMessage());
+                    "Request could not be processed");
 
         }
     }

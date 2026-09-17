@@ -206,6 +206,9 @@ class MySqlMigrationIntegrationTest {
                 List.of(new GpsLogEntry(null, "0", "A", "37000000", "127000000", "90", "20", "100", "12")));
         try (var harness = new GpsFailureHarness("transient-exhausted")) {
             var message = harness.converter.toMessage(request, new org.springframework.amqp.core.MessageProperties());
+            var device = emulators.findByMdn(mdn).orElseThrow();
+            message.getMessageProperties().getHeaders().putAll(org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.headers(
+                    new org.thisway.emulator.credential.DeviceIdentity(device.getId(), vehicle.getId(), vehicle.getCompany().getId(), mdn, 0)));
             var approval = new org.thisway.ops.GpsDlqReplay.Approval("TICKET-23", GpsDlqReplayTest.digest(message.getBody()));
             harness.template.send(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY, message);
             var factory = new ConnectionFactory();
@@ -378,7 +381,7 @@ class MySqlMigrationIntegrationTest {
 
     @Test
     void 빈_MySQL_migration과_JPA_validate_기동후_재실행은_noop이다() {
-        assertThat(flyway.info().applied()).hasSize(3);
+        assertThat(flyway.info().applied()).hasSize(14);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.statistics "
                 + "WHERE table_schema=DATABASE() AND table_name='trip_log' "

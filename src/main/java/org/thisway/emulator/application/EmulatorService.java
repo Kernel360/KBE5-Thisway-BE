@@ -68,7 +68,8 @@ public class EmulatorService {
         }
 
         long companyId = currentCompanyId();
-        Emulator emulator = findEmulator(input.id(), companyId);
+        Emulator emulator = emulatorRepository.findOwnedForUpdate(input.id(), companyId)
+                .orElseThrow(() -> new CustomException(ErrorCode.EMULATOR_NOT_FOUND));
 
         if (input.mdn() != null && !input.mdn().equals(emulator.getMdn()) &&
                 emulatorRepository.findByMdn(input.mdn()).isPresent()) {

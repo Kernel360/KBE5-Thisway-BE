@@ -18,12 +18,12 @@ public class RabbitMqGlobalErrorHandler implements ErrorHandler {
             Throwable cause = lefe.getCause();
 
             if (cause instanceof CustomException customEx) {
-                log.warn("클라이언트 메시지 예외: {}, payloadSize={}", customEx.getMessage(), payloadSize);
+                log.warn("클라이언트 메시지 예외: {}, payloadSize={}", customEx.getErrorCode().getCode(), payloadSize);
             } else {
-                log.error("메시지 소비 중 서버 오류. payloadSize={}", payloadSize, cause);
+                log.error("메시지 소비 중 서버 오류. payloadSize={} diagnostic={}", payloadSize, org.thisway.support.logging.SafeDiagnostics.describe(cause));
             }
         } else {
-            log.error("알 수 없는 RabbitMQ 예외 발생", t);
+            log.error("event=rabbit_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(t));
         }
     }
 }

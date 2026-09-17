@@ -9,24 +9,27 @@ public record CurrentDrivingInfo(
         Integer tripMeter,
         Integer speed,
         Double latitude,
-        Double longitude
+        Double longitude,
+        Integer startOdometer
 ) {
     public static CurrentDrivingInfo from(TripLog tripLog, GpsLogData gps) {
         if (gps == null) {
             return new CurrentDrivingInfo(
                     tripLog.getStartTime(),
-                    0,
+                    null,
                     0,
                     tripLog.getOnLatitude(),
-                    tripLog.getOnLongitude()
+                    tripLog.getOnLongitude(),
+                    tripLog.getStartOdometer()
             );
         } else {
             return new CurrentDrivingInfo(
                     tripLog.getStartTime(),
-                    gps.totalTripMeter() - tripLog.getTotalTripMeter(),
+                    TripLog.distanceFrom(tripLog.getStartOdometer(), gps.totalTripMeter()),
                     gps.speed(),
                     gps.latitude(),
-                    gps.longitude()
+                    gps.longitude(),
+                    tripLog.getStartOdometer()
             );
         }
     }

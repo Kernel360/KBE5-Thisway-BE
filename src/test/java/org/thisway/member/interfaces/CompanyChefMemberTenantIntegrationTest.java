@@ -57,7 +57,8 @@ class CompanyChefMemberTenantIntegrationTest {
         companyA = companyRepository.save(company("company-a", "crn-a"));
         companyB = companyRepository.save(company("company-b", "crn-b"));
         companyBMember = memberRepository.save(member(companyB, "member-b@example.com"));
-        companyAToken = accessToken(companyA.getId());
+        Member companyAChef = memberRepository.save(member(companyA, "company-chef@example.com", MemberRole.COMPANY_CHEF));
+        companyAToken = accessToken(companyAChef);
     }
 
     @Test
@@ -121,10 +122,11 @@ class CompanyChefMemberTenantIntegrationTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.MEMBER_NOT_FOUND.getCode()));
     }
 
-    private String accessToken(long companyId) {
-        return jwtTokenProvider.generateAccessToken("company-chef@example.com", Map.of(
-                "roles", List.of(MemberRole.COMPANY_CHEF.name()),
-                "companyId", companyId
+    private String accessToken(Member member) {
+        return jwtTokenProvider.generateAccessToken(member.getEmail(), Map.of(
+                "roles", List.of(member.getRole().name()),
+                "companyId", member.getCompany().getId(),
+                "memberId", member.getId()
         ));
     }
 
@@ -145,9 +147,13 @@ class CompanyChefMemberTenantIntegrationTest {
     }
 
     private Member member(Company company, String email) {
+        return member(company, email, MemberRole.MEMBER);
+    }
+
+    private Member member(Company company, String email, MemberRole role) {
         return Member.builder()
                 .company(company)
-                .role(MemberRole.MEMBER)
+                .role(role)
                 .name(company.getName().replace("company", "member"))
                 .email(email)
                 .password("Password123!")

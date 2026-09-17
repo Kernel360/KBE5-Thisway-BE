@@ -14,6 +14,12 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(org.springframework.http.converter.HttpMessageNotReadableException ignored) {
+        // Jackson errors can contain raw coordinates or credentials. Return only the fixed code.
+        return ApiErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
@@ -24,14 +30,14 @@ public class GlobalExceptionHandler {
             errorCode = ErrorCode.INVALID_INPUT_VALUE;
         }
 
-        log.warn("클라이언트 요청 오류: {}", errorCode.getMessage(), e);
+        log.warn("event=validation_rejected code={}", errorCode.getCode());
 
         return ApiErrorResponse.of(errorCode);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiErrorResponse> handleRuntimeException(RuntimeException e) {
-        log.error("서버 내부 오류 발생", e);
+        log.error("event=server_error diagnostic={}", org.thisway.support.logging.SafeDiagnostics.describe(e));
         return ApiErrorResponse.of(ErrorCode.SERVER_ERROR);
     }
 
@@ -42,13 +48,17 @@ public class GlobalExceptionHandler {
         String message = errorCode.getMessage();
 
         if (status.is5xxServerError()) {
-            log.error("비즈니스 예외 발생: {}", message, e);
+            log.error("event=business_error code={} diagnostic={}", errorCode.getCode(), org.thisway.support.logging.SafeDiagnostics.describe(e));
         } else if (status.is4xxClientError()) {
             log.warn("클라이언트 요청 오류: {}", message);
         } else {
             log.info("예외 발생: {}", message);
         }
 
+        if (errorCode == ErrorCode.TELEMETRY_RATE_LIMITED) {
+            return ResponseEntity.status(status).header("Retry-After", "60")
+                    .body(new ApiErrorResponse(errorCode.getCode(), message));
+        }
         return ApiErrorResponse.of(errorCode);
     }
 }

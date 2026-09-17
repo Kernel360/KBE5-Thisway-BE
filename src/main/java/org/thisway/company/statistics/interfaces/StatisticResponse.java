@@ -20,8 +20,11 @@ public record StatisticResponse(
         Double lowHourRate,
         Double averageOperationRate,
         List<Double> hours,
-        List<TripLocationStats> locationStats
+        List<TripLocationStats> locationStats,
+        Quality quality
 ) {
+    public record Quality(int formulaVersion, long coveredDays, long requestedDays, long excludedLegacyDays,
+                          long gpsObservationCount, long unclosedTripDays, String fleetBasis) { }
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public static StatisticResponse from(Statistics statistics, List<TripLocationStats> locationStats) {
@@ -44,7 +47,9 @@ public record StatisticResponse(
                 lowHourRate,
                 statistics.getAverageOperationRate(),
                 hours,
-                locationStats
+                locationStats,
+                new Quality(statistics.getFormulaVersion(), 1, 1, 0, statistics.getGpsObservationCount(),
+                        statistics.getUnclosedTripCount(), "CURRENT_ACTIVE_FLEET_AT_CALCULATION")
         );
     }
 
@@ -54,7 +59,7 @@ public record StatisticResponse(
     public static StatisticResponse fromAggregatedData(
             Long companyId, String dateRange, Integer powerOnCount, Double averageDailyPowerCount,
             Integer totalDrivingTime, Integer peakHour, Integer lowHour, Double averageOperationRate,
-            List<Double> hourlyRates, List<TripLocationStats> locationStats) {
+            List<Double> hourlyRates, List<TripLocationStats> locationStats, Quality quality) {
 
         Double peakHourRate = getSafeHourlyRate(peakHour, hourlyRates);
         Double lowHourRate = getSafeHourlyRate(lowHour, hourlyRates);
@@ -71,7 +76,8 @@ public record StatisticResponse(
                 lowHourRate,
                 averageOperationRate,
                 hourlyRates,
-                locationStats
+                locationStats,
+                quality
         );
     }
 

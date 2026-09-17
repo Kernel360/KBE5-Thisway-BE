@@ -12,6 +12,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.images.builder.Transferable;
 import org.thisway.company.domain.Company;
 import org.thisway.company.infrastructure.CompanyRepository;
+import org.thisway.member.domain.Member;
+import org.thisway.member.domain.MemberRole;
+import org.thisway.member.infrastructure.MemberRepository;
 import org.thisway.vehicle.domain.Vehicle;
 import org.thisway.vehicle.infrastructure.VehicleRepository;
 import org.thisway.vehicle.vehicle_model.domain.VehicleModel;
@@ -37,6 +40,7 @@ import static org.awaitility.Awaitility.await;
 class SseBrowserIntegrationTest {
     @LocalServerPort int port;
     @Autowired CompanyRepository companies;
+    @Autowired MemberRepository members;
     @Autowired VehicleRepository vehicles;
     @Autowired VehicleModelRepository models;
     @Autowired JwtTokenProvider tokens;
@@ -53,10 +57,15 @@ class SseBrowserIntegrationTest {
                 .name("fixture").modelYear(2026).build());
         Vehicle vehicle = vehicles.save(Vehicle.builder().company(company).vehicleModel(model)
                 .carNumber("SSE-TEST-" + idleTimeout).color("white").mileage(0).powerOn(false).build());
-        String token = tokens.generateAccessToken("fixture@example.com",
-                Map.of("roles", List.of("MEMBER"), "companyId", company.getId()));
-        String foreignToken = tokens.generateAccessToken("foreign@example.com",
-                Map.of("roles", List.of("MEMBER"), "companyId", company.getId() + 1000));
+        Member subscriber = member(company, "fixture-" + idleTimeout + "@example.com");
+        Company foreignCompany = companies.save(Company.builder().name("foreign sse fixture")
+                .crn("sse-foreign-" + idleTimeout).contact("000").addrRoad("fixture")
+                .addrDetail("fixture").memo("fixture").gpsCycle(60).build());
+        Member foreignSubscriber = member(foreignCompany, "foreign-" + idleTimeout + "@example.com");
+        String token = token(subscriber);
+        // A real authenticated foreign member must reach ownership denial (404),
+        // rather than failing the current-account identity guard (401).
+        String foreignToken = token(foreignSubscriber);
         Testcontainers.exposeHostPorts(port);
         String config = """
                 events {}
@@ -121,5 +130,16 @@ class SseBrowserIntegrationTest {
                 }
             }
         }
+    }
+
+    private Member member(Company company, String email) {
+        return members.save(Member.builder().company(company).role(MemberRole.MEMBER).name("SSE subscriber")
+                .email(email).password("unused-fixture-password").phone("01000000000").memo("fixture").build());
+    }
+
+    private String token(Member member) {
+        return tokens.generateAccessToken(member.getEmail(), Map.of(
+                "roles", List.of(member.getRole().name()),
+                "companyId", member.getCompany().getId(), "memberId", member.getId()));
     }
 }

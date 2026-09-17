@@ -27,6 +27,10 @@ public class StatisticService {
         persistenceService.saveStatistics(companyId, targetDate);
     }
 
+    public void saveStatistics(Long companyId, LocalDate targetDate, String reason) {
+        persistenceService.saveStatistics(companyId, targetDate, reason);
+    }
+
     /**
      * 날짜 범위 기반 통계 조회
      */

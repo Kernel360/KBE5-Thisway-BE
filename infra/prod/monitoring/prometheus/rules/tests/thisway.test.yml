@@ -1,0 +1,84 @@
+rule_files:
+  - ../thisway.yml
+evaluation_interval: 30s
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'gps_publisher_storage_unconfirmed_total'
+        values: '0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'gps_publisher_deadline_total'
+        values: '0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'gps_publisher_saturated_total'
+        values: '0+0x12'
+      - series: 'gps_consumer_rejected_total'
+        values: '0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'thisway_trip_address_worker_total{outcome="exhausted"}'
+        values: '0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'thisway_statistics_correction_total{outcome="failed"}'
+        values: '0 0 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'http_server_requests_seconds_count{uri="/api/logs/gps",status="429"}'
+        values: '0 0 15 15 15 15 15 15 15 15 15 15 15'
+      - series: 'up{job="spring-boot-application",instance="fixture:8080"}'
+        values: '1 1 0 0 0 0 0 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ThiswayStoragePublishUnconfirmed
+        exp_alerts: []
+      - eval_time: 4m
+        alertname: ThiswayStoragePublishUnconfirmed
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: GPS storage broker acceptance is unconfirmed}
+      - eval_time: 4m
+        alertname: ThiswayPublisherDeadlineOrSaturation
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: GPS publisher budget or capacity is exhausted}
+      - eval_time: 4m
+        alertname: ThiswayGpsConsumerRejected
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: GPS consumer rejected a storage message}
+      - eval_time: 4m
+        alertname: ThiswayAddressWorkerFailure
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: Trip address recovery needs review}
+      - eval_time: 4m
+        alertname: ThiswayStatisticsCorrectionFailure
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: Statistics correction remains pending after failure}
+      - eval_time: 4m
+        alertname: ThiswayTelemetryRejected
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: Telemetry admission failures are elevated}
+      - eval_time: 4m
+        alertname: ThiswayApplicationScrapeMissing
+        exp_alerts:
+          - exp_labels: {severity: critical, job: spring-boot-application, instance: 'fixture:8080'}
+            exp_annotations: {summary: Thisway application metrics scrape is unavailable}
+      - eval_time: 12m
+        alertname: ThiswayStoragePublishUnconfirmed
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: ThiswayApplicationScrapeMissing
+        exp_alerts: []
+  - interval: 1m
+    input_series:
+      - series: 'gps_publisher_deadline_total'
+        values: '0 0 1 1 1'
+      - series: 'thisway_telemetry_body_rejected_total'
+        values: '0 0 15 15 15'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ThiswayPublisherDeadlineOrSaturation
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: GPS publisher budget or capacity is exhausted}
+      - eval_time: 4m
+        alertname: ThiswayTelemetryOversized
+        exp_alerts:
+          - exp_labels: {severity: warning}
+            exp_annotations: {summary: Oversized telemetry bodies are being rejected}

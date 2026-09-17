@@ -8,6 +8,10 @@ import org.thisway.vehicle.domain.Vehicle;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long>, VehicleQueryRepository {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT v FROM Vehicle v WHERE v.id = :id AND v.active = true")
+    Optional<Vehicle> lockActiveById(@org.springframework.data.repository.query.Param("id") Long id);
+
     Optional<Vehicle> findByIdAndActiveTrue(Long id);
 
     Optional<Vehicle> findByIdAndCompanyIdAndActiveTrue(Long id, Long companyId);

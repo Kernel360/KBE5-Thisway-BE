@@ -113,3 +113,17 @@ AI 기능을 추가할 때도 Emulator가 정상·이상 label을 재현하고 B
 - `sum`의 원 외부 단말 protocol 의미
 
 이 항목을 통과하기 전에는 “세 애플리케이션 통합 검증 완료”라고 표현하지 않는다.
+
+## 2026-09-07 인증 계약 갱신 (CHANGE-037)
+
+위 감사는 과거 기준선이다. 현재 세 수집 POST는 X-Device-Id/X-Device-Key를 요구한다.
+Python Emulator의 private credential 파일과 FE 브라우저 Emulator의 실행 중 키 입력을 연결했다.
+MDN만 아는 호출과 사람 JWT만 사용한 호출은 정상 payload 기준 401이다.
+새 AMQP identity와 소속 재검증, 실제 검증 결과·잔여 한계는
+[CHANGE-037](work-logs/2026-09-07-device-ingestion-authentication.md)에 기록한다.
+구형 client/consumer 혼합 배포를 호환된다고 표현하지 않는다.
+
+
+## 2026-09-07 후속 변경
+
+CHANGE-038에서 두 Emulator가 새 nonce/전송 timestamp를 생성하고 BE는 CORS·freshness·Redis budget·본문 상한을 적용한다. 원래 event time은 바꾸지 않는다. 통계 CHANGE-040의 `quality.fleetBasis` snapshot/unknown을 FE가 구분해 표시한다. CHANGE-044에서 실제 production page chunk 분리와 실패 복구를 검증했다. 원래 팀 기여와 이후 개인 변경의 구분은 유지하며, 전체 실제 화면 업무 경로는 CHANGE-045 및 최종 통합 결과를 기준으로 판단한다. 이 문서의 초기 감사 결과가 후속 수정을 자동으로 덮어쓰지 않도록 날짜/CHANGE 번호를 함께 읽는다.

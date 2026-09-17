@@ -51,9 +51,11 @@ class GpsLogValidationTest {
     @MethodSource("invalidRequests")
     void 잘못된_HTTP_packet은_저장이나_publish_전에_400이다(GpsLogRequest request) throws Exception {
         GpsLogService service = mock(GpsLogService.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new LogController(mock(LogService.class), service))
+        var authentication = mock(org.thisway.emulator.credential.DeviceAuthenticationService.class);
+        when(authentication.authenticate(anyLong(), any(), any())).thenReturn(new org.thisway.emulator.credential.DeviceIdentity(1, 1, 1, "01234567890", 0));
+        var mvc = MockMvcBuilders.standaloneSetup(new LogController(service, authentication, mock(org.thisway.vehicle.log.application.DeviceTelemetryService.class), mock(org.thisway.vehicle.log.application.TelemetryRequestGuard.class)))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
-        mvc.perform(post("/api/logs/gps").contentType("application/json")
+        mvc.perform(post("/api/logs/gps").header("X-Device-Id", "1").header("X-Device-Key", "fixture").contentType("application/json")
                 .content(new ObjectMapper().writeValueAsString(request))).andExpect(status().isBadRequest());
         verifyNoInteractions(service);
     }
@@ -67,19 +69,21 @@ class GpsLogValidationTest {
     @Test
     void 정상_HTTP_packet은_서비스에_전달한다() throws Exception {
         GpsLogService service = mock(GpsLogService.class);
-        var mvc = MockMvcBuilders.standaloneSetup(new LogController(mock(LogService.class), service))
+        var authentication = mock(org.thisway.emulator.credential.DeviceAuthenticationService.class);
+        when(authentication.authenticate(anyLong(), any(), any())).thenReturn(new org.thisway.emulator.credential.DeviceIdentity(1, 1, 1, "01234567890", 0));
+        var mvc = MockMvcBuilders.standaloneSetup(new LogController(service, authentication, mock(org.thisway.vehicle.log.application.DeviceTelemetryService.class), mock(org.thisway.vehicle.log.application.TelemetryRequestGuard.class)))
                 .setControllerAdvice(new GlobalExceptionHandler()).build();
         GpsLogRequest request = request("202609051200", "1", List.of(VALID));
-        mvc.perform(post("/api/logs/gps").contentType("application/json")
+        mvc.perform(post("/api/logs/gps").header("X-Device-Id", "1").header("X-Device-Key", "fixture").contentType("application/json")
                 .content(new ObjectMapper().writeValueAsString(request))).andExpect(status().isOk());
-        verify(service).saveGpsLog(request);
+        verify(service).saveGpsLog(eq(request), any());
     }
 
     @Test
     void consumer_저장경계도_조회와_쓰기_전에_거부한다() {
         EmulatorRepository emulators = mock(EmulatorRepository.class);
         LogRepository logs = mock(LogRepository.class);
-        GpsLogSaveService service = new GpsLogSaveService(emulators, logs, new LogDataConverter());
+        GpsLogSaveService service = new GpsLogSaveService(emulators, logs, new LogDataConverter(), mock(org.thisway.emulator.credential.DeviceBindingGuard.class), mock(org.springframework.context.ApplicationEventPublisher.class));
         assertThatThrownBy(() -> service.saveGpsLog(request("invalid", "1", List.of(VALID))))
                 .isInstanceOfSatisfying(CustomException.class,
                         error -> org.assertj.core.api.Assertions.assertThat(error.getErrorCode())

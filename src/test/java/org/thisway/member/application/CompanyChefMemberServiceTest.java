@@ -173,8 +173,8 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .role(MemberRole.COMPANY_CHEF)
                 .name("name")
-                .email("email")
-                .password("password")
+                .email("email@example.test")
+                .password("Password123!")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -192,8 +192,8 @@ class CompanyChefMemberServiceTest {
         assertThat(registeredMember.getCompany().getId()).isEqualTo(companyForRegister.getId());
         assertThat(registeredMember.getRole()).isEqualTo(MemberRole.COMPANY_CHEF);
         assertThat(registeredMember.getName()).isEqualTo("name");
-        assertThat(registeredMember.getEmail()).isEqualTo("email");
-        assertThat(passwordEncoder.matches("password", registeredMember.getPassword())).isTrue();
+        assertThat(registeredMember.getEmail()).isEqualTo("email@example.test");
+        assertThat(passwordEncoder.matches("Password123!", registeredMember.getPassword())).isTrue();
         assertThat(registeredMember.getPhoneValue()).isEqualTo("01012345678");
         assertThat(registeredMember.getMemo()).isEqualTo("memo");
     }
@@ -209,7 +209,7 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .name("name")
                 .email(alreadyExistEmail)
-                .password("password")
+                .password("Password123!")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -234,8 +234,8 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .name("name")
                 .role(MemberRole.ADMIN)
-                .email("email")
-                .password("password")
+                .email("email@example.test")
+                .password("Password123!")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -260,7 +260,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.COMPANY_CHEF)
                         .name("preUpdateName")
                         .email("pre@update.email")
-                        .password("password")
+                        .password("Password123!")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -331,7 +331,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.COMPANY_CHEF)
                         .name("preUpdateName")
                         .email("preUpdateEmail@email.com")
-                        .password("password")
+                        .password("Password123!")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -403,7 +403,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.ADMIN)
                         .name("preUpdateName")
                         .email("pre@update.email")
-                        .password("password")
+                        .password("Password123!")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -482,8 +482,8 @@ class CompanyChefMemberServiceTest {
                         .company(company)
                         .role(MemberRole.ADMIN)
                         .name("name")
-                        .email("email")
-                        .password("password")
+                        .email("email@example.test")
+                        .password("Password123!")
                         .phone("01012345678")
                         .memo("memo")
                         .build()

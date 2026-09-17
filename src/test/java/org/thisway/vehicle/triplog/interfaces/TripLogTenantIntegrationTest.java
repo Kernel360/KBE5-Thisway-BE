@@ -108,8 +108,9 @@ class TripLogTenantIntegrationTest {
     @ParameterizedTest
     @ValueSource(strings = {"/api/trip-log/current/stream/1", "/api/trip-log/detail/stream/1", "/api/vehicles/stream/track"})
     void 허용되지_않은_ADMIN_role은_SSE에서_403이다(String path) throws Exception {
+        Member admin = memberRepository.save(member(companyA, "admin@example.com", MemberRole.ADMIN));
         String token = jwtTokenProvider.generateAccessToken("admin@example.com", Map.of(
-                "roles", List.of("ADMIN"), "companyId", companyA.getId()));
+                "roles", List.of("ADMIN"), "companyId", companyA.getId(), "memberId", admin.getId()));
         mockMvc.perform(get(path).header(AUTHORIZATION, bearer(token)))
                 .andExpect(status().isForbidden());
         assertThat(connections.getAllKeys()).isEmpty();
@@ -136,8 +137,9 @@ class TripLogTenantIntegrationTest {
     void MEMBER는_자기_회사_차량_SSE를_구독한다() throws Exception {
         Vehicle owned = vehicleRepository.save(vehicle(companyA,
                 vehicleModelRepository.findAll().getFirst(), "11가1111", false));
-        String token = jwtTokenProvider.generateAccessToken("member@example.com", Map.of(
-                "roles", List.of("MEMBER"), "companyId", companyA.getId()));
+        Member subscriber = memberRepository.save(member(companyA, "member@example.com", MemberRole.MEMBER));
+        String token = jwtTokenProvider.generateAccessToken(subscriber.getEmail(), Map.of(
+                "roles", List.of("MEMBER"), "companyId", companyA.getId(), "memberId", subscriber.getId()));
         mockMvc.perform(get("/api/trip-log/current/stream/{id}", owned.getId())
                         .header(AUTHORIZATION, bearer(token)))
                 .andExpect(status().isOk());
@@ -208,7 +210,34 @@ class TripLogTenantIntegrationTest {
         mockMvc.perform(get("/api/trip-log/detail/{id}", companyATrip.getId())
                         .header(AUTHORIZATION, bearer(companyAToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.carNumber").value("11가1111"));
+                .andExpect(jsonPath("$.carNumber").value("11가1111"))
+                .andExpect(jsonPath("$.tripMeter").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.distanceStatus").value("LEGACY_UNVERIFIED"));
+    }
+
+    @Test
+    void 신규운행의_HTTP_거리는_누적값이_아닌_차이이고_ON누락은_null이다() throws Exception {
+        Vehicle owned = vehicleRepository.save(vehicle(companyA,
+                vehicleModelRepository.findAll().getFirst(), "11가1111", false));
+        var start = LocalDateTime.of(2020, 1, 1, 10, 0);
+        for (boolean missingOn : List.of(false, true)) {
+            var time = missingOn ? start.plusDays(1) : start;
+            TripLog trip = TripLog.observed(owned, time);
+            if (!missingOn) trip.observe(new org.thisway.vehicle.triplog.domain.TripLogSaveInput(
+                    owned, "fixture", time, null, 37.5, 127.0, 1000));
+            trip.observe(new org.thisway.vehicle.triplog.domain.TripLogSaveInput(
+                    owned, "fixture", time, time.plusHours(1), 37.5, 127.0, 1500));
+            tripLogRepository.save(trip);
+            var result = mockMvc.perform(get("/api/trip-log/detail/{id}", trip.getId())
+                    .header(AUTHORIZATION, bearer(companyAToken))).andExpect(status().isOk());
+            if (missingOn) {
+                result.andExpect(jsonPath("$.tripMeter").value(org.hamcrest.Matchers.nullValue()))
+                        .andExpect(jsonPath("$.distanceStatus").value("MISSING_ON"));
+            } else {
+                result.andExpect(jsonPath("$.tripMeter").value(500))
+                        .andExpect(jsonPath("$.distanceStatus").value("KNOWN"));
+            }
+        }
     }
 
     @Test
@@ -244,7 +273,8 @@ class TripLogTenantIntegrationTest {
     private String accessToken(String email, long companyId) {
         return jwtTokenProvider.generateAccessToken(email, Map.of(
                 "roles", List.of(MemberRole.COMPANY_ADMIN.name()),
-                "companyId", companyId
+                "companyId", companyId,
+                "memberId", memberRepository.findByEmailAndActiveTrue(email).orElseThrow().getId()
         ));
     }
 
@@ -265,9 +295,13 @@ class TripLogTenantIntegrationTest {
     }
 
     private Member member(Company company, String email) {
+        return member(company, email, MemberRole.COMPANY_ADMIN);
+    }
+
+    private Member member(Company company, String email, MemberRole role) {
         return Member.builder()
                 .company(company)
-                .role(MemberRole.COMPANY_ADMIN)
+                .role(role)
                 .name("company-admin")
                 .email(email)
                 .password("Password123!")

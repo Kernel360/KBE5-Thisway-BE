@@ -1,5 +1,6 @@
 package org.thisway.vehicle.log.application;
 
+import org.thisway.emulator.credential.DeviceIdentity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,7 +16,7 @@ public class DirectGpsLogService implements GpsLogService {
     private final GpsLogSaveService gpsLogSaveService;
 
     @Override
-    public void saveGpsLog(GpsLogRequest request) {
-        gpsLogSaveService.saveGpsLog(request);
+    public void saveGpsLog(GpsLogRequest request, DeviceIdentity identity) {
+        gpsLogSaveService.saveGpsLog(request, identity);
     }
 }

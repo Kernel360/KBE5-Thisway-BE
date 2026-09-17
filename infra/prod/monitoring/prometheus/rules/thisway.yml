@@ -1,0 +1,60 @@
+groups:
+  - name: thisway-reliability
+    interval: 30s
+    rules:
+      - alert: ThiswayStoragePublishUnconfirmed
+        expr: sum(increase(gps_publisher_storage_unconfirmed_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: GPS storage broker acceptance is unconfirmed
+      - alert: ThiswayPublisherDeadlineOrSaturation
+        expr: (sum(increase(gps_publisher_deadline_total[5m])) or vector(0)) + (sum(increase(gps_publisher_saturated_total[5m])) or vector(0)) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: GPS publisher budget or capacity is exhausted
+      - alert: ThiswayGpsConsumerRejected
+        expr: sum(increase(gps_consumer_rejected_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: GPS consumer rejected a storage message
+      - alert: ThiswayAddressWorkerFailure
+        expr: sum(increase(thisway_trip_address_worker_total{outcome=~"worker_failure|exhausted"}[15m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Trip address recovery needs review
+      - alert: ThiswayStatisticsCorrectionFailure
+        expr: sum(increase(thisway_statistics_correction_total{outcome="failed"}[15m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Statistics correction remains pending after failure
+      - alert: ThiswayTelemetryRejected
+        expr: sum(increase(http_server_requests_seconds_count{uri=~"/api/logs/(gps|power|geofence)",status=~"409|429|503"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Telemetry admission failures are elevated
+      - alert: ThiswayTelemetryOversized
+        expr: sum(increase(thisway_telemetry_body_rejected_total[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Oversized telemetry bodies are being rejected
+      - alert: ThiswayApplicationScrapeMissing
+        expr: up{job="spring-boot-application"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Thisway application metrics scrape is unavailable

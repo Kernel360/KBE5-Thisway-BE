@@ -77,7 +77,14 @@ public final class GpsDlqReplay {
         var headers = delivery.getProps().getHeaders();
         // Any existing marker is treated as already replayed, including malformed values.
         if (headers != null && headers.containsKey(REPLAY_COUNT)) throw new IllegalStateException("Replay limit reached");
-        GpsLogRequestValidator.validate(JSON.readValue(body, GpsLogRequest.class));
+        var packet = JSON.readValue(body, GpsLogRequest.class);
+        GpsLogRequestValidator.validate(packet);
+        var identity = org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.read(headers, packet.mdn());
+        var replayHeaders = new java.util.HashMap<String, Object>(
+                org.thisway.vehicle.log.infrastructure.GpsMessageIdentity.headers(identity));
+        replayHeaders.put(REPLAY_COUNT, 1);
+        replayHeaders.put("thisway-replay-approval", approval.ticket());
+        replayHeaders.put("__TypeId__", GpsLogRequest.class.getName());
         channel.queueDeclarePassive(RabbitMQConfig.GPS_LOG_QUEUE);
         channel.exchangeDeclarePassive(RabbitMQConfig.GPS_LOG_EXCHANGE);
         audit.append("INTENT", digest); // A durable audit failure must prevent publication.
@@ -87,8 +94,7 @@ public final class GpsDlqReplay {
         // Rebuild properties: never copy arbitrary type/expiry/user headers or broker x-death history.
         var properties = new AMQP.BasicProperties.Builder()
                 .contentType("application/json").contentEncoding("UTF-8").deliveryMode(2)
-                .headers(Map.of(REPLAY_COUNT, 1, "thisway-replay-approval", approval.ticket(),
-                        "__TypeId__", GpsLogRequest.class.getName())).build();
+                .headers(replayHeaders).build();
         channel.basicPublish(RabbitMQConfig.GPS_LOG_EXCHANGE, RabbitMQConfig.GPS_LOG_ROUTING_KEY,
                 true, properties, body);
         channel.waitForConfirmsOrDie(5000);

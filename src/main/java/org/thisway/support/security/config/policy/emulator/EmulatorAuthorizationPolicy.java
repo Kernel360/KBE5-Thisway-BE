@@ -11,6 +11,9 @@ public class EmulatorAuthorizationPolicy {
 
     public static List<AuthorizationRule> getRules() {
         return List.of(
+                withRoles(HttpMethod.POST, List.of("/api/emulators/{id}/device-key"), "COMPANY_ADMIN"),
+                withRoles(HttpMethod.DELETE, List.of("/api/emulators/{id}/device-key"), "COMPANY_ADMIN"),
+                withRoles(HttpMethod.GET, List.of("/api/emulators/{id}/device-key"), "COMPANY_ADMIN"),
                 // — emulators CRUD —
                 withRoles(
                         HttpMethod.POST,

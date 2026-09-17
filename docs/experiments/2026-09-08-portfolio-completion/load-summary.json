@@ -1,0 +1,206 @@
+{
+  "scope": "Three fresh local environments; stepped 20/40/80 RPS, 100s each. Host resources/background processes not pinned.",
+  "compiledClassesSha256": "8ac99b950dfe436c21cfa68b6b098c213677eaa3781618cdd82e0a0bb4e8f90a",
+  "runs": [
+    {
+      "run": 1,
+      "stages": [
+        {
+          "rps": 20,
+          "requests": 2000,
+          "errors": 0,
+          "actualRps": 20.006489162978895,
+          "httpP95Ms": 16.271167,
+          "commitP95Ms": 11,
+          "commitP99Ms": 14,
+          "unmeasured": 0
+        },
+        {
+          "rps": 40,
+          "requests": 4000,
+          "errors": 0,
+          "actualRps": 40.00629559070563,
+          "httpP95Ms": 10.86825,
+          "commitP95Ms": 8,
+          "commitP99Ms": 10,
+          "unmeasured": 0
+        },
+        {
+          "rps": 80,
+          "requests": 8000,
+          "errors": 0,
+          "actualRps": 79.99755544110063,
+          "httpP95Ms": 6.799417,
+          "commitP95Ms": 5,
+          "commitP99Ms": 7,
+          "unmeasured": 0
+        }
+      ],
+      "recovery": {
+        "p99Ms": 3346,
+        "unmeasured": 0,
+        "p95Ms": 3322,
+        "attempts": 80
+      },
+      "duplicate": {
+        "p99Ms": 7,
+        "unmeasured": 0,
+        "p95Ms": 7,
+        "attempts": 24
+      },
+      "db": {
+        "pausedConsumerAccepted": 80,
+        "deadLetters": 0,
+        "recoveryMs": 183.240416,
+        "expectedUniqueRows": 14096,
+        "actualUniqueRows": 14096,
+        "readyBeforeRestart": 80,
+        "duplicateRequests": 24
+      },
+      "query": {
+        "baselineMedianMs": 1.3533119999999998,
+        "candidateMedianMs": 0.5381875,
+        "medianReductionPercent": 60.23182385141046
+      },
+      "resources": {
+        "maxHeapUsedBytes": 270766128,
+        "maxSampledReadyMessages": 0,
+        "maxSampledPublisherQueue": 0
+      }
+    },
+    {
+      "run": 2,
+      "stages": [
+        {
+          "rps": 20,
+          "requests": 2000,
+          "errors": 0,
+          "actualRps": 20.007265296668393,
+          "httpP95Ms": 18.609541,
+          "commitP95Ms": 11,
+          "commitP99Ms": 14,
+          "unmeasured": 0
+        },
+        {
+          "rps": 40,
+          "requests": 4000,
+          "errors": 0,
+          "actualRps": 40.00542103459084,
+          "httpP95Ms": 11.103875,
+          "commitP95Ms": 7,
+          "commitP99Ms": 10,
+          "unmeasured": 0
+        },
+        {
+          "rps": 80,
+          "requests": 8000,
+          "errors": 0,
+          "actualRps": 80.00275192826062,
+          "httpP95Ms": 7.137708,
+          "commitP95Ms": 5,
+          "commitP99Ms": 7,
+          "unmeasured": 0
+        }
+      ],
+      "recovery": {
+        "p95Ms": 2334,
+        "unmeasured": 0,
+        "p99Ms": 2367,
+        "attempts": 80
+      },
+      "duplicate": {
+        "p95Ms": 5,
+        "unmeasured": 0,
+        "p99Ms": 7,
+        "attempts": 24
+      },
+      "db": {
+        "readyBeforeRestart": 80,
+        "actualUniqueRows": 14096,
+        "expectedUniqueRows": 14096,
+        "recoveryMs": 182.03575,
+        "deadLetters": 0,
+        "pausedConsumerAccepted": 80,
+        "duplicateRequests": 24
+      },
+      "query": {
+        "baselineMedianMs": 1.4639795000000002,
+        "candidateMedianMs": 0.6016874999999999,
+        "medianReductionPercent": 58.90055154460838
+      },
+      "resources": {
+        "maxHeapUsedBytes": 249276064,
+        "maxSampledReadyMessages": 0,
+        "maxSampledPublisherQueue": 0
+      }
+    },
+    {
+      "run": 3,
+      "stages": [
+        {
+          "rps": 20,
+          "requests": 2000,
+          "errors": 0,
+          "actualRps": 20.00620494947284,
+          "httpP95Ms": 18.976125,
+          "commitP95Ms": 12,
+          "commitP99Ms": 16,
+          "unmeasured": 0
+        },
+        {
+          "rps": 40,
+          "requests": 4000,
+          "errors": 0,
+          "actualRps": 40.00387590873032,
+          "httpP95Ms": 11.007,
+          "commitP95Ms": 8,
+          "commitP99Ms": 9,
+          "unmeasured": 0
+        },
+        {
+          "rps": 80,
+          "requests": 8000,
+          "errors": 0,
+          "actualRps": 80.00323379711276,
+          "httpP95Ms": 7.503,
+          "commitP95Ms": 6,
+          "commitP99Ms": 8,
+          "unmeasured": 0
+        }
+      ],
+      "recovery": {
+        "p99Ms": 2342,
+        "unmeasured": 0,
+        "p95Ms": 2321,
+        "attempts": 80
+      },
+      "duplicate": {
+        "p99Ms": 4,
+        "unmeasured": 0,
+        "p95Ms": 4,
+        "attempts": 24
+      },
+      "db": {
+        "pausedConsumerAccepted": 80,
+        "deadLetters": 0,
+        "recoveryMs": 182.526875,
+        "expectedUniqueRows": 14096,
+        "actualUniqueRows": 14096,
+        "readyBeforeRestart": 80,
+        "duplicateRequests": 24
+      },
+      "query": {
+        "baselineMedianMs": 1.3740835,
+        "candidateMedianMs": 0.5045204999999999,
+        "medianReductionPercent": 63.28312653488671
+      },
+      "resources": {
+        "maxHeapUsedBytes": 265289728,
+        "maxSampledReadyMessages": 0,
+        "maxSampledPublisherQueue": 0
+      }
+    }
+  ],
+  "normalRequests": 42000,
+  "normalErrors": 0
+}

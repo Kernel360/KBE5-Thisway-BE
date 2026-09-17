@@ -15,14 +15,14 @@ public class PasswordController {
     private final PasswordService passwordService;
 
     @PostMapping("/verify-code")
-    public ResponseEntity<Void> sendVerifyCode(@RequestBody SendVerificationCodeRequest request) {
+    public ResponseEntity<Void> sendVerifyCode(@jakarta.validation.Valid @RequestBody SendVerificationCodeRequest request) {
         passwordService.sendVerificationCode(request.email());
         return ResponseEntity.status(HttpStatus.OK)
                 .build();
     }
 
     @PutMapping("/password")
-    public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeRequest request) {
+    public ResponseEntity<Void> changePassword(@jakarta.validation.Valid @RequestBody PasswordChangeRequest request) {
         passwordService.changePassword(request.email(), request.code(), request.newPassword());
         return ResponseEntity.status(HttpStatus.OK)
                 .build();

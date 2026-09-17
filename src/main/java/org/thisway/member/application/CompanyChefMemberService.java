@@ -15,6 +15,9 @@ import org.thisway.member.infrastructure.MemberRepository;
 import org.thisway.support.security.service.SecurityService;
 
 import java.util.Set;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.thisway.member.util.EmailValidation;
+import org.thisway.member.util.PasswordValidation;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +62,10 @@ public class CompanyChefMemberService {
     }
 
     public void registerMember(CompanyChefMemberRegisterInput request) {
+        validateFields(request.name(), request.email(), request.memo());
+        if (!PasswordValidation.isValidPassword(request.password())) {
+            throw new CustomException(ErrorCode.MEMBER_INVALID_PASSWORD);
+        }
         String encodePassword = passwordEncoder.encode(request.password());
         validateEmail(request.email());
 
@@ -77,20 +84,22 @@ public class CompanyChefMemberService {
                 .memo(request.memo())
                 .build();
 
-        memberRepository.save(member);
+        flushEmailWrite(() -> memberRepository.saveAndFlush(member));
     }
 
     public void updateMember(CompanyChefMemberUpdateInput request) {
         Member member = getActiveMember(request.id());
 
-        if (!member.getEmail().equals(request.email())) {
-            validateEmail(request.email());
+        validateFields(request.name(), request.email(), request.memo());
+        if (memberRepository.existsByEmailAndIdNot(request.email(), member.getId())) {
+            throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
         }
 
         member.updateName(request.name());
         member.updateEmail(request.email());
         member.updatePhone(request.phone());
         member.updateMemo(request.memo());
+        flushEmailWrite(memberRepository::flush);
     }
 
     public void deleteMember(Long id) {
@@ -123,6 +132,32 @@ public class CompanyChefMemberService {
         }
 
         return member;
+    }
+
+    private void validateFields(String name, String email, String memo) {
+        if (name == null || name.isBlank() || name.length() > 255 || memo == null || memo.length() > 255) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (!EmailValidation.isValidEmail(email) || email.length() > 255) {
+            throw new CustomException(ErrorCode.MEMBER_INVALID_EMAIL);
+        }
+    }
+
+    private void flushEmailWrite(Runnable write) {
+        try {
+            write.run();
+        } catch (DataIntegrityViolationException failure) {
+            // Translate only the known email unique constraint; unrelated DB failures must remain failures.
+            for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+                if (cause instanceof org.hibernate.exception.ConstraintViolationException constraint
+                        && constraint.getConstraintName() != null
+                        && constraint.getConstraintName().toLowerCase(java.util.Locale.ROOT)
+                                .contains("ukmbmcqelty0fbrvxp1q58dn57t")) {
+                    throw new CustomException(ErrorCode.MEMBER_ALREADY_EXIST_BY_EMAIL);
+                }
+            }
+            throw failure;
+        }
     }
 
     private void validateEmail(String email) {

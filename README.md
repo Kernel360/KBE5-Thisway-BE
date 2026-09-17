@@ -29,13 +29,18 @@
     
 <img width="2559" height="1440" alt="image" src="https://github.com/user-attachments/assets/2802e16d-97f9-4802-b487-c6e28c53ff3b" />
 
-  - 차량으로부터 운행 데이터(시동 켜짐/꺼짐, 위치 등)를 RabbitMQ를 통해 비동기적으로 수신
+  - GPS는 설정에 따라 직접 저장 또는 RabbitMQ 수집, 시동 ON/OFF는 HTTP transaction에서 처리
+  - Power는 strict 날짜/숫자/좌표 검증과 서버 Asia/Seoul+5분 미래 시각 상한 적용.
+    [허용 범위와 한계](docs/portfolio/work-logs/2026-09-06-power-request-validation.md). 장치 인증 연결은 [CHANGE-037](docs/portfolio/work-logs/2026-09-07-device-ingestion-authentication.md) 참고
     
 <img width="2558" height="1440" alt="image" src="https://github.com/user-attachments/assets/973fdb1a-7e92-4e16-9b55-e7689e7eed45" />
 
 
 - **운행 기록 관리 (Trip Log)**
-  - 수신된 데이터를 가공하여 운행 기록(Trip Log)으로 저장
+  - Power ON/OFF 관측을 운행 기록으로 저장. 신규 운행의 중복·역순을 처리하고 충돌은 거부
+  - 시작/종료 누적 계기값의 차이로 거리 계산. 누락·계기값 감소·과거 혼합 데이터는 확인 불가 표시
+  - [Trip 관측/거리 변경과 검증](docs/portfolio/work-logs/2026-09-06-trip-observation-distance.md),
+    [기존 데이터 전환 gate](docs/runbooks/trip-observation-v7.md)
     
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/9d9aea95-fd1b-45aa-b20b-afd193a2c0c7" />
 
@@ -45,8 +50,10 @@
 
 
 - **통계 (Statistics)**
-  - Spring Batch를 활용하여 일별/월별 운행 데이터 통계 처리
-  - 사용자별, 차량별 운행 거리, 시간 등 다양한 통계 데이터 제공
+  - Spring Batch의 회사별 일 통계 저장·재시작, 기간 조회 시 일별 값 합산/평균
+  - V2 가동률: 완료 운행의 시동 ON~OFF 구간을 차량별로 합쳐 시간대별 계산(정차 포함)
+  - 저장된 GPS 관측 수·미종료 운행·집계 일수 표시. 실제 GPS 수신율이나 과거 fleet 이력은 제공하지 않음
+  - 기존 공식과 새 공식의 혼합 방지 및 [V2 전환·보정 절차](docs/runbooks/statistics-formula-v2.md)
     
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/09b25259-5f52-43f8-8a98-b59baf3acb89" />
 
@@ -160,7 +167,9 @@
 
 ## 6. 테스트
 
-DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한다. V1/V2는 기본 schema, V3는 신규 GPS 관측값 중복 방지 key다. dev/prod는 `ddl-auto=validate`이며 이력이 관리되는 DB에는 후속 migration이 적용된다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+DB schema는 `src/main/resources/db/migration`의 Flyway migration이 관리한다. V1/V2는 기본 schema, V3는 신규 GPS 관측값 중복 방지 key, V4는 회사·일자 통계 unique와 Batch 회사별 checkpoint다. V4 적용 전 `src/main/resources/db/preflight/statistics-readiness.sql`로 기존 중복을 조사한다. 중복을 자동 삭제하지 않는다. dev/prod는 `ddl-auto=validate`이며 이력이 관리되는 DB에는 후속 migration이 적용된다. **이력이 없는 기존 DB는 자동 baseline하지 않으므로 그대로 연결하면 기동이 실패할 수 있다.** 기존 volume을 삭제하지 말고 [전환 경계 ADR](docs/adr/001-flyway-fresh-schema.md)을 먼저 확인한다. compose는 과거 init SQL/seed를 자동 실행하지 않는다.
+
+V5는 통계 공식 버전과 품질 필드를 추가한다. 기존 숫자는 V1로 보존하며 GET은 새 공식 V2만 집계하고 coverage를 반환한다. 전환 전 [통계 V2 runbook](docs/runbooks/statistics-formula-v2.md)과 FE 변경을 함께 검토한다. 기존 통계를 자동 삭제/재계산하지 않는다.
 
 기존 schema의 알려진 차이를 조회하는 읽기 전용 SQL과 결과 해석은 [preflight runbook](docs/runbooks/legacy-schema-preflight.md)에 있다. 점검 통과가 자동 baseline 승인이나 전체 schema 일치를 뜻하지 않는다.
 
@@ -182,3 +191,31 @@ Redis를 수동으로 `localhost:6379`에 실행할 필요는 없다. Redis inte
 Docker가 준비되지 않았다면 실제 Redis 직렬화와 TTL 계약을 검증할 수 없으므로 해당 통합 테스트를 자동으로 건너뛰지 않고 실패시킨다.
 
 실제 Boot·nginx·Chromium SSE 검증은 별도 `./gradlew sseBrowserTest --console=plain`으로 실행한다. 인접 `../KBE5-Thisway-FE` checkout에서 `npm ci`와 `npx playwright install chromium`을 먼저 실행하고 Node가 PATH에 있어야 한다. 기본 `test`에는 이 브라우저 시나리오가 포함되지 않는다. 정확한 검증 범위와 재현 조건은 [CHANGE-015](docs/portfolio/work-logs/2026-09-05-sse-boot-nginx-browser.md)를 참고한다.
+
+## 장치 수집 인증 실행
+
+세 수집 POST API는 `X-Device-Id`(Emulator DB id)와 `X-Device-Key`를 요구한다.
+사람 JWT만으로 수집 요청을 허용하지 않는다. 장치 키 발급·Emulator 비밀 주입·구형 메시지 전환은
+[장치 인증 runbook](docs/runbooks/device-ingestion-authentication.md)을 따른다.
+소속이 변경된 GPS 메시지는 저장/방송을 거부하며, 기존 keyless queue 메시지를 현재 MDN에 자동 귀속하지 않는다.
+
+`./gradlew emulatorClientTest -Demulator.python=/path/to/venv/bin/python --console=plain`은
+sibling Python Emulator→임시 Boot→MySQL의 실제 HTTP 인증 계약을 검증한다.
+기본 `test`와 별도이며 Python 의존성과 Docker가 필요하다.
+
+
+### 2026-09-07 로컬 마무리 변경
+
+수집 API는 `X-Device-Id`, `X-Device-Key`와 함께 전송 시도별 `X-Request-Id`(UUID v4), `X-Request-Timestamp`(epoch seconds)를 요구한다. 기본 120회/60초, 256 KiB 제한과 clock ±5분을 적용한다. [인증/전환 절차](docs/runbooks/device-ingestion-authentication.md)를 두 Emulator와 함께 따른다.
+
+V10 주소 retry worker, V11 통계 correction queue, V12 수정 revision, V13 최초 fleet ID snapshot, V14 orphan 복구 감사가 추가됐다. 기존 fleet 정보가 없는 통계는 자동 추정하지 않고 409로 보존한다. [통계 절차](docs/runbooks/statistics-formula-v2.md), [주소 worker](docs/runbooks/trip-address-worker.md), [배치 offline 복구](docs/runbooks/statistics-orphan-recovery.md), [경보/rollback](docs/runbooks/reliability-alerts-and-release.md)을 참고한다. 운영 DB·broker·AWS 적용 완료를 뜻하지 않는다.
+
+추가 opt-in 검증은 `fleetEvidenceTest`, `fleetBrowserTest`, `statisticsCrashRecoveryTest`, `emulatorClientTest`다. Docker·FE npm/Chromium·Emulator Python 의존성을 갖추고 Gradle task는 같은 checkout에서 순서대로 실행한다. `emulatorClientTest`는 `-Demulator.python=/사용할/venv/bin/python`을 지정할 수 있다. 정확한 현재 검증 결과와 남은 외부 입력은 [남은 작업](docs/portfolio/remaining-work.md)에 기록한다.
+
+### 관측성과 재현 실험
+
+로그의 민감정보 제외·HTTP/RabbitMQ correlation, consumer transaction timer, publisher queue 지표와 Grafana18개 패널을 추가했다. [실행계획](docs/portfolio/observability-execution-plan.md)과 [실행 절차](docs/runbooks/observability-evidence.md)를 참고한다. 실제 격리 Prometheus/Grafana 수집과90초 단계 부하·consumer pause/recovery는 `./gradlew observabilityEvidenceTest --console=plain`으로 재현한다. [CHANGE-050](docs/portfolio/work-logs/2026-09-07-observability-evidence.md)의 원시 자료와 한계를 함께 읽는다. 운영 지속 수집/알림 수신, 최대 처리량이나 개선율을 검증한 결과는 아니다.
+
+## 취업 포트폴리오 증거 업데이트 (2026-09-08)
+
+[제출 요약](docs/portfolio/portfolio-evidence-summary.md)에 전용 metrics 권한, DB commit 지연,5분씩3회42,000건 반복 부하, 조회 인덱스 후보 비교, 로컬 경보·중앙 로그, FE/Emulator CI 근거를 모았다. 운영 SLA·전체 API 개선율·실제 배포 완료를 주장하지 않는다. [재현 절차](docs/runbooks/portfolio-completion-evidence.md)와 기여·AI 사용 경계를 함께 확인한다.
