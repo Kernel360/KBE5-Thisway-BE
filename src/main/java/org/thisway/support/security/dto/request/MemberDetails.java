@@ -15,15 +15,13 @@ import java.util.List;
 @Value
 public class MemberDetails implements UserDetails {
 
-    long memberId;
     String username;
     long companyId;
     String password;
     MemberRole role;
 
     @Builder
-    public MemberDetails(long memberId, String username, long companyId, String password, MemberRole role) {
-        this.memberId = memberId;
+    public MemberDetails(String username, long companyId, String password, MemberRole role) {
         this.username = username;
         this.companyId = companyId;
         this.password = password;

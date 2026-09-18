@@ -24,7 +24,6 @@ public class JwtTokenGenerator implements TokenGenerator {
 
         // 1. Claims 생성 과정
         Map<String, Object> claims = new HashMap<>();
-        claims.put("memberId", member.getId());
 
         Company company = member.getCompany();
         if (company != null)

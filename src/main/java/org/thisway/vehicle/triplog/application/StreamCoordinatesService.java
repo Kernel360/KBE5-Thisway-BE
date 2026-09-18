@@ -16,17 +16,12 @@ import org.thisway.vehicle.triplog.interfaces.CurrentTripLogResponse;
 import org.thisway.vehicle.domain.VehicleReference;
 import org.thisway.vehicle.interfaces.VehicleTrackResponse;
 import org.thisway.vehicle.application.VehicleService;
-import org.thisway.vehicle.infrastructure.VehicleRepository;
-import org.thisway.support.security.service.SecurityService;
-import org.thisway.support.common.CustomException;
-import org.thisway.support.common.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +32,6 @@ public class StreamCoordinatesService {
     private final LogService logService;
     private final VehicleService vehicleService;
     private final TripLogService tripLogService;
-    private final VehicleRepository vehicleRepository;
-    private final SecurityService securityService;
 
     private final SseConnection sseConnection;
     private final SseEventSender sseEventSender;
@@ -47,8 +40,8 @@ public class StreamCoordinatesService {
     private final Long SSE_CHUNK_TIMEOUT = 10 * 60 * 1000L;   // 10분으로 설정
 
     public SseEmitter createStreamForTripLog(Long tripId) {
-        List<CoordinatesInfo> allGpsLogsInTrip = tripLogService.getGpsLogsInTripLog(tripId);
         SseEmitter emitter = new SseEmitter(SSE_CHUNK_TIMEOUT);
+        List<CoordinatesInfo> allGpsLogsInTrip = tripLogService.getGpsLogsInTripLog(tripId);
         sendChunkedTripLog(emitter, allGpsLogsInTrip);
 
         return emitter;
@@ -66,21 +59,13 @@ public class StreamCoordinatesService {
     }
 
     public SseEmitter createStreamForVehicle(Long vehicleId, String userName) {
-        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
-        var vehicle = vehicleRepository.findByIdAndCompanyIdAndActiveTrue(vehicleId, companyId)
-                .orElseThrow(() -> new CustomException(ErrorCode.VEHICLE_NOT_FOUND));
-        // Complete all initial reads before registering a live subscription.
-        List<GpsLogData> gpsLogs = List.of();
-        if (vehicle.isPowerOn()) {
-            LocalDateTime time = tripLogService.getLastStartTimeByVehicle(vehicleId);
-            if (time != null) {
-                gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
-            }
-        }
         String key = generateSseKey("vehicle", vehicleId.toString(), userName);
         SseEmitter emitter = sseConnection.createSseEmitter(key);
 
-        if (vehicle.isPowerOn()) {
+        if (vehicleService.getVehiclePowerState(vehicleId)) {
+            LocalDateTime time = tripLogService.getLastStartTimeByVehicle(vehicleId);
+            List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
+
             sendPastGpsLogForVehicle(key, gpsLogs, emitter);
             return emitter;
         }
@@ -100,12 +85,10 @@ public class StreamCoordinatesService {
     }
 
     public SseEmitter createStreamForCompany(Long companyId, String userName) {
-        if (companyId != securityService.getCurrentMemberDetails().getCompanyId()) {
-            throw new CustomException(ErrorCode.AUTH_UNAUTHORIZED);
-        }
-        List<VehicleTrackResponse> vehicleTracks = vehicleService.getVehicleTracks(companyId);
         String key = generateSseKey("company", companyId.toString(), userName);
         SseEmitter emitter = sseConnection.createSseEmitter(key);
+
+        List<VehicleTrackResponse> vehicleTracks = vehicleService.getVehicleTracks(companyId);
 
         sendCurrentGpsLogForCompany(key, vehicleTracks, emitter);
 
@@ -124,10 +107,7 @@ public class StreamCoordinatesService {
     }
 
     public void sendCurrentCoordinates(String mdn, List<GpsLogEntry> gpsLogs) {
-        sendCurrentCoordinates(emulatorService.getVehicleReferenceByMdn(mdn), gpsLogs);
-    }
-
-    public void sendCurrentCoordinates(VehicleReference vehicle, List<GpsLogEntry> gpsLogs) {
+        VehicleReference vehicle = emulatorService.getVehicleReferenceByMdn(mdn);
 
         sseEventSender.sendToPrefix(
                 getSseKeyToSend("vehicle", vehicle.id().toString()),
@@ -149,7 +129,7 @@ public class StreamCoordinatesService {
     }
 
     private String generateSseKey(String category, String id, String uniqueId) {
-        return category + ":" + id + ":" + uniqueId + ":" + UUID.randomUUID();
+        return category + ":" + id + ":" + uniqueId;
     }
 
     private String getSseKeyToSend(String category, String id) {

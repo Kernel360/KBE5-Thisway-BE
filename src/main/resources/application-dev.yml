@@ -1,10 +1,4 @@
 spring:
-  flyway:
-    baseline-on-migrate: false
-    clean-disabled: true
-  batch:
-    jdbc:
-      initialize-schema: never
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -13,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -50,12 +44,11 @@ spring:
       enabled: always
 
   security:
-    debug: false
+    debug: true
 
-logging:
-  level:
-    org.springframework.security: INFO
-    org.springframework.web: INFO
+custom:
+  verification-code-expiration-millis: 600000
+  verification-code-key-prefix: ${CUSTOM_VERIFICATION_CODE_KEY_PREFIX:"verify:email:"}
 
 security:
   jwt:
@@ -70,16 +63,11 @@ kakao:
 management:
   endpoints:
     web:
+      exclude: "env,beans,metrics,threaddump"
       exposure:
-        include: "health,prometheus"
+        include: "*"
 
   endpoint:
     health:
-      show-details: never
-    prometheus:
-      enabled: true
+      show-details: always
 
-  prometheus:
-    metrics:
-      export:
-        enabled: true

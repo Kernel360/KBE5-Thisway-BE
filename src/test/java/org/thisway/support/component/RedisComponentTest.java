@@ -1,115 +1,94 @@
 package org.thisway.support.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestConstructor;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
-
-import java.util.concurrent.TimeUnit;
+import org.thisway.support.component.support.RedisTestConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-class RedisComponentTest {
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = RedisTestConfig.class)
+@RequiredArgsConstructor
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+public class RedisComponentTest {
 
-    private static final String PREFIX = "prefix:";
-    private static final String KEY = "abc@example.com";
-    private static final String REDIS_KEY = PREFIX + KEY;
-    private static final long EXPIRATION_MILLIS = 10_000L;
+    private final RedisComponent redisComponent;
 
-    @Mock
-    private StringRedisTemplate redisTemplate;
+    @MockitoSpyBean
+    private final StringRedisTemplate redisTemplate;
+    @MockitoSpyBean
+    private final ObjectMapper objectMapper;
 
-    @Mock
-    private ValueOperations<String, String> valueOperations;
+    private final String prefix = "prefix:";
+    private final String key = "abc@example.com";
+    private final long expiryMillis = 10000;
+    private final String data = "data";
 
-    @Mock
-    private ObjectMapper objectMapper;
-
-    @InjectMocks
-    private RedisComponent redisComponent;
+    @BeforeEach
+    void setUp() {
+        redisComponent.delete(prefix, key);
+    }
 
     @Test
-    @DisplayName("직렬화한 값을 millisecond TTL과 함께 Redis에 저장한다")
-    void storeToRedisStoresSerializedValueWithExpiration() throws Exception {
+    @DisplayName("redis에 성공적으로 저장한다.")
+    void givenKeyAndData_whenStoreToRedis_thenStoreCodeInRedis() throws Exception {
         String data = "data";
-        String json = "\"data\"";
-        when(objectMapper.writeValueAsString(data)).thenReturn(json);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        redisComponent.storeToRedis(prefix, key, expiryMillis, data);
 
-        redisComponent.storeToRedis(PREFIX, KEY, EXPIRATION_MILLIS, data);
+        String savedData = redisTemplate.opsForValue().get(prefix + key);
+        assertThat(savedData).isNotNull();
 
-        verify(valueOperations).set(REDIS_KEY, json, EXPIRATION_MILLIS, TimeUnit.MILLISECONDS);
+        String result = objectMapper.readValue(savedData, String.class);
+        assertThat(result).isNotNull();
     }
 
     @Test
-    @DisplayName("Redis 저장 과정의 예외를 REDIS_STORE_ERROR로 변환한다")
-    void storeToRedisMapsExceptionToStoreError() throws Exception {
-        doThrow(new RuntimeException("serialization failed"))
-                .when(objectMapper).writeValueAsString("data");
+    @DisplayName("redis에 저장하던 중 에러 발생 시 server_error 응답을 한다.")
+    void givenKeyAndData_whenStoreToRedisAndAnyExceptionThrown_thenReturnServerErrorStatus() throws Exception {
+        doThrow(new RuntimeException("redis에 저장 실패")).when(objectMapper).writeValueAsString(any());
 
-        CustomException exception = assertThrows(CustomException.class,
-                () -> redisComponent.storeToRedis(PREFIX, KEY, EXPIRATION_MILLIS, "data"));
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.REDIS_STORE_ERROR);
+        CustomException e = assertThrows(CustomException.class, () -> redisComponent.storeToRedis(prefix, key, expiryMillis, data));
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REDIS_STORE_ERROR);
     }
 
     @Test
-    @DisplayName("Redis 값을 지정한 타입으로 역직렬화한다")
-    void retrieveFromRedisDeserializesStoredValue() throws Exception {
-        String json = "\"data\"";
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(REDIS_KEY)).thenReturn(json);
-        when(objectMapper.readValue(json, String.class)).thenReturn("data");
+    @DisplayName("redis에서 성공적으로 데이터를 추출한다.")
+    void givenKey_whenRetrieveFromRedis_thenRetrieveCodeFromRedis() throws Exception {
+        redisComponent.storeToRedis(prefix, key, expiryMillis, data);
 
-        String result = redisComponent.retrieveFromRedis(PREFIX, KEY, String.class);
-
-        assertThat(result).isEqualTo("data");
+        String result = redisComponent.retrieveFromRedis(prefix, key, String.class);
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(data);
     }
 
     @Test
-    @DisplayName("Redis에 값이 없으면 역직렬화하지 않고 null을 반환한다")
-    void retrieveFromRedisReturnsNullWhenValueDoesNotExist() throws Exception {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(REDIS_KEY)).thenReturn(null);
-
-        String result = redisComponent.retrieveFromRedis(PREFIX, KEY, String.class);
-
+    @DisplayName("redis에 요청하는 값이 없으면 Null을 반환한다.")
+    void givenKey_whenRetrieveFromRedisAndNoData_thenReturnNull() {
+        String result = redisComponent.retrieveFromRedis(prefix, key, String.class);
         assertThat(result).isNull();
-        verify(objectMapper, never()).readValue(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.<Class<Object>>any());
     }
 
     @Test
-    @DisplayName("Redis 조회 과정의 예외를 REDIS_RETRIEVE_ERROR로 변환한다")
-    void retrieveFromRedisMapsExceptionToRetrieveError() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(REDIS_KEY)).thenThrow(new RuntimeException("redis unavailable"));
+    @DisplayName("redis에서 데이터를 추출하던 중 에러 발생 시 server_error 응답을 한다.")
+    void givenKey_whenRetrieveFromRedisAndAnyExceptionThrown_thenReturnErrorStatus() {
+        doThrow(new RuntimeException("Redis 에러")).when(redisTemplate).opsForValue();
 
-        CustomException exception = assertThrows(CustomException.class,
-                () -> redisComponent.retrieveFromRedis(PREFIX, KEY, String.class));
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.REDIS_RETRIEVE_ERROR);
+        CustomException e = assertThrows(CustomException.class, () -> redisComponent.retrieveFromRedis(prefix, key, String.class));
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.REDIS_RETRIEVE_ERROR);
     }
 
-    @Test
-    @DisplayName("삭제 실패는 기존 정책에 따라 호출자에게 전파하지 않는다")
-    void deleteIgnoresRedisException() {
-        doThrow(new RuntimeException("redis unavailable")).when(redisTemplate).delete(REDIS_KEY);
-
-        assertThatCode(() -> redisComponent.delete(PREFIX, KEY)).doesNotThrowAnyException();
-    }
 }

@@ -16,7 +16,6 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.thisway.member.domain.MemberRole;
-import org.thisway.member.domain.MemberReader;
 import org.thisway.support.security.dto.request.MemberDetails;
 import org.thisway.support.security.utils.JwtTokenProvider;
 
@@ -28,7 +27,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final MemberReader memberReader;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -56,43 +54,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throw new BadCredentialsException("Invalid JWT token: missing subject");
         }
 
-        // Tokens issued by this application contain exactly one domain role.
-        // Validate the structure before constructing either principal or authorities.
-        List<?> roles = claims.get("roles", List.class);
-        if (roles == null || roles.size() != 1 || !(roles.getFirst() instanceof String roleName)) {
-            throw new BadCredentialsException("Invalid JWT token: invalid roles");
-        }
-        MemberRole role;
-        try {
-            role = MemberRole.valueOf(roleName);
-        } catch (IllegalArgumentException invalidRole) {
-            throw new BadCredentialsException("Invalid JWT token: invalid roles");
-        }
+        @SuppressWarnings("unchecked")
+        List<String> roles = claims.get("roles", List.class);
+        if (roles == null)
+            roles = List.of();
 
         Long companyId = claims.get("companyId", Long.class);
-        if (companyId == null || companyId <= 0)
-            throw new BadCredentialsException("Invalid JWT token: invalid companyId");
+        if (companyId == null)
+            throw new BadCredentialsException("Invalid JWT token: missing companyId");
 
-        Long memberId = claims.get("memberId", Long.class);
-        if (memberId == null || memberId <= 0)
-            throw new BadCredentialsException("Invalid JWT token: invalid memberId");
-
-        // A valid signature does not establish current membership or company access.
-        // Include the immutable member ID so a reused email cannot rebind an old token.
-        if (!memberReader.isCurrentIdentity(memberId, username, companyId, role))
-            throw new BadCredentialsException("Invalid JWT token: inactive or changed identity");
+        MemberRole role = MemberRole.valueOf(roles.getFirst());
 
         MemberDetails memberDetails = MemberDetails.builder()
-                .memberId(memberId)
                 .username(username)
                 .companyId(companyId)
                 .role(role)
                 .build();
 
+        String[] authorities = roles.stream()
+                .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                .toArray(String[]::new);
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 memberDetails,
                 null,
-                AuthorityUtils.createAuthorityList("ROLE_" + role.name()));
+                AuthorityUtils.createAuthorityList(authorities));
 
         SecurityContextHolder
                 .getContext()

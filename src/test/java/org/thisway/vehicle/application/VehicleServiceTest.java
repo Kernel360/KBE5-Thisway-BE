@@ -203,7 +203,6 @@ class VehicleServiceTest {
         // given
         Long vehicleId = 1L;
         Company company = mock(Company.class);
-        when(company.getId()).thenReturn(1L);
 
         MemberRole mockRole = mock(MemberRole.class);
         Set<MemberRole> roles = new HashSet<>();
@@ -228,13 +227,13 @@ class VehicleServiceTest {
                 .mileage(50000)
                 .build();
 
-        when(vehicleRepository.findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
 
         // when
         VehicleResponse response = vehicleService.getVehicleDetail(vehicleId);
 
         // then
-        verify(vehicleRepository).findByIdAndCompanyIdAndActiveTrue(vehicleIdCaptor.capture(), eq(1L));
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleIdCaptor.capture());
         assertThat(vehicleIdCaptor.getValue()).isEqualTo(vehicleId);
 
         assertThat(response).isNotNull();
@@ -326,7 +325,7 @@ class VehicleServiceTest {
                 .company(mockCompany)
                 .build();
 
-        when(vehicleRepository.findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
         when(vehicleModelRepository.findByIdAndActiveTrue(newVehicleModelId)).thenReturn(Optional.of(newVehicleModel));
         doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
@@ -334,7 +333,7 @@ class VehicleServiceTest {
         vehicleService.updateVehicle(vehicleId, request);
 
         // then
-        verify(vehicleRepository).findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L);
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
         verify(vehicleModelRepository).findByIdAndActiveTrue(newVehicleModelId);
         verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
@@ -385,7 +384,7 @@ class VehicleServiceTest {
                 .company(mockCompany)
                 .build();
 
-        when(vehicleRepository.findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
         when(vehicleModelRepository.findByIdAndActiveTrue(nonExistentVehicleModelId)).thenReturn(Optional.empty());
         doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
@@ -393,7 +392,7 @@ class VehicleServiceTest {
         CustomException exception = assertThrows(CustomException.class,
                 () -> vehicleService.updateVehicle(vehicleId, request));
 
-        verify(vehicleRepository).findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L);
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
         verify(vehicleModelRepository).findByIdAndActiveTrue(nonExistentVehicleModelId);
         verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
@@ -439,14 +438,14 @@ class VehicleServiceTest {
                 .company(mockCompany)
                 .build();
 
-        when(vehicleRepository.findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L)).thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.findByIdAndActiveTrue(vehicleId)).thenReturn(Optional.of(vehicle));
         doNothing().when(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 
         // when
         vehicleService.updateVehicle(vehicleId, request);
 
         // then
-        verify(vehicleRepository).findByIdAndCompanyIdAndActiveTrue(vehicleId, 1L);
+        verify(vehicleRepository).findByIdAndActiveTrue(vehicleId);
         verify(vehicleModelRepository, never()).findByIdAndActiveTrue(any());
         verify(vehicleUpdateValidator).validateUpdateRequest(vehicle, request);
 

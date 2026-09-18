@@ -48,8 +48,3 @@ out/
 
 ### Apple ###
 .DS_Store
-
-# Locally generated monitoring credential (never commit).
-infra/observability/.secrets/
-.local-demo/
-scripts/local-demo/__pycache__/

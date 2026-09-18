@@ -1,5 +1,3 @@
--- Historical team schema, retained for provenance only. Not mounted or executed by compose.
--- Fresh databases are owned by src/main/resources/db/migration (Flyway).
 create table company
 (
     id          bigint auto_increment
@@ -196,3 +194,4 @@ create table trip_log
 
 create index idx_trip_log_vehicle_id
     on power_log (vehicle_id);
+

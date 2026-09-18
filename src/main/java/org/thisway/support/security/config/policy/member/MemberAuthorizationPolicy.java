@@ -69,7 +69,13 @@ public class MemberAuthorizationPolicy {
 
                 withRoles(
                         HttpMethod.DELETE,
-                        List.of("/api/company-chef/members/{id}"),
+                        List.of("/api/company-chef/members"),
+                        "COMPANY_CHEF"
+                ),
+
+                withRoles(
+                        HttpMethod.DELETE,
+                        List.of("/api/company-chef/members/summary"),
                         "COMPANY_CHEF"
                 )
         );

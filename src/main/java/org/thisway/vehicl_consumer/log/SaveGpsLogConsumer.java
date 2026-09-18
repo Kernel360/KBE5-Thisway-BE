@@ -1,6 +1,5 @@
 package org.thisway.vehicl_consumer.log;
 
-import org.thisway.vehicle.log.infrastructure.GpsMessageIdentity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -22,25 +21,13 @@ import java.util.Map;
 public class SaveGpsLogConsumer {
 
     private final GpsLogSaveService gpsLogSaveService;
-    private final io.micrometer.core.instrument.MeterRegistry meters;
-    private final org.thisway.support.logging.GpsCommitLatency commitLatency;
 
-    @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5",
-            containerFactory = "gpsSaveListenerContainerFactory")
+    @RabbitListener(queues = RabbitMQConfig.GPS_LOG_QUEUE, concurrency = "2-5")
     public void receiveGpsLog(GpsLogRequest request, @Headers Map<String, Object> headers) {
-        String traceId = headers.get(MdcKeys.TRACE_ID) instanceof String value ? value : null;
-        long started = System.nanoTime();
-        String outcome = "failed";
-        try (var context = org.thisway.support.logging.TraceContext.open(traceId)) {
-            log.debug("GPS 저장 메시지 수신");
-            gpsLogSaveService.saveGpsLog(request,
-                    GpsMessageIdentity.read(headers, request.mdn()));
-            outcome = "committed"; // Transactional service proxy returned after commit.
-            commitLatency.committed(headers);
-        } finally {
-            io.micrometer.core.instrument.Timer.builder("gps.consumer.processing")
-                    .tag("outcome", outcome).publishPercentileHistogram()
-                    .register(meters).record(System.nanoTime() - started, java.util.concurrent.TimeUnit.NANOSECONDS);
-        }
+        String traceId = (String) headers.get(MdcKeys.TRACE_ID);
+        MDC.put(MdcKeys.TRACE_ID, traceId);
+
+        log.debug("Received GPS log: {}", request);
+        gpsLogSaveService.saveGpsLog(request);
     }
 }

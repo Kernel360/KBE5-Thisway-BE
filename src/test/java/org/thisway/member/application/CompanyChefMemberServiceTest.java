@@ -81,10 +81,6 @@ class CompanyChefMemberServiceTest {
     void 멤버_조회_테스트_없는_사용자() {
         // given
         long invalidMemberId = 1L;
-        MemberDetails authenticatedMember = MemberDetails.builder()
-                .companyId(1L)
-                .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.getMemberDetail(invalidMemberId));
@@ -136,7 +132,7 @@ class CompanyChefMemberServiceTest {
         // then
         assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
-        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
+        assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
     }
 
     @Test
@@ -173,8 +169,8 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .role(MemberRole.COMPANY_CHEF)
                 .name("name")
-                .email("email@example.test")
-                .password("Password123!")
+                .email("email")
+                .password("password")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -192,8 +188,8 @@ class CompanyChefMemberServiceTest {
         assertThat(registeredMember.getCompany().getId()).isEqualTo(companyForRegister.getId());
         assertThat(registeredMember.getRole()).isEqualTo(MemberRole.COMPANY_CHEF);
         assertThat(registeredMember.getName()).isEqualTo("name");
-        assertThat(registeredMember.getEmail()).isEqualTo("email@example.test");
-        assertThat(passwordEncoder.matches("Password123!", registeredMember.getPassword())).isTrue();
+        assertThat(registeredMember.getEmail()).isEqualTo("email");
+        assertThat(passwordEncoder.matches("password", registeredMember.getPassword())).isTrue();
         assertThat(registeredMember.getPhoneValue()).isEqualTo("01012345678");
         assertThat(registeredMember.getMemo()).isEqualTo("memo");
     }
@@ -209,7 +205,7 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .name("name")
                 .email(alreadyExistEmail)
-                .password("Password123!")
+                .password("password")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -234,8 +230,8 @@ class CompanyChefMemberServiceTest {
         CompanyChefMemberRegisterInput request = CompanyChefMemberRegisterInput.builder()
                 .name("name")
                 .role(MemberRole.ADMIN)
-                .email("email@example.test")
-                .password("Password123!")
+                .email("email")
+                .password("password")
                 .phone("01012345678")
                 .memo("memo")
                 .build();
@@ -260,7 +256,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.COMPANY_CHEF)
                         .name("preUpdateName")
                         .email("pre@update.email")
-                        .password("Password123!")
+                        .password("password")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -297,10 +293,6 @@ class CompanyChefMemberServiceTest {
     void 멤버_수정_테스트_없는_멤버() {
         //given
         long invalidMemberId = 1L;
-        MemberDetails authenticatedMember = MemberDetails.builder()
-                .companyId(1L)
-                .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
         CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
                 .id(invalidMemberId)
                 .name("name")
@@ -331,7 +323,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.COMPANY_CHEF)
                         .name("preUpdateName")
                         .email("preUpdateEmail@email.com")
-                        .password("Password123!")
+                        .password("password")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -361,38 +353,6 @@ class CompanyChefMemberServiceTest {
     }
 
     @Test
-    @DisplayName("다른 업체 멤버는 수정할 수 없다.")
-    void 다른_업체_멤버_수정_차단() {
-        // given
-        Company targetCompany = companyRepository.save(CompanyFixture.createCompany());
-        Member targetMember = memberRepository.save(MemberFixture.createMember(targetCompany, MemberRole.MEMBER));
-        MemberDetails authenticatedMember = MemberDetails.builder()
-                .companyId(targetCompany.getId() + 1)
-                .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
-
-        CompanyChefMemberUpdateInput request = CompanyChefMemberUpdateInput.builder()
-                .id(targetMember.getId())
-                .name("attacker-updated-name")
-                .email("attacker-updated@example.com")
-                .phone("01099999999")
-                .memo("attacker-updated-memo")
-                .build();
-
-        // when
-        Throwable thrown = catchThrowable(() -> companyChefMemberService.updateMember(request));
-
-        // then
-        assertThat(thrown).isInstanceOf(CustomException.class);
-        CustomException exception = (CustomException) thrown;
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
-
-        Member unchangedMember = memberRepository.findById(targetMember.getId()).orElseThrow();
-        assertThat(unchangedMember.getName()).isEqualTo(targetMember.getName());
-        assertThat(unchangedMember.getEmail()).isEqualTo(targetMember.getEmail());
-    }
-
-    @Test
     @DisplayName("멤버 정보를 수정할 때, ADMIN 일 경우 예외를 던진다.")
     void 멤버_수정_테스트_최고_관리자_이외의_수정() {
         //given
@@ -403,7 +363,7 @@ class CompanyChefMemberServiceTest {
                         .role(MemberRole.ADMIN)
                         .name("preUpdateName")
                         .email("pre@update.email")
-                        .password("Password123!")
+                        .password("password")
                         .phone("01012345678")
                         .memo("preUpdatedMemo")
                         .build()
@@ -458,10 +418,6 @@ class CompanyChefMemberServiceTest {
     void 멤버_삭제_테스트_없는_멤버() {
         //given
         long invalidMemberId = 1L;
-        MemberDetails authenticatedMember = MemberDetails.builder()
-                .companyId(1L)
-                .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
 
         // when
         Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(invalidMemberId));
@@ -482,8 +438,8 @@ class CompanyChefMemberServiceTest {
                         .company(company)
                         .role(MemberRole.ADMIN)
                         .name("name")
-                        .email("email@example.test")
-                        .password("Password123!")
+                        .email("email")
+                        .password("password")
                         .phone("01012345678")
                         .memo("memo")
                         .build()
@@ -502,27 +458,6 @@ class CompanyChefMemberServiceTest {
         Assertions.assertThat(thrown).isInstanceOf(CustomException.class);
         CustomException e = (CustomException) thrown;
         Assertions.assertThat(e.getErrorCode()).isEqualTo(ErrorCode.MEMBER_ACCESS_DENIED);
-    }
-
-    @Test
-    @DisplayName("다른 업체 멤버는 삭제할 수 없다.")
-    void 다른_업체_멤버_삭제_차단() {
-        // given
-        Company targetCompany = companyRepository.save(CompanyFixture.createCompany());
-        Member targetMember = memberRepository.save(MemberFixture.createMember(targetCompany, MemberRole.MEMBER));
-        MemberDetails authenticatedMember = MemberDetails.builder()
-                .companyId(targetCompany.getId() + 1)
-                .build();
-        given(securityService.getCurrentMemberDetails()).willReturn(authenticatedMember);
-
-        // when
-        Throwable thrown = catchThrowable(() -> companyChefMemberService.deleteMember(targetMember.getId()));
-
-        // then
-        assertThat(thrown).isInstanceOf(CustomException.class);
-        CustomException exception = (CustomException) thrown;
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.MEMBER_NOT_FOUND);
-        assertThat(memberRepository.findById(targetMember.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test

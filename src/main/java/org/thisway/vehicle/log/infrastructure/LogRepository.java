@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.vehicle.log.domain.GeofenceLogData;
 import org.thisway.vehicle.log.domain.GpsLogData;
-import org.thisway.vehicle.log.domain.GpsEventFingerprint;
 import org.thisway.vehicle.log.domain.GpsStatus;
 import org.thisway.vehicle.log.domain.PowerLogData;
 
@@ -66,32 +65,24 @@ public class LogRepository {
                         + "speed, "
                         + "total_trip_meter, "
                         + "battery_voltage, "
-                        + "occurred_time, event_key"
+                        + "occurred_time"
                         + ") VALUES "
         );
 
         List<Object> params = new ArrayList<>();
 
-        record PreparedGps(GpsLogData data, byte[] key) {}
-        var ordered = gpsLogDataList.stream()
-                .map(data -> new PreparedGps(data, GpsEventFingerprint.of(data)))
-                .sorted((left, right) -> java.util.Arrays.compareUnsigned(left.key(), right.key()))
-                .toList();
-        for (int i = 0; i < ordered.size(); i++) {
-            GpsLogData data = ordered.get(i).data();
+        for (int i = 0; i < gpsLogDataList.size(); i++) {
+            GpsLogData data = gpsLogDataList.get(i);
 
             if (i > 0) {
                 sqlBuilder.append(", ");
             }
 
-            sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            sqlBuilder.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             params.addAll(List.of(toGpsLogParams(data)));
-            params.add(ordered.get(i).key());
         }
 
-        // Do not suppress FK/type failures; only the unique-key collision becomes a no-op.
-        sqlBuilder.append(" ON DUPLICATE KEY UPDATE event_key = event_key");
         jdbcTemplate.update(sqlBuilder.toString(), params.toArray());
     }
 
@@ -106,7 +97,7 @@ public class LogRepository {
                 gpsLogData.speed(),
                 gpsLogData.totalTripMeter(),
                 gpsLogData.batteryVoltage(),
-                gpsLogData.occurredTime().withNano(0)
+                gpsLogData.occurredTime()
         };
     }
 
@@ -241,15 +232,14 @@ public class LogRepository {
         );
     }
 
-    /** Stored observation rows in [from, to) for the company's current active fleet; not a reception rate. */
-    public long countGpsObservations(Long companyId, LocalDateTime from, LocalDateTime to) {
-        return jdbcTemplate.queryForObject("""
-                SELECT COUNT(*) FROM gps_log g JOIN vehicle v ON v.id=g.vehicle_id
-                WHERE v.company_id=? AND v.active=true AND g.occurred_time>=? AND g.occurred_time<?
-                """, Long.class, companyId, from, to);
-    }
-
-    /** Legacy GPS count query. Not used by the V2 operation-time formula. */
+    /**
+     * 특정 회사의 특정 날짜에 대해 시간대별 GPS 로그 개수를 반환
+     *
+     * @param companyId     회사 ID
+     * @param startDateTime 시작 날짜시간 (해당 날짜 00:00:00)
+     * @param endDateTime   종료 날짜시간 (해당 날짜 23:59:59)
+     * @return Map<시간대 ( 0 ~ 2 3 ), GPS 로그 개수>
+     */
     public Map<Integer, Long> countGpsLogsByCompanyAndHour(Long companyId, LocalDateTime startDateTime,
                                                            LocalDateTime endDateTime) {
         // 시간대별 GPS 로그 개수 조회 (DB 호환성을 위해 EXTRACT 사용)

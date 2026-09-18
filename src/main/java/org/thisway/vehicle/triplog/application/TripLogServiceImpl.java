@@ -1,14 +1,12 @@
 package org.thisway.vehicle.triplog.application;
 
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
-import org.thisway.support.security.service.SecurityService;
 import org.thisway.vehicle.application.VehicleService;
 import org.thisway.vehicle.interfaces.VehicleResponse;
 import org.thisway.vehicle.log.application.LogService;
@@ -31,29 +29,24 @@ public class TripLogServiceImpl implements TripLogService {
     private final VehicleService vehicleService;
     private final LogService logService;
     private final TripLogRepository tripLogRepository;
-    private final ApplicationEventPublisher events;
-    private final SecurityService securityService;
+    private final ReverseGeocodingConverter reverseGeocodingConverter;
 
     public TripLogServiceImpl(
             VehicleService vehicleService,
             @Lazy LogService logService,
             TripLogRepository tripLogRepository,
-            ApplicationEventPublisher events,
-            SecurityService securityService
+            ReverseGeocodingConverter reverseGeocodingConverter
     ) {
         this.vehicleService = vehicleService;
         this.logService = logService;
         this.tripLogRepository = tripLogRepository;
-        this.events = events;
-        this.securityService = securityService;
+        this.reverseGeocodingConverter = reverseGeocodingConverter;
     }
 
     @Override
     public VehicleDetailResponse getVehicleDetails(Long vehicleId) {
-        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
         VehicleResponse vehicleResponse = vehicleService.getVehicleDetail(vehicleId);
-        List<TripLog> tripLogs = tripLogRepository
-                .findTop6ByVehicleIdAndVehicleCompanyIdOrderByStartTimeDesc(vehicleId, companyId);
+        List<TripLog> tripLogs = tripLogRepository.findTop6ByVehicleIdOrderByStartTimeDesc(vehicleId);
         CurrentDrivingInfo currentDrivingInfo = null;
 
         if (!tripLogs.isEmpty() && vehicleResponse.powerOn()) {
@@ -66,7 +59,7 @@ public class TripLogServiceImpl implements TripLogService {
         }
 
         return VehicleDetailResponse.from(
-                vehicleResponse,
+                vehicleService.getVehicleDetail(vehicleId),
                 currentDrivingInfo,
                 tripLogs
         );
@@ -74,8 +67,7 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public CurrentTripLogResponse getCurrentGpsLogs(Long vehicleId, LocalDateTime time) {
-        VehicleResponse vehicleResponse = vehicleService.getVehicleDetail(vehicleId);
-        if (vehicleResponse.powerOn()) {
+        if (vehicleService.getVehiclePowerState(vehicleId)) {
             List<GpsLogData> gpsLogs = logService.findGpsLogs(vehicleId, time, LocalDateTime.now(ZoneId.of("Asia/Seoul")));
 
             if (!gpsLogs.isEmpty()) {
@@ -97,9 +89,7 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public TripLogDetailResponse getTripLogDetails(Long tripId) {
-        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
-        TripLog tripLog = tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, companyId)
-                .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
+        TripLog tripLog = tripLogRepository.findById(tripId).orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         List<GpsLogData> gpsLogs = logService.findGpsLogs(tripLog.getVehicle().getId(), tripLog.getStartTime(), tripLog.getEndTime());
 
         return TripLogDetailResponse.from(
@@ -116,8 +106,7 @@ public class TripLogServiceImpl implements TripLogService {
 
     @Override
     public List<CoordinatesInfo> getGpsLogsInTripLog(Long tripId) {
-        long companyId = securityService.getCurrentMemberDetails().getCompanyId();
-        TripLog tripLog = tripLogRepository.findByIdAndVehicleCompanyIdAndActiveTrue(tripId, companyId)
+        TripLog tripLog = tripLogRepository.findById(tripId)
                 .orElseThrow(() -> new CustomException(ErrorCode.TRIP_LOG_NOT_FOUND));
         return logService.findGpsLogs(
                 tripLog.getVehicle().getId(),
@@ -127,31 +116,50 @@ public class TripLogServiceImpl implements TripLogService {
     }
 
     @Override
-    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    @Transactional
     public void saveTripLog(TripLogSaveInput tripLogSaveInput) {
-        try {
-            tripLogSaveInput.validate();
-        } catch (IllegalArgumentException exception) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        var vehicle = vehicleService.getVehicleForPowerUpdate(tripLogSaveInput.vehicle().getId());
-        var existing = tripLogRepository.findTop2ByVehicleIdAndStartTimeOrderByIdAsc(
-                vehicle.getId(), tripLogSaveInput.onTime());
-        if (existing.size() > 1 || (!existing.isEmpty() && existing.getFirst().getIdentityStartTime() == null)) {
-            throw new CustomException(ErrorCode.TRIP_LEGACY_REVIEW_REQUIRED);
-        }
-        TripLog tripLog = existing.isEmpty() ? TripLog.observed(vehicle, tripLogSaveInput.onTime()) : existing.getFirst();
-        try {
-            if (!tripLog.observe(tripLogSaveInput)) return;
-        } catch (TripObservationConflictException exception) {
-            throw new CustomException(ErrorCode.TRIP_EVENT_CONFLICT);
+        TripLog tripLog;
+        ReverseGeocodeResult address = reverseGeocodingConverter.convertToAddress(tripLogSaveInput.latitude(), tripLogSaveInput.longitude());
+
+        if (tripLogSaveInput.offTime() == null) {
+            tripLog = TripLog.builder()
+                    .vehicle(tripLogSaveInput.vehicle())
+                    .startTime(tripLogSaveInput.onTime())
+                    .totalTripMeter(tripLogSaveInput.totalTripMeter())
+                    .onLatitude(tripLogSaveInput.latitude())
+                    .onLongitude(tripLogSaveInput.longitude())
+                    .onAddress(address.addr())
+                    .onAddrDetail(address.addrDetail())
+                    .active(false)
+                    .build();
+        } else {
+            tripLog = tripLogRepository.findByVehicleIdAndStartTime(tripLogSaveInput.vehicle().getId(), tripLogSaveInput.onTime());
+
+            if (tripLog == null) {
+                tripLog = TripLog.builder()
+                        .vehicle(tripLogSaveInput.vehicle())
+                        .startTime(tripLogSaveInput.onTime())
+                        .endTime(tripLogSaveInput.offTime())
+                        .totalTripMeter(0)
+                        .offLatitude(tripLogSaveInput.latitude())
+                        .offLongitude(tripLogSaveInput.longitude())
+                        .offAddress(address.addr())
+                        .offAddrDetail(address.addrDetail())
+                        .active(true)
+                        .build();
+            } else {
+                tripLog.finishTrip(
+                        tripLogSaveInput.offTime(),
+                        tripLogSaveInput.totalTripMeter(),
+                        tripLogSaveInput.latitude(),
+                        tripLogSaveInput.longitude(),
+                        address.addr(),
+                        address.addrDetail()
+                );
+            }
         }
 
         tripLogRepository.save(tripLog);
-        events.publishEvent(new org.thisway.company.statistics.application.StatisticsSourceChanged(
-                vehicle.getCompany().getId(), tripLogSaveInput.onTime().toLocalDate(),
-                java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(1), "TRIP_OBSERVED"));
-        events.publishEvent(new TripAddressRequested(tripLog.getId(), tripLogSaveInput.offTime() != null));
     }
 
 }

@@ -10,7 +10,7 @@ import org.thisway.support.security.config.policy.AuthorizationRule;
 public class AuthAuthorizationPolicy {
     public static List<AuthorizationRule> getRules() {
         return List.of(
-                // Human JWT is optional here. The three telemetry POST handlers always verify device credentials.
+                // — 비인증(permit all) —
                 permitAll(HttpMethod.POST,
                         List.of("/api/auth/login", "/api/auth/verify-code", "/api/logs/gps", "/api/logs/geofence",
                                 "/api/logs/power")),

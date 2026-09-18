@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestConstructor;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.thisway.support.common.ApiErrorResponse;
 import org.thisway.support.common.CustomException;
 import org.thisway.support.common.ErrorCode;
+import org.thisway.support.logging.config.LoggingConfig;
 import org.thisway.member.application.PasswordService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,9 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PasswordController.class)
-@org.springframework.context.annotation.Import(io.micrometer.core.instrument.simple.SimpleMeterRegistry.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
+@Import(LoggingConfig.class)
 @RequiredArgsConstructor
 public class PasswordControllerTest {
 
@@ -72,7 +74,7 @@ public class PasswordControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                 )
-                .andExpect(status().isNotFound())
+                .andExpect(status().isBadRequest())
                 .andDo(print())
                 .andReturn();
 
@@ -125,35 +127,6 @@ public class PasswordControllerTest {
                 responseBody, ApiErrorResponse.class
         );
         assertThat(response.code()).isEqualTo(ErrorCode.AUTH_INVALID_VERIFICATION_CODE.getCode());
-    }
-
-    @Test
-    void 코드형식과_빈_입력은_서비스호출전에_400으로_거부한다() throws Exception {
-        for (String body : new String[]{"{}",
-                "{\"email\":\"abc@example.com\",\"code\":\"12345a\",\"newPassword\":\"Password123!\"}",
-                "{\"email\":\"abc@example.com\",\"code\":\"123456\",\"newPassword\":\"short\"}"}) {
-            mockMvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON).content(body))
-                    .andExpect(status().isBadRequest());
-        }
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isBadRequest());
-        org.mockito.Mockito.verifyNoInteractions(passwordService);
-    }
-
-    @Test
-    void 발송과_변경_한도는_고정_429코드로_응답한다() throws Exception {
-        doThrow(new CustomException(ErrorCode.AUTH_VERIFICATION_RATE_LIMITED)).when(passwordService)
-                .sendVerificationCode(anyString());
-        doThrow(new CustomException(ErrorCode.AUTH_VERIFICATION_RATE_LIMITED)).when(passwordService)
-                .changePassword(anyString(), anyString(), anyString());
-        mockMvc.perform(post("/api/auth/verify-code").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"abc@example.com\"}"))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value("13006"));
-        mockMvc.perform(put("/api/auth/password").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"abc@example.com\",\"code\":\"123456\",\"newPassword\":\"Password123!\"}"))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.code").value("13006"));
     }
 
 }

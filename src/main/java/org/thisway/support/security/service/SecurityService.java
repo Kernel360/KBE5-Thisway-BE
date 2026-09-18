@@ -34,8 +34,7 @@ public class SecurityService {
 
     @Transactional(readOnly = true)
     public Member getCurrentMember() {
-        MemberDetails identity = getCurrentMemberDetails();
-        return memberRepository.findByIdAndCompanyIdAndActiveTrue(identity.getMemberId(), identity.getCompanyId())
+        return memberRepository.findByEmailAndActiveTrue(getCurrentMemberDetails().getUsername())
                 .orElseThrow(() -> new CustomException(ErrorCode.AUTH_INVALID_AUTHENTICATION));
     }
 }

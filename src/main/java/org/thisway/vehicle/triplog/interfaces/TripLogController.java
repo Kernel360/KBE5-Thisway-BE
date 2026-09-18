@@ -15,10 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.thisway.support.common.CustomException;
+import org.thisway.support.common.ErrorCode;
 import org.thisway.support.security.dto.request.MemberDetails;
+import org.thisway.support.security.utils.JwtTokenProvider;
 import org.thisway.vehicle.triplog.application.StreamCoordinatesService;
 import org.thisway.vehicle.triplog.application.TripLogService;
 
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +35,7 @@ public class TripLogController {
     private final TripLogService tripLogService;
     private final StreamCoordinatesService streamCoordinatesService;
 
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/{id}")
     public ResponseEntity<VehicleDetailResponse> getVehicleDetailTripLogs(@PathVariable Long id) {
@@ -48,9 +53,9 @@ public class TripLogController {
     }
 
     @GetMapping(value = "/current/stream/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter getVehicleCurrentGpsLogsSseEmitter(@PathVariable Long id,
-            @AuthenticationPrincipal MemberDetails memberDetails) {
-        return streamCoordinatesService.createStreamForVehicle(id, memberDetails.getUsername());
+    public SseEmitter getVehicleCurrentGpsLogsSseEmitter(@PathVariable Long id, @RequestParam("token") String token) {
+        Claims claims = jwtTokenProvider.validateTokenAndGetClaims(token);
+        return streamCoordinatesService.createStreamForVehicle(id, claims.getSubject());
     }
 
     @GetMapping
@@ -69,7 +74,12 @@ public class TripLogController {
     }
 
     @GetMapping(value = "/detail/stream/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter getTripLogsStream(@PathVariable Long id) {
+    public SseEmitter getTripLogsStream(@PathVariable Long id, @RequestParam("token") String token) {
+        try {
+            jwtTokenProvider.validateTokenAndGetClaims(token);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.AUTH_UNAUTHENTICATED);
+        }
         return streamCoordinatesService.createStreamForTripLog(id);
     }
 }
